@@ -1,0 +1,14 @@
+# Package Files #
+*.class
+/.idea/
+/*.iml
+/target/
+/build/
+
+# OS generated files
+.DS_Store
+
+# Gradle related files
+.gradle
+.settings
+/dependency-reduced-pom.xml
