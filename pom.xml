@@ -41,7 +41,7 @@
     </scm>
 
     <build>
-        <!-- <finalName>${project.artifactId}</finalName> -->
+        <finalName>${project.artifactId}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -57,6 +57,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <mainClass>${app.main.class}</mainClass>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                         </manifest>
                     </archive>
                 </configuration>
@@ -115,7 +116,7 @@
                                 <type>SINGLE_JAR</type>
                                 <artifacts>
                                     <artifact>
-                                        <path>target/{{distributionName}}-{{projectVersion}}.jar</path>
+                                        <path>target/{{distributionName}}.jar</path>
                                     </artifact>
                                 </artifacts>
                             </solarpos-cli>

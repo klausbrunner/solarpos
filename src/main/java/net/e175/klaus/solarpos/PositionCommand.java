@@ -9,7 +9,7 @@ import java.util.Formatter;
 import java.util.concurrent.Callable;
 
 @CommandLine.Command(name = "position", description = "calculates topocentric solar coordinates")
-class PositionCommand implements Callable<Integer> {
+final class PositionCommand implements Callable<Integer> {
 
     enum Algorithm {SPA, GRENA3}
 

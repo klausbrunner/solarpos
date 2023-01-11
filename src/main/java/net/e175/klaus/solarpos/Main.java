@@ -15,8 +15,8 @@ import java.util.Stack;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 import static java.time.temporal.ChronoField.*;
 
-@CommandLine.Command(name = "solarpos-cli", subcommands = {PositionCommand.class, SunriseCommand.class}, mixinStandardHelpOptions = true, description = "Calculates topocentric solar coordinates or sunrise/sunset times.")
-public class Main {
+@CommandLine.Command(name = "solarpos-cli", subcommands = {PositionCommand.class, SunriseCommand.class}, mixinStandardHelpOptions = true, description = "Calculates topocentric solar coordinates or sunrise/sunset times.", versionProvider = ManifestBasedVersionProviderWithVariables.class)
+public final class Main {
     static final String INPUT_DATE_TIME_PATTERN = "yyyy-MM-dd['T'HH:mm:ss[X]]";
     static final DateTimeFormatter INPUT_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(INPUT_DATE_TIME_PATTERN);
     static final DateTimeFormatter ISO_LOCAL_TIME_REDUCED = new DateTimeFormatterBuilder().appendValue(HOUR_OF_DAY, 2).appendLiteral(':').appendValue(MINUTE_OF_HOUR, 2).optionalStart().appendLiteral(':').appendValue(SECOND_OF_MINUTE, 2).appendOffsetId().toFormatter();
@@ -70,7 +70,7 @@ public class Main {
 /**
  * A somewhat tolerant parser of ZonedDateTimes.
  */
-class DateTimeConsumer implements CommandLine.IParameterConsumer {
+final class DateTimeConsumer implements CommandLine.IParameterConsumer {
 
     public void consumeParameters(Stack<String> args, CommandLine.Model.ArgSpec argSpec, CommandLine.Model.CommandSpec commandSpec) {
         if (!args.isEmpty()) {
@@ -106,3 +106,10 @@ class DateTimeConsumer implements CommandLine.IParameterConsumer {
     }
 }
 
+final class ManifestBasedVersionProviderWithVariables implements CommandLine.IVersionProvider {
+    public String[] getVersion() {
+        // this requires Implementation-Version in the MANIFEST file to work
+        String version = getClass().getPackage().getImplementationVersion();
+        return new String[] { "${COMMAND-FULL-NAME} " + (version == null ? "" : version)};
+    }
+}
