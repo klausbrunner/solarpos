@@ -2,9 +2,10 @@
 
 ![CI](https://github.com/KlausBrunner/solarpos-cli/workflows/CI/badge.svg)
 
-A simple command-line application to calculate topocentric solar coordinates and sunrise/sunset times, based on [solarpositioning](https://github.com/KlausBrunner/solarpositioning).
+A simple command-line application to calculate topocentric solar coordinates and sunrise/sunset times, based
+on [solarpositioning](https://github.com/KlausBrunner/solarpositioning).
 
-Very much a work in progress and only semi-usable so far.
+Status: early stage, "alpha" quality. Basic functionality works, but lacks real-world testing and polish.
 
 ## Usage
 
