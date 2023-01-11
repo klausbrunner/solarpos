@@ -7,9 +7,22 @@ on [solarpositioning](https://github.com/KlausBrunner/solarpositioning).
 
 Status: early stage, "alpha" quality. Basic functionality works, but lacks real-world testing and polish.
 
+## Requirements
+
+Java 17 or newer.
+
 ## Usage
 
-See built-in help.
+Get executable JAR for [latest release](https://github.com/KlausBrunner/solarpos-cli/releases/latest) (or build it
+yourself) and run as usual:
+
+```
+java -jar solarpos-cli.jar
+```
+
+On Linux, macOS and other POSIX-like systems, it should be enough to set the executable flag and run the JAR directly.
+
+Then, see built-in help.
 
 ```
 Usage: solarpos-cli [-hV] [--show-inputs] [--deltat[=<deltaT>]]
@@ -20,8 +33,8 @@ Calculates topocentric solar coordinates or sunrise/sunset times.
                               equator)
       <longitude>           longitude in decimal degrees (positive East of
                               Greenwich)
-      <dateTime>            date/time in ISO format yyyy-MM-dd['T'HH:mm:ss[X]].
-                              use 'now' for current time and date.
+      <dateTime>            date/time in ISO format yyyy-MM-dd['T'HH:mm:ss[.SSS]
+                              [XXX]]. use 'now' for current time and date.
       --deltat[=<deltaT>]   delta T in seconds; an estimate is used if this
                               option is given without a value
       --format=<format>     output format, one of HUMAN, CSV, JSON
@@ -33,6 +46,4 @@ Commands:
   sunrise   calculates sunrise, transit, and sunset
 ```
 
-## Requirements
 
-Java 17 or newer.

@@ -8,7 +8,9 @@
     <version>0.0.2-SNAPSHOT</version>
 
     <name>solarpos-cli</name>
-    <description>A simple command-line application to calculate topocentric solar coordinates and sunrise/sunset times.</description>
+    <description>A simple command-line application to calculate topocentric solar coordinates and sunrise/sunset
+        times.
+    </description>
 
     <url>https://github.com/KlausBrunner/solarpos-cli</url>
     <licenses>
@@ -29,8 +31,7 @@
         <app.main.class>net.e175.klaus.solarpos.Main</app.main.class>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>17</java.version>
-        <maven.compiler.source>${java.version}</maven.compiler.source>
-        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <maven.compiler.release>${java.version}</maven.compiler.release>
     </properties>
 
     <scm>

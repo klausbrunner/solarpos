@@ -9,7 +9,7 @@ import java.util.Formatter;
 import java.util.concurrent.Callable;
 
 @CommandLine.Command(name = "sunrise", description = "calculates sunrise, transit, and sunset")
-public class SunriseCommand implements Callable<Integer> {
+public final class SunriseCommand implements Callable<Integer> {
     @CommandLine.ParentCommand
     Main parent;
 
