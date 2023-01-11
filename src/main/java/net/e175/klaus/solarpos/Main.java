@@ -3,15 +3,14 @@ package net.e175.klaus.solarpos;
 import net.e175.klaus.solarpositioning.DeltaT;
 import picocli.CommandLine;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.util.Stack;
-import java.util.TimeZone;
 
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 import static java.time.temporal.ChronoField.*;
@@ -58,14 +57,11 @@ public class Main {
     }
 
     static CommandLine createCommandLine() {
-        return new CommandLine(new Main())
-                .setCaseInsensitiveEnumValuesAllowed(true)
-                .setAbbreviatedOptionsAllowed(true);
+        return new CommandLine(new Main()).setCaseInsensitiveEnumValuesAllowed(true).setAbbreviatedOptionsAllowed(true);
     }
 
     public static void main(String[] args) {
-        int exitCode = createCommandLine()
-                .execute(args);
+        int exitCode = createCommandLine().execute(args);
         System.exit(exitCode);
     }
 
@@ -79,35 +75,34 @@ class DateTimeConsumer implements CommandLine.IParameterConsumer {
     public void consumeParameters(Stack<String> args, CommandLine.Model.ArgSpec argSpec, CommandLine.Model.CommandSpec commandSpec) {
         if (!args.isEmpty()) {
             String arg = args.pop();
-            ZonedDateTime dateTime;
-            if (arg.equals("now")) {
-                dateTime = ZonedDateTime.now();
-            } else {
-                try {
-                    var temporal = Main.INPUT_DATE_TIME_FORMATTER
-                            .parseBest(arg,
-                                    ZonedDateTime::from,
-                                    LocalDateTime::from,
-                                    LocalDate::from);
-
-                    if (temporal instanceof ZonedDateTime zdt) {
-                        dateTime = zdt;
-                    } else if (temporal instanceof LocalDateTime ldt) {
-                        var tz = TimeZone.getDefault().toZoneId();
-                        dateTime = ZonedDateTime.of(ldt, tz);
-                    } else if (temporal instanceof LocalDate ld) {
-                        var tz = TimeZone.getDefault().toZoneId();
-                        var lt = LocalTime.ofSecondOfDay(0);
-                        dateTime = ZonedDateTime.of(ld, lt, tz);
-                    } else {
-                        throw new DateTimeParseException("unable to parse", arg, 0);
-                    }
-                } catch (DateTimeParseException e3) {
-                    throw new CommandLine.ParameterException(commandSpec.commandLine(), "failed to parse date/time " + arg, argSpec, arg);
-                }
+            try {
+                ZonedDateTime dateTime = lenientlyParseDateTime(arg, Clock.systemDefaultZone());
+                argSpec.setValue(dateTime);
+            } catch (DateTimeParseException e3) {
+                throw new CommandLine.ParameterException(commandSpec.commandLine(), "failed to parse date/time " + arg, argSpec, arg);
             }
-            argSpec.setValue(dateTime);
         }
+    }
+
+    static ZonedDateTime lenientlyParseDateTime(String arg, Clock clock) {
+        final var nowDateTime = ZonedDateTime.now(clock);
+        ZonedDateTime dateTime;
+        if (arg.equals("now")) {
+            dateTime = nowDateTime;
+        } else {
+            var temporal = Main.INPUT_DATE_TIME_FORMATTER.parseBest(arg, ZonedDateTime::from, LocalDateTime::from, LocalDate::from);
+
+            if (temporal instanceof ZonedDateTime zdt) {
+                dateTime = zdt;
+            } else if (temporal instanceof LocalDateTime ldt) {
+                dateTime = ZonedDateTime.of(ldt, nowDateTime.getZone());
+            } else if (temporal instanceof LocalDate ld) {
+                dateTime = ZonedDateTime.of(ld, nowDateTime.toLocalTime(), nowDateTime.getZone());
+            } else {
+                throw new DateTimeParseException("unable to parse", arg, 0);
+            }
+        }
+        return dateTime;
     }
 }
 

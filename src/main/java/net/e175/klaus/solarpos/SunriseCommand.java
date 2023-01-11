@@ -26,7 +26,7 @@ public class SunriseCommand implements Callable<Integer> {
     }
 
     private String buildOutput(Main.Format format, SunriseTransitSet result, boolean showInput) {
-        try (Formatter fmt = new Formatter(new StringBuilder(64))) {
+        try (Formatter fmt = new Formatter(new StringBuilder(100))) {
             final DateTimeFormatter dateTimeFormatter = Main.ISO_LOCAL_DATE_TIME_REDUCED;
             switch (format) {
                 case JSON -> {

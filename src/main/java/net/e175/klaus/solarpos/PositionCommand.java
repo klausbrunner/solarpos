@@ -46,7 +46,7 @@ class PositionCommand implements Callable<Integer> {
     }
 
     private String buildOutput(Main.Format format, AzimuthZenithAngle position, boolean allInput) {
-        try (Formatter fmt = new Formatter(new StringBuilder(64))) {
+        try (Formatter fmt = new Formatter(new StringBuilder(100))) {
             switch (format) {
                 case JSON -> {
                     fmt.format("{");
