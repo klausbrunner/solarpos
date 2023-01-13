@@ -3,21 +3,19 @@ package net.e175.klaus.solarpos;
 import net.e175.klaus.solarpositioning.DeltaT;
 import picocli.CommandLine;
 
-import java.time.Clock;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
-import java.util.Stack;
+import java.time.temporal.TemporalAccessor;
+import java.util.Optional;
 
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 import static java.time.temporal.ChronoField.*;
 
 @CommandLine.Command(name = "solarpos-cli", subcommands = {PositionCommand.class, SunriseCommand.class}, mixinStandardHelpOptions = true, description = "Calculates topocentric solar coordinates or sunrise/sunset times.", versionProvider = ManifestBasedVersionProviderWithVariables.class)
 public final class Main {
-    static final String INPUT_DATE_TIME_PATTERN = "yyyy-MM-dd['T'HH:mm:ss[.SSS][XXX]]";
+    static final String INPUT_DATE_TIME_PATTERN = "yyyy[-MM[-dd['T'HH:mm:ss[.SSS][XXX['['VV']']]]]]";
     static final DateTimeFormatter INPUT_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(INPUT_DATE_TIME_PATTERN);
     static final DateTimeFormatter ISO_LOCAL_TIME_REDUCED = new DateTimeFormatterBuilder().appendValue(HOUR_OF_DAY, 2).appendLiteral(':').appendValue(MINUTE_OF_HOUR, 2).optionalStart().appendLiteral(':').appendValue(SECOND_OF_MINUTE, 2).appendOffsetId().toFormatter();
     static final DateTimeFormatter ISO_LOCAL_DATE_TIME_REDUCED = new DateTimeFormatterBuilder().parseCaseInsensitive().append(ISO_LOCAL_DATE).appendLiteral('T').append(ISO_LOCAL_TIME_REDUCED).toFormatter();
@@ -33,8 +31,11 @@ public final class Main {
     @CommandLine.Parameters(index = "1", description = "longitude in decimal degrees (positive East of Greenwich)")
     double longitude;
 
-    @CommandLine.Parameters(index = "2", description = "date/time in ISO format " + INPUT_DATE_TIME_PATTERN + ". use 'now' for current time and date.", parameterConsumer = DateTimeConsumer.class)
-    ZonedDateTime dateTime;
+    @CommandLine.Parameters(index = "2", description = "date/time in ISO format " + INPUT_DATE_TIME_PATTERN + ". use 'now' for current time and date.", converter = DateTimeConverter.class)
+    TemporalAccessor dateTime;
+
+    @CommandLine.Option(names = {"--timezone"}, description = "timezone as offset (e.g. +01:00) and/or zone id (e.g. America/Los_Angeles). overrides any timezone info found in date/time parameter.")
+    Optional<ZoneId> timezone;
 
     @CommandLine.Option(names = {"--show-inputs"}, description = "show all inputs in output")
     boolean showInput;
@@ -52,8 +53,10 @@ public final class Main {
         if (longitude > 180.0 || longitude < -180.0) {
             throw new CommandLine.ParameterException(spec.commandLine(), "invalid longitude");
         }
+    }
 
-        this.deltaT = Double.isNaN(deltaT) ? DeltaT.estimate(dateTime.toLocalDate()) : deltaT;
+    double getBestGuessDeltaT(ZonedDateTime dateTime) {
+        return Double.isNaN(deltaT) ? DeltaT.estimate(dateTime.toLocalDate()) : deltaT;
     }
 
     static CommandLine createCommandLine() {
@@ -70,39 +73,30 @@ public final class Main {
 /**
  * A somewhat tolerant parser of ZonedDateTimes.
  */
-final class DateTimeConsumer implements CommandLine.IParameterConsumer {
+final class DateTimeConverter implements CommandLine.ITypeConverter<TemporalAccessor> {
 
-    public void consumeParameters(Stack<String> args, CommandLine.Model.ArgSpec argSpec, CommandLine.Model.CommandSpec commandSpec) {
-        if (!args.isEmpty()) {
-            String arg = args.pop();
-            try {
-                ZonedDateTime dateTime = lenientlyParseDateTime(arg, Clock.systemDefaultZone());
-                argSpec.setValue(dateTime);
-            } catch (DateTimeParseException e3) {
-                throw new CommandLine.ParameterException(commandSpec.commandLine(), "failed to parse date/time " + arg, argSpec, arg);
+    static TemporalAccessor lenientlyParseDateTime(String arg, Clock clock) {
+        final var nowDateTime = ZonedDateTime.now(clock);
+        if (arg.equals("now")) {
+            return nowDateTime;
+        } else {
+            var temporal = Main.INPUT_DATE_TIME_FORMATTER.parseBest(arg,
+                    ZonedDateTime::from, LocalDateTime::from, LocalDate::from, YearMonth::from, Year::from);
+            if (temporal instanceof LocalDate ld) {
+                return LocalDateTime.of(ld, nowDateTime.toLocalTime());
+            } else {
+                return temporal;
             }
         }
     }
 
-    static ZonedDateTime lenientlyParseDateTime(String arg, Clock clock) {
-        final var nowDateTime = ZonedDateTime.now(clock);
-        ZonedDateTime dateTime;
-        if (arg.equals("now")) {
-            dateTime = nowDateTime;
-        } else {
-            var temporal = Main.INPUT_DATE_TIME_FORMATTER.parseBest(arg, ZonedDateTime::from, LocalDateTime::from, LocalDate::from);
-
-            if (temporal instanceof ZonedDateTime zdt) {
-                dateTime = zdt;
-            } else if (temporal instanceof LocalDateTime ldt) {
-                dateTime = ZonedDateTime.of(ldt, nowDateTime.getZone());
-            } else if (temporal instanceof LocalDate ld) {
-                dateTime = ZonedDateTime.of(ld, nowDateTime.toLocalTime(), nowDateTime.getZone());
-            } else {
-                throw new DateTimeParseException("unable to parse", arg, 0);
-            }
+    @Override
+    public TemporalAccessor convert(String arg) {
+        try {
+            return lenientlyParseDateTime(arg, Clock.systemDefaultZone());
+        } catch (DateTimeParseException e3) {
+            throw new CommandLine.TypeConversionException("failed to parse date/time " + arg);
         }
-        return dateTime;
     }
 }
 
