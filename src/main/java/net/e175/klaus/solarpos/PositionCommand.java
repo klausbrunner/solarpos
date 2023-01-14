@@ -20,6 +20,9 @@ final class PositionCommand implements Callable<Integer> {
 
     enum Algorithm {SPA, GRENA3}
 
+    @CommandLine.Spec
+    CommandLine.Model.CommandSpec spec;
+
     @CommandLine.ParentCommand
     Main parent;
 
@@ -35,10 +38,17 @@ final class PositionCommand implements Callable<Integer> {
     @CommandLine.Option(names = {"--temperature"}, description = "avg. air temperature in degrees Celsius", defaultValue = "0")
     double temperature;
 
+    @CommandLine.Option(names = {"--step"}, description = "step interval for time series, in seconds", defaultValue = "3600")
+    int step;
+
     @Override
     public Integer call() {
         parent.validate();
-        Stream<ZonedDateTime> dateTimes = getDatetimes(parent.dateTime, parent.timezone);
+        if (step < 1 || step > 24 * 60 * 60) {
+            throw new CommandLine.ParameterException(spec.commandLine(), "invalid step value");
+        }
+
+        Stream<ZonedDateTime> dateTimes = getDatetimes(parent.dateTime, parent.timezone, step);
 
         dateTimes.forEach(dateTime -> {
             final double deltaT = parent.getBestGuessDeltaT(dateTime);
@@ -57,14 +67,18 @@ final class PositionCommand implements Callable<Integer> {
         return 0;
     }
 
-    static Stream<ZonedDateTime> getDatetimes(TemporalAccessor dateTime, Optional<ZoneId> zoneId) {
+    static Stream<ZonedDateTime> getDatetimes(TemporalAccessor dateTime, Optional<ZoneId> zoneId, int step) {
         Stream<ZonedDateTime> dateTimes;
         ZoneId overrideTz = zoneId.orElse(ZoneId.systemDefault());
 
         if (dateTime instanceof Year) {
-            throw new IllegalStateException("this command requires a concrete date and time");
+            throw new IllegalStateException("this command requires at least a concrete day");
         } else if (dateTime instanceof YearMonth) {
-            throw new IllegalStateException("this command requires a concrete date and time");
+            throw new IllegalStateException("this command requires at least a concrete day");
+        } else if (dateTime instanceof LocalDate ld) {
+            dateTimes = Stream.iterate(ZonedDateTime.of(ld, LocalTime.of(0, 0), overrideTz),
+                    i -> i.getDayOfMonth() == ld.getDayOfMonth(),
+                    i -> i.plusSeconds(step));
         } else if (dateTime instanceof LocalDateTime ldt) {
             dateTimes = Stream.of(ZonedDateTime.of(ldt, overrideTz));
         } else if (dateTime instanceof ZonedDateTime zdt) {

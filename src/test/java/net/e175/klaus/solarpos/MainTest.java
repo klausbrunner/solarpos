@@ -2,7 +2,10 @@ package net.e175.klaus.solarpos;
 
 import org.junit.jupiter.api.Test;
 
-import java.time.*;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -34,10 +37,6 @@ class MainTest {
         assertEquals(
                 ZonedDateTime.parse("2023-01-01T13:30:15+03:00"),
                 DateTimeConverter.lenientlyParseDateTime("2023-01-01T13:30:15+03:00", clock));
-
-        assertEquals(
-                LocalDateTime.parse("2023-01-01T13:15:30"),
-                DateTimeConverter.lenientlyParseDateTime("2023-01-01", clock));
 
         assertEquals(
                 ZonedDateTime.parse("2023-01-01T13:30:15Z"),

@@ -48,6 +48,8 @@ public final class SunriseCommand implements Callable<Integer> {
             dateTimes = Stream.iterate(ZonedDateTime.of(LocalDate.of(ym.getYear(), ym.getMonth(), 1), LocalTime.of(0, 0), overrideTz),
                     i -> i.getMonth() == ym.getMonth(),
                     i -> i.plusDays(1));
+        } else if (dateTime instanceof LocalDate ld) {
+            dateTimes = Stream.of(ZonedDateTime.of(ld, LocalTime.of(0, 0), overrideTz));
         } else if (dateTime instanceof LocalDateTime ldt) {
             dateTimes = Stream.of(ZonedDateTime.of(ldt, overrideTz));
         } else if (dateTime instanceof ZonedDateTime zdt) {

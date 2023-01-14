@@ -5,7 +5,7 @@
 A simple command-line application to calculate topocentric solar coordinates and sunrise/sunset times, based
 on [solarpositioning](https://github.com/KlausBrunner/solarpositioning).
 
-Status: early stage, "alpha" quality. Basic functionality works, but lacks real-world testing and polish.
+Status: **early stage**, "alpha" quality. Basic functionality works, but lacks real-world testing and polish.
 
 ## Requirements
 
@@ -46,4 +46,11 @@ Commands:
   sunrise   calculates sunrise, transit, and sunset
 ```
 
+### Time series
 
+There is some basic built-in support for time series.
+
+* If you pass only a year (e.g. 2023) or a year-month (e.g. 2023-01) to the sunrise command, you will get results for
+  each day of that year or month.
+* If you pass a day but no time, the position command will calculate a series of values for that entire day, tracking
+  the sun's path from 00:00 to 24:00. The interval is determined by the step option.

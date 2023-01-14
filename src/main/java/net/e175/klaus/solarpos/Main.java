@@ -77,25 +77,17 @@ public final class Main {
 final class DateTimeConverter implements CommandLine.ITypeConverter<TemporalAccessor> {
 
     static TemporalAccessor lenientlyParseDateTime(String arg, Clock clock) {
-        final var nowDateTime = ZonedDateTime.now(clock);
-        if (arg.equals("now")) {
-            return nowDateTime;
-        } else {
-            var temporal = Main.INPUT_DATE_TIME_FORMATTER.parseBest(arg,
-                    ZonedDateTime::from, LocalDateTime::from, LocalDate::from, YearMonth::from, Year::from);
-            if (temporal instanceof LocalDate ld) {
-                return LocalDateTime.of(ld, nowDateTime.toLocalTime());
-            } else {
-                return temporal;
-            }
-        }
+        return arg.equals("now") ?
+                ZonedDateTime.now(clock) :
+                Main.INPUT_DATE_TIME_FORMATTER.parseBest(arg,
+                        ZonedDateTime::from, LocalDateTime::from, LocalDate::from, YearMonth::from, Year::from);
     }
 
     @Override
     public TemporalAccessor convert(String arg) {
         try {
             return lenientlyParseDateTime(arg, Clock.systemDefaultZone());
-        } catch (DateTimeParseException e3) {
+        } catch (DateTimeParseException e) {
             throw new CommandLine.TypeConversionException("failed to parse date/time " + arg);
         }
     }
