@@ -14,14 +14,14 @@ class PositionTest {
 
     @Test
     void testBasicUsageWithJson() {
-        CommandLine cmd = Main.createCommandLine();
-        StringWriter sw = new StringWriter();
-        cmd.setOut(new PrintWriter(sw));
-
         String lat = "52.0";
         String lon = "25.0";
         String dateTime = "2022-10-17T12:00:00Z";
 
+        CommandLine cmd = Main.createCommandLine();
+
+        StringWriter sw = new StringWriter();
+        cmd.setOut(new PrintWriter(sw));
         int exitCode = cmd.execute(lat, lon, dateTime, "--format=json", "--deltat=69", "--show-inputs", "position");
         assertEquals(0, exitCode);
         String output = sw.toString();
@@ -57,18 +57,24 @@ class PositionTest {
 
     @Test
     void testBasicUsageWithCsv() {
-        CommandLine cmd = Main.createCommandLine();
-        StringWriter sw = new StringWriter();
-        cmd.setOut(new PrintWriter(sw));
-
         String lat = "52.0";
         String lon = "25.0";
         String dateTime = "2003-10-17T12:00:00Z";
 
+        CommandLine cmd = Main.createCommandLine();
+
+        StringWriter sw = new StringWriter();
+        cmd.setOut(new PrintWriter(sw));
         int exitCode = cmd.execute(lat, lon, dateTime, "--format=csv", "--deltat=69", "position");
         assertEquals(0, exitCode);
         String output = sw.toString();
-
         assertEquals("2003-10-17T12:00:00Z,211.20726,65.92346", output.strip());
+
+        sw = new StringWriter();
+        cmd.setOut(new PrintWriter(sw));
+        exitCode = cmd.execute(lat, lon, dateTime, "--format=csv", "--show-inputs", "--deltat=69", "position");
+        assertEquals(0, exitCode);
+        output = sw.toString();
+        assertEquals("52.00000,25.00000,0.000,1000.000,0.000,2003-10-17T12:00:00Z,69.000,211.20726,65.92346", output.strip());
     }
 }

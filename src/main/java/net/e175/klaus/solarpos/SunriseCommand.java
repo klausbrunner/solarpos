@@ -7,10 +7,12 @@ import picocli.CommandLine;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
-import java.util.Formatter;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
+
+import static net.e175.klaus.solarpos.Main.Format.HUMAN;
 
 @CommandLine.Command(name = "sunrise", description = "calculates sunrise, transit, and sunset")
 public final class SunriseCommand implements Callable<Integer> {
@@ -58,56 +60,47 @@ public final class SunriseCommand implements Callable<Integer> {
         return dateTimes;
     }
 
+    private static final Map<Boolean, String> JSON_FORMATS = Map.of(
+            true, """
+                    {"latitude":%.5f,"longitude":%5f,"dateTime":"%s","deltaT":%.3f,"sunrise":"%s","transit":"%s","sunset":"%s"}
+                    """,
+            false, """
+                    {"sunrise":"%5$s","transit":"%6$s","sunset":"%7$s"}
+                    """);
+
+    private static final Map<Boolean, String> CSV_FORMATS = Map.of(
+            true, "%.5f,%.5f,%s,%.3f,%s,%s,%s%n",
+            false, "%5$s,%6$s,%7$s%n");
+
+    private static final Map<Boolean, String> HUMAN_FORMATS = Map.of(
+            true, """
+                    latitude:    %24.4f
+                    longitude:   %24.4f
+                    date/time:  %s
+                    delta T:     %22.2f
+                    sunrise:    %s
+                    transit:    %s
+                    sunset:     %s
+                    """,
+            false, """
+                    sunrise:    %5$s
+                    transit:    %6$s
+                    sunset:     %7$s
+                    """);
+
+    private static final Map<Main.Format, Map<Boolean, String>> TEMPLATES =
+            Map.of(Main.Format.CSV, CSV_FORMATS, Main.Format.JSON, JSON_FORMATS, HUMAN, HUMAN_FORMATS);
+
     private String buildOutput(Main.Format format, ZonedDateTime dateTime, double deltaT, SunriseTransitSet result, boolean showInput) {
-        try (Formatter fmt = new Formatter(new StringBuilder(100))) {
-            final DateTimeFormatter dateTimeFormatter = Main.ISO_LOCAL_DATE_TIME_REDUCED;
-            switch (format) {
-                case JSON -> {
-                    fmt.format("{");
-                    if (showInput) {
-                        fmt.format("\"latitude\":%.5f, ", parent.latitude);
-                        fmt.format("\"longitude\":%.5f, ", parent.longitude);
-                    }
-                    fmt.format("\"dateTime\":\"%s\", ", dateTimeFormatter.format(dateTime));
-                    if (showInput) {
-                        fmt.format("\"deltaT\":%.4f, ", deltaT);
-                    }
-                    fmt.format("\"sunrise\":\"%s\", ", dateTimeFormatter.format(result.getSunrise()));
-                    fmt.format("\"transit\":\"%s\", ", dateTimeFormatter.format(result.getTransit()));
-                    fmt.format("\"sunset\":\"%s\"", dateTimeFormatter.format(result.getSunset()));
-                    fmt.format("}");
-                }
-
-                case CSV -> {
-                    if (showInput) {
-                        fmt.format("%.5f,", parent.latitude);
-                        fmt.format("%.5f,", parent.longitude);
-                    }
-                    fmt.format("%s,", dateTimeFormatter.format(dateTime));
-                    if (showInput) {
-                        fmt.format("%.2f,", deltaT);
-                    }
-                    fmt.format("%s,", dateTimeFormatter.format(result.getSunrise()));
-                    fmt.format("%s,", dateTimeFormatter.format(result.getTransit()));
-                    fmt.format("%s", dateTimeFormatter.format(result.getSunset()));
-                }
-
-                case HUMAN -> {
-                    if (showInput) {
-                        fmt.format("latitude:    %24.4f%n", parent.latitude);
-                        fmt.format("longitude:   %24.4f%n", parent.longitude);
-                    }
-                    String[] splitDateTime = dateTimeFormatter.format(dateTime).split("T");
-                    fmt.format("date:                      %s%n", splitDateTime[0]);
-                    if (showInput) {
-                        fmt.format("delta T:     %22.2f%n", deltaT);
-                    }
-                    fmt.format("sunrise:    %25s%n", Main.ISO_LOCAL_TIME_REDUCED.format(result.getSunrise()));
-                    fmt.format("transit:    %25s%n", Main.ISO_LOCAL_TIME_REDUCED.format(result.getTransit()));
-                    fmt.format("sunset:     %25s%n", Main.ISO_LOCAL_TIME_REDUCED.format(result.getSunset()));
-                }
-            }
-            return fmt.toString();
-        }
+        String template = TEMPLATES.get(format).get(showInput);
+        DateTimeFormatter dtf = (format == HUMAN) ? Main.ISO_HUMAN_LOCAL_DATE_TIME_REDUCED : Main.ISO_LOCAL_DATE_TIME_REDUCED;
+        return template.formatted(parent.latitude,
+                parent.longitude,
+                dtf.format(dateTime),
+                deltaT,
+                dtf.format(result.getSunrise()),
+                dtf.format(result.getTransit()),
+                dtf.format(result.getSunset()));
     }
+
 }

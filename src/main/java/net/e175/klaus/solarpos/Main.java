@@ -15,10 +15,11 @@ import static java.time.temporal.ChronoField.*;
 
 @CommandLine.Command(name = "solarpos-cli", subcommands = {PositionCommand.class, SunriseCommand.class}, mixinStandardHelpOptions = true, description = "Calculates topocentric solar coordinates or sunrise/sunset times.", versionProvider = ManifestBasedVersionProviderWithVariables.class)
 public final class Main {
-    static final String INPUT_DATE_TIME_PATTERN = "yyyy[-MM[-dd['T'HH:mm:ss[.SSS][XXX['['VV']']]]]]";
+    static final String INPUT_DATE_TIME_PATTERN = "yyyy[-MM[-dd[['T'][ ]HH:mm:ss[.SSS][XXX['['VV']']]]]]";
     static final DateTimeFormatter INPUT_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(INPUT_DATE_TIME_PATTERN);
     static final DateTimeFormatter ISO_LOCAL_TIME_REDUCED = new DateTimeFormatterBuilder().appendValue(HOUR_OF_DAY, 2).appendLiteral(':').appendValue(MINUTE_OF_HOUR, 2).optionalStart().appendLiteral(':').appendValue(SECOND_OF_MINUTE, 2).appendOffsetId().toFormatter();
     static final DateTimeFormatter ISO_LOCAL_DATE_TIME_REDUCED = new DateTimeFormatterBuilder().parseCaseInsensitive().append(ISO_LOCAL_DATE).appendLiteral('T').append(ISO_LOCAL_TIME_REDUCED).toFormatter();
+    static final DateTimeFormatter ISO_HUMAN_LOCAL_DATE_TIME_REDUCED = new DateTimeFormatterBuilder().parseCaseInsensitive().append(ISO_LOCAL_DATE).appendLiteral(' ').append(ISO_LOCAL_TIME_REDUCED).toFormatter();
 
     enum Format {HUMAN, CSV, JSON}
 

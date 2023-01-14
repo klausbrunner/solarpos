@@ -20,8 +20,16 @@ class MainTest {
                 DateTimeConverter.lenientlyParseDateTime("2023-01-01T13:30:15Z", clock));
 
         assertEquals(
+                ZonedDateTime.parse("2023-01-01T13:30:15Z"),
+                DateTimeConverter.lenientlyParseDateTime("2023-01-01 13:30:15Z", clock));
+
+        assertEquals(
                 ZonedDateTime.parse("2011-12-03T10:15:30+01:00[Europe/Paris]"),
                 DateTimeConverter.lenientlyParseDateTime("2011-12-03T10:15:30+01:00[Europe/Paris]", clock));
+
+        assertEquals(
+                ZonedDateTime.parse("2011-12-03T10:15:30+01:00[Europe/Paris]"),
+                DateTimeConverter.lenientlyParseDateTime("2011-12-03 10:15:30+01:00[Europe/Paris]", clock));
 
         assertEquals(
                 ZonedDateTime.parse("2023-01-01T13:30:15+03:00"),

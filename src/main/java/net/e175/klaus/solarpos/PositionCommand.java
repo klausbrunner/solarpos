@@ -6,11 +6,14 @@ import net.e175.klaus.solarpositioning.SPA;
 import picocli.CommandLine;
 
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
-import java.util.Formatter;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
+
+import static net.e175.klaus.solarpos.Main.Format.HUMAN;
 
 @CommandLine.Command(name = "position", description = "calculates topocentric solar coordinates")
 final class PositionCommand implements Callable<Integer> {
@@ -47,8 +50,9 @@ final class PositionCommand implements Callable<Integer> {
             };
 
             String output = buildOutput(parent.format, dateTime, deltaT, position, parent.showInput);
-            parent.spec.commandLine().getOut().println(output);
+            parent.spec.commandLine().getOut().print(output);
         });
+        parent.spec.commandLine().getOut().flush();
 
         return 0;
     }
@@ -73,63 +77,51 @@ final class PositionCommand implements Callable<Integer> {
         return dateTimes;
     }
 
+    private static final Map<Boolean, String> JSON_FORMATS = Map.of(
+            true, """
+                    {"latitude":%.5f,"longitude":%5f,"elevation":%.3f,"pressure":%.3f,"temperature":%.3f,"dateTime":"%s","deltaT":%.3f,"azimuth":%.5f,"zenith":%.5f}
+                    """,
+            false, """
+                    {"dateTime":"%6$s","azimuth":%8$.5f,"zenith":%9$.5f}
+                    """);
+
+    private static final Map<Boolean, String> CSV_FORMATS = Map.of(
+            true, "%.5f,%.5f,%.3f,%.3f,%.3f,%s,%.3f,%.5f,%.5f%n",
+            false, "%6$s,%8$.5f,%9$.5f%n");
+
+    private static final Map<Boolean, String> HUMAN_FORMATS = Map.of(
+            true, """
+                    latitude:    %24.4f
+                    longitude:   %24.4f
+                    elevation:   %22.2f
+                    pressure:    %22.2f
+                    temperature: %22.2f
+                    date/time:  %s
+                    delta T:     %22.2f
+                    azimuth:     %24.4f
+                    zenith:      %24.4f
+                    """,
+            false, """
+                    date/time:  %6$s
+                    azimuth:     %8$24.4f
+                    zenith:      %9$24.4f
+                    """);
+
+    private static final Map<Main.Format, Map<Boolean, String>> TEMPLATES =
+            Map.of(Main.Format.CSV, CSV_FORMATS, Main.Format.JSON, JSON_FORMATS, HUMAN, HUMAN_FORMATS);
+
     private String buildOutput(Main.Format format, ZonedDateTime dateTime, double deltaT, AzimuthZenithAngle result, boolean showInput) {
-        try (Formatter fmt = new Formatter(new StringBuilder(100))) {
-            switch (format) {
-                case JSON -> {
-                    fmt.format("{");
-                    if (showInput) {
-                        fmt.format("\"latitude\":%.5f, ", parent.latitude);
-                        fmt.format("\"longitude\":%.5f, ", parent.longitude);
-                        fmt.format("\"elevation\":%.4f, ", elevation);
-                        fmt.format("\"pressure\":%.4f, ", pressure);
-                        fmt.format("\"temperature\":%.4f, ", temperature);
-                    }
-                    fmt.format("\"dateTime\":\"%s\", ", Main.ISO_LOCAL_DATE_TIME_REDUCED.format(dateTime));
-                    if (showInput) {
-                        fmt.format("\"deltaT\":%.4f, ", deltaT);
-                    }
-                    fmt.format("\"azimuth\":%.5f, ", result.getAzimuth());
-                    fmt.format("\"zenith\":%.5f", result.getZenithAngle());
-                    fmt.format("}%n");
-                }
-
-                case CSV -> {
-                    if (showInput) {
-                        fmt.format("%.5f,", parent.latitude);
-                        fmt.format("%.5f,", parent.longitude);
-                        fmt.format("%.2f,", elevation);
-                        fmt.format("%.2f,", pressure);
-                        fmt.format("%.2f,", temperature);
-                    }
-                    fmt.format("%s,", Main.ISO_LOCAL_DATE_TIME_REDUCED.format(dateTime));
-                    if (showInput) {
-                        fmt.format("%.2f,", deltaT);
-                    }
-                    fmt.format("%.5f,", result.getAzimuth());
-                    fmt.format("%.5f%n", result.getZenithAngle());
-                }
-
-                case HUMAN -> {
-                    if (showInput) {
-                        fmt.format("latitude:    %24.4f%n", parent.latitude);
-                        fmt.format("longitude:   %24.4f%n", parent.longitude);
-                        fmt.format("elevation:   %22.2f%n", elevation);
-                        fmt.format("pressure:    %22.2f%n", pressure);
-                        fmt.format("temperature: %22.2f%n", temperature);
-                    }
-                    String[] splitDateTime = Main.ISO_LOCAL_DATE_TIME_REDUCED.format(dateTime).split("T");
-                    fmt.format("date:                      %s%n", splitDateTime[0]);
-                    fmt.format("time:               %s%n", splitDateTime[1]);
-                    if (showInput) {
-                        fmt.format("delta T:     %22.2f%n", deltaT);
-                    }
-                    fmt.format("azimuth:     %24.4f%n", result.getAzimuth());
-                    fmt.format("zenith:      %24.4f%n", result.getZenithAngle());
-                }
-            }
-            return fmt.toString();
-        }
+        String template = TEMPLATES.get(format).get(showInput);
+        DateTimeFormatter dtf = (format == HUMAN) ? Main.ISO_HUMAN_LOCAL_DATE_TIME_REDUCED : Main.ISO_LOCAL_DATE_TIME_REDUCED;
+        return template.formatted(parent.latitude,
+                parent.longitude,
+                elevation,
+                pressure,
+                temperature,
+                dtf.format(dateTime),
+                deltaT,
+                result.getAzimuth(),
+                result.getZenithAngle());
     }
 
 }
