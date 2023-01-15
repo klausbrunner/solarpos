@@ -71,10 +71,18 @@ final class PositionCommand implements Callable<Integer> {
         Stream<ZonedDateTime> dateTimes;
         ZoneId overrideTz = zoneId.orElse(ZoneId.systemDefault());
 
-        if (dateTime instanceof Year) {
-            throw new IllegalStateException("this command requires at least a concrete day");
-        } else if (dateTime instanceof YearMonth) {
-            throw new IllegalStateException("this command requires at least a concrete day");
+        if (dateTime instanceof Year y) {
+            dateTimes = Stream.iterate(ZonedDateTime.of(LocalDate.of(y.getValue(), 1, 1),
+                            LocalTime.of(0, 0),
+                            overrideTz),
+                    i -> i.getYear() == y.getValue(),
+                    i -> i.plusSeconds(step));
+        } else if (dateTime instanceof YearMonth ym) {
+            dateTimes = Stream.iterate(ZonedDateTime.of(LocalDate.of(ym.getYear(), ym.getMonth(), 1),
+                            LocalTime.of(0, 0),
+                            overrideTz),
+                    i -> i.getMonth() == ym.getMonth(),
+                    i -> i.plusSeconds(step));
         } else if (dateTime instanceof LocalDate ld) {
             dateTimes = Stream.iterate(ZonedDateTime.of(ld, LocalTime.of(0, 0), overrideTz),
                     i -> i.getDayOfMonth() == ld.getDayOfMonth(),

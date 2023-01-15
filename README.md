@@ -26,20 +26,24 @@ Then, see built-in help.
 
 ```
 Usage: solarpos-cli [-hV] [--show-inputs] [--deltat[=<deltaT>]]
-                    [--format=<format>] <latitude> <longitude> <dateTime>
-                    [COMMAND]
+                    [--format=<format>] [--timezone=<timezone>] <latitude>
+                    <longitude> <dateTime> [COMMAND]
 Calculates topocentric solar coordinates or sunrise/sunset times.
       <latitude>            latitude in decimal degrees (positive North of
                               equator)
       <longitude>           longitude in decimal degrees (positive East of
                               Greenwich)
-      <dateTime>            date/time in ISO format yyyy-MM-dd['T'HH:mm:ss[.SSS]
-                              [XXX]]. use 'now' for current time and date.
+      <dateTime>            date/time in ISO format yyyy[-MM[-dd[['T'][ ]HH:mm:
+                              ss[.SSS][XXX['['VV']']]]]]. use 'now' for current
+                              time and date.
       --deltat[=<deltaT>]   delta T in seconds; an estimate is used if this
                               option is given without a value
       --format=<format>     output format, one of HUMAN, CSV, JSON
   -h, --help                Show this help message and exit.
       --show-inputs         show all inputs in output
+      --timezone=<timezone> timezone as offset (e.g. +01:00) and/or zone id (e.
+                              g. America/Los_Angeles). overrides any timezone
+                              info found in date/time parameter.
   -V, --version             Print version information and exit.
 Commands:
   position  calculates topocentric solar coordinates
@@ -48,9 +52,24 @@ Commands:
 
 ### Time series
 
-There is some basic built-in support for time series.
+There is some basic built-in support for calculating time series.
 
 * If you pass only a year (e.g. 2023) or a year-month (e.g. 2023-01) to the sunrise command, you will get results for
   each day of that year or month.
-* If you pass a day but no time, the position command will calculate a series of values for that entire day, tracking
-  the sun's path from 00:00 to 24:00. The interval is determined by the step option.
+* Similarly, the position command will calculate a time series of sun positions for the given day, month or even year.
+  The interval is determined by the step option (default: 1 hour).
+
+### Usage examples
+
+Get today's sunrise and sunset for Madrid, Spain, in UTC:
+
+```
+solarpos-cli.jar 40.4168 -3.7038 now --timezone UTC sunrise
+```
+
+Get a time series of sun positions for Berlin Alexanderplatz on 15 January 2023, one position every 10 minutes, with CSV
+output, in local timezone and using a delta T estimate:
+
+```
+solarpos-cli.jar 52.5219 13.4132 2023-01-15 --timezone Europe/Berlin --deltat --format=csv position --step=600
+```
