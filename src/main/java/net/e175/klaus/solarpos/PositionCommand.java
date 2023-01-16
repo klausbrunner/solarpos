@@ -5,6 +5,7 @@ import net.e175.klaus.solarpositioning.Grena3;
 import net.e175.klaus.solarpositioning.SPA;
 import picocli.CommandLine;
 
+import java.io.PrintWriter;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
@@ -48,7 +49,8 @@ final class PositionCommand implements Callable<Integer> {
             throw new CommandLine.ParameterException(spec.commandLine(), "invalid step value");
         }
 
-        Stream<ZonedDateTime> dateTimes = getDatetimes(parent.dateTime, parent.timezone, step);
+        final Stream<ZonedDateTime> dateTimes = getDatetimes(parent.dateTime, parent.timezone, step);
+        final PrintWriter out = parent.spec.commandLine().getOut();
 
         dateTimes.forEach(dateTime -> {
             final double deltaT = parent.getBestGuessDeltaT(dateTime);
@@ -60,43 +62,41 @@ final class PositionCommand implements Callable<Integer> {
             };
 
             String output = buildOutput(parent.format, dateTime, deltaT, position, parent.showInput);
-            parent.spec.commandLine().getOut().print(output);
+            out.print(output);
         });
-        parent.spec.commandLine().getOut().flush();
+        out.flush();
 
         return 0;
     }
 
     static Stream<ZonedDateTime> getDatetimes(TemporalAccessor dateTime, Optional<ZoneId> zoneId, int step) {
-        Stream<ZonedDateTime> dateTimes;
-        ZoneId overrideTz = zoneId.orElse(ZoneId.systemDefault());
+        final ZoneId overrideTz = zoneId.orElse(ZoneId.systemDefault());
 
         if (dateTime instanceof Year y) {
-            dateTimes = Stream.iterate(ZonedDateTime.of(LocalDate.of(y.getValue(), 1, 1),
+            return Stream.iterate(ZonedDateTime.of(LocalDate.of(y.getValue(), 1, 1),
                             LocalTime.of(0, 0),
                             overrideTz),
                     i -> i.getYear() == y.getValue(),
                     i -> i.plusSeconds(step));
         } else if (dateTime instanceof YearMonth ym) {
-            dateTimes = Stream.iterate(ZonedDateTime.of(LocalDate.of(ym.getYear(), ym.getMonth(), 1),
+            return Stream.iterate(ZonedDateTime.of(LocalDate.of(ym.getYear(), ym.getMonth(), 1),
                             LocalTime.of(0, 0),
                             overrideTz),
                     i -> i.getMonth() == ym.getMonth(),
                     i -> i.plusSeconds(step));
         } else if (dateTime instanceof LocalDate ld) {
-            dateTimes = Stream.iterate(ZonedDateTime.of(ld, LocalTime.of(0, 0), overrideTz),
+            return Stream.iterate(ZonedDateTime.of(ld, LocalTime.of(0, 0), overrideTz),
                     i -> i.getDayOfMonth() == ld.getDayOfMonth(),
                     i -> i.plusSeconds(step));
         } else if (dateTime instanceof LocalDateTime ldt) {
-            dateTimes = Stream.of(ZonedDateTime.of(ldt, overrideTz));
+            return Stream.of(ZonedDateTime.of(ldt, overrideTz));
         } else if (dateTime instanceof ZonedDateTime zdt) {
-            dateTimes = Stream.of(zoneId.isPresent() ?
+            return Stream.of(zoneId.isPresent() ?
                     ZonedDateTime.of(zdt.toLocalDate(), zdt.toLocalTime(), overrideTz) :
                     zdt);
         } else {
             throw new IllegalStateException("unexpected date/time type");
         }
-        return dateTimes;
     }
 
     private static final Map<Boolean, String> JSON_FORMATS = Map.of(

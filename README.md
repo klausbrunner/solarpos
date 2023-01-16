@@ -9,7 +9,7 @@ Status: **early stage**, "alpha" quality. Basic functionality works, but lacks r
 
 ## Requirements
 
-Java 17 or newer.
+Java 17 or newer. (Unsure how to get a recent Java version? Try [Adoptium](https://adoptium.net/).)
 
 ## Usage
 

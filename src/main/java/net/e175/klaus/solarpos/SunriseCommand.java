@@ -4,6 +4,7 @@ import net.e175.klaus.solarpositioning.SPA;
 import net.e175.klaus.solarpositioning.SunriseTransitSet;
 import picocli.CommandLine;
 
+import java.io.PrintWriter;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
@@ -23,43 +24,43 @@ public final class SunriseCommand implements Callable<Integer> {
     public Integer call() {
         parent.validate();
 
-        Stream<ZonedDateTime> dateTimes = getDatetimes(parent.dateTime, parent.timezone);
+        final Stream<ZonedDateTime> dateTimes = getDatetimes(parent.dateTime, parent.timezone);
+        final PrintWriter out = parent.spec.commandLine().getOut();
 
         dateTimes.forEach(dateTime -> {
             final double deltaT = parent.getBestGuessDeltaT(dateTime);
             SunriseTransitSet result = SPA.calculateSunriseTransitSet(dateTime, parent.latitude, parent.longitude,
                     deltaT);
             String output = buildOutput(parent.format, dateTime, deltaT, result, parent.showInput);
-            parent.spec.commandLine().getOut().println(output);
+            out.print(output);
         });
+        out.flush();
 
         return 0;
     }
 
     static Stream<ZonedDateTime> getDatetimes(TemporalAccessor dateTime, Optional<ZoneId> zoneId) {
-        Stream<ZonedDateTime> dateTimes;
-        ZoneId overrideTz = zoneId.orElse(ZoneId.systemDefault());
+        final ZoneId overrideTz = zoneId.orElse(ZoneId.systemDefault());
 
         if (dateTime instanceof Year y) {
-            dateTimes = Stream.iterate(ZonedDateTime.of(LocalDate.of(y.getValue(), Month.JANUARY, 1), LocalTime.of(0, 0), overrideTz),
+            return Stream.iterate(ZonedDateTime.of(LocalDate.of(y.getValue(), Month.JANUARY, 1), LocalTime.of(0, 0), overrideTz),
                     i -> i.getYear() == y.getValue(),
                     i -> i.plusDays(1));
         } else if (dateTime instanceof YearMonth ym) {
-            dateTimes = Stream.iterate(ZonedDateTime.of(LocalDate.of(ym.getYear(), ym.getMonth(), 1), LocalTime.of(0, 0), overrideTz),
+            return Stream.iterate(ZonedDateTime.of(LocalDate.of(ym.getYear(), ym.getMonth(), 1), LocalTime.of(0, 0), overrideTz),
                     i -> i.getMonth() == ym.getMonth(),
                     i -> i.plusDays(1));
         } else if (dateTime instanceof LocalDate ld) {
-            dateTimes = Stream.of(ZonedDateTime.of(ld, LocalTime.of(0, 0), overrideTz));
+            return Stream.of(ZonedDateTime.of(ld, LocalTime.of(0, 0), overrideTz));
         } else if (dateTime instanceof LocalDateTime ldt) {
-            dateTimes = Stream.of(ZonedDateTime.of(ldt, overrideTz));
+            return Stream.of(ZonedDateTime.of(ldt, overrideTz));
         } else if (dateTime instanceof ZonedDateTime zdt) {
-            dateTimes = Stream.of(zoneId.isPresent() ?
+            return Stream.of(zoneId.isPresent() ?
                     ZonedDateTime.of(zdt.toLocalDate(), zdt.toLocalTime(), overrideTz) :
                     zdt);
         } else {
             throw new IllegalStateException("unexpected date/time type");
         }
-        return dateTimes;
     }
 
     private static final Map<Boolean, String> JSON_FORMATS = Map.of(
