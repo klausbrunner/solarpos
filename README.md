@@ -71,7 +71,7 @@ Get today's sunrise and sunset for Madrid, Spain, in UTC:
 solarpos-cli.jar 40.4168 -3.7038 now --timezone UTC sunrise
 ```
 
-Get the sun's positions in Stockholm, Sweden, on 15 January 2023 at 12:30 Central European Time:
+Get the sun's position in Stockholm, Sweden, on 15 January 2023 at 12:30 Central European Time:
 
 ```
 solarpos-cli.jar 59.334 18.063 2023-01-15T12:30:00+01:00 position 
