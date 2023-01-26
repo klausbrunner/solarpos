@@ -1,4 +1,4 @@
-# solarpos-cli
+# solarpos
 
 ![CI](https://github.com/KlausBrunner/solarpos-cli/workflows/CI/badge.svg)
 
@@ -14,11 +14,11 @@ Java 17 or newer. (Unsure how to get a recent Java version? Try [Adoptium](https
 
 ## Usage
 
-Get executable JAR for [latest release](https://github.com/KlausBrunner/solarpos-cli/releases/latest) (or build it
+Get executable JAR for [latest release](https://github.com/KlausBrunner/solarpos/releases/latest) (or build it
 yourself) and run as usual:
 
 ```
-java -jar solarpos-cli.jar
+java -jar solarpos.jar
 ```
 
 On Linux, macOS and other POSIX-like systems, it should be enough to set the executable flag and run the JAR directly.
@@ -26,7 +26,7 @@ On Linux, macOS and other POSIX-like systems, it should be enough to set the exe
 Then, see built-in help.
 
 ```
-Usage: solarpos-cli [-hV] [--show-inputs] [--deltat[=<deltaT>]]
+Usage: solarpos [-hV] [--show-inputs] [--deltat[=<deltaT>]]
                     [--format=<format>] [--timezone=<timezone>] <latitude>
                     <longitude> <dateTime> [COMMAND]
 Calculates topocentric solar coordinates or sunrise/sunset times.
@@ -69,19 +69,19 @@ Dates and times should be given in ISO 8601 format like 2011-12-03T10:15:30+01:0
 Get today's sunrise and sunset for Madrid, Spain, in UTC:
 
 ```
-solarpos-cli 40.4168 -3.7038 now --timezone UTC sunrise
+solarpos 40.4168 -3.7038 now --timezone UTC sunrise
 ```
 
 Get the sun's position in Stockholm, Sweden, on 15 January 2023 at 12:30 Central European Time:
 
 ```
-solarpos-cli 59.334 18.063 2023-01-15T12:30:00+01:00 position 
+solarpos 59.334 18.063 2023-01-15T12:30:00+01:00 position 
 ```
 
 Get a time series of sun positions for Berlin Alexanderplatz on 15 January 2023, one position every 10 minutes, with CSV
 output, in local timezone and using a delta T estimate:
 
 ```
-solarpos-cli 52.5219 13.4132 2023-01-15 --timezone Europe/Berlin --deltat --format=csv position --step=600
+solarpos 52.5219 13.4132 2023-01-15 --timezone Europe/Berlin --deltat --format=csv position --step=600
 ```
 

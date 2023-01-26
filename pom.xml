@@ -4,10 +4,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.e175.klaus</groupId>
-    <artifactId>solarpos-cli</artifactId>
+    <artifactId>solarpos</artifactId>
     <version>0.0.2-SNAPSHOT</version>
 
-    <name>solarpos-cli</name>
+    <name>solarpos</name>
     <description>A simple command-line application to calculate topocentric solar coordinates and sunrise/sunset
         times.
     </description>
@@ -116,7 +116,7 @@
                         </project>
                         <assemble>
                             <javaArchive>
-                                <solarpos-cli>
+                                <solarpos>
                                     <active>ALWAYS</active>
                                     <fileSets>
                                         <fileSet>
@@ -134,7 +134,7 @@
                                     <mainJar>
                                         <path>target/{{distributionName}}-{{projectVersion}}.jar</path>
                                     </mainJar>
-                                </solarpos-cli>
+                                </solarpos>
                             </javaArchive>
                         </assemble>
                         <release>
@@ -144,9 +144,9 @@
                             </github>
                         </release>
                         <distributions>
-                            <solarpos-cli>
+                            <solarpos>
                                 <stereotype>CLI</stereotype>
-                            </solarpos-cli>
+                            </solarpos>
                         </distributions>
                     </jreleaser>
                 </configuration>

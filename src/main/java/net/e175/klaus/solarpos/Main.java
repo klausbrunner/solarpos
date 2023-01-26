@@ -13,7 +13,7 @@ import java.util.Optional;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 import static java.time.temporal.ChronoField.*;
 
-@CommandLine.Command(name = "solarpos-cli", subcommands = {PositionCommand.class, SunriseCommand.class}, mixinStandardHelpOptions = true, description = "Calculates topocentric solar coordinates or sunrise/sunset times.", versionProvider = ManifestBasedVersionProviderWithVariables.class)
+@CommandLine.Command(name = "solarpos", subcommands = {PositionCommand.class, SunriseCommand.class}, mixinStandardHelpOptions = true, description = "Calculates topocentric solar coordinates or sunrise/sunset times.", versionProvider = ManifestBasedVersionProviderWithVariables.class)
 public final class Main {
     static final String INPUT_DATE_TIME_PATTERN = "yyyy[-MM[-dd[['T'][ ]HH:mm:ss[.SSS][XXX['['VV']']]]]]";
     static final DateTimeFormatter INPUT_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(INPUT_DATE_TIME_PATTERN);
