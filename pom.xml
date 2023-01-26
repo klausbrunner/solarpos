@@ -134,9 +134,6 @@
                                     <mainJar>
                                         <path>target/{{distributionName}}-{{projectVersion}}.jar</path>
                                     </mainJar>
-                                    <java>
-                                        <mainClass>${app.main.class}</mainClass>
-                                    </java>
                                 </solarpos-cli>
                             </javaArchive>
                         </assemble>
@@ -149,7 +146,6 @@
                         <distributions>
                             <solarpos-cli>
                                 <stereotype>CLI</stereotype>
-                                <type>JAVA_BINARY</type>
                             </solarpos-cli>
                         </distributions>
                     </jreleaser>
