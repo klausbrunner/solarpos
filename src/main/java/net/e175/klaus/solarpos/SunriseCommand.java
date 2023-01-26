@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 import static net.e175.klaus.solarpos.Main.Format.HUMAN;
 
 @CommandLine.Command(name = "sunrise", description = "calculates sunrise, transit, and sunset")
-public final class SunriseCommand implements Callable<Integer> {
+final class SunriseCommand implements Callable<Integer> {
     @CommandLine.ParentCommand
     Main parent;
 

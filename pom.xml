@@ -42,15 +42,16 @@
     </scm>
 
     <build>
-        <finalName>${project.artifactId}</finalName>
+        <!-- The idea here is to
+                1) build an executable fat (shaded) JAR
+                2) build an "assembly" (archive) for distribution using JReleaser
+         -->
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.10.1</version>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.3.0</version>
                 <configuration>
@@ -64,11 +65,11 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.4.1</version>
                 <configuration>
                     <createDependencyReducedPom>false</createDependencyReducedPom>
+                    <outputDirectory>${project.build.outputDirectory}</outputDirectory>
                 </configuration>
                 <executions>
                     <execution>
@@ -97,6 +98,14 @@
                 <artifactId>jreleaser-maven-plugin</artifactId>
                 <version>1.4.0</version>
                 <inherited>false</inherited>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>assemble</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <configuration>
                     <jreleaser>
                         <project>
@@ -105,6 +114,32 @@
                                 <mainClass>${app.main.class}</mainClass>
                             </java>
                         </project>
+                        <assemble>
+                            <javaArchive>
+                                <solarpos-cli>
+                                    <active>ALWAYS</active>
+                                    <fileSets>
+                                        <fileSet>
+                                            <input>.</input>
+                                            <includes>
+                                                <include>LICENSE</include>
+                                                <include>README</include>
+                                            </includes>
+                                        </fileSet>
+                                    </fileSets>
+                                    <formats>
+                                        <format>ZIP</format>
+                                        <format>TAR_GZ</format>
+                                    </formats>
+                                    <mainJar>
+                                        <path>target/{{distributionName}}-{{projectVersion}}.jar</path>
+                                    </mainJar>
+                                    <java>
+                                        <mainClass>${app.main.class}</mainClass>
+                                    </java>
+                                </solarpos-cli>
+                            </javaArchive>
+                        </assemble>
                         <release>
                             <github>
                                 <owner>KlausBrunner</owner>
@@ -114,12 +149,7 @@
                         <distributions>
                             <solarpos-cli>
                                 <stereotype>CLI</stereotype>
-                                <type>SINGLE_JAR</type>
-                                <artifacts>
-                                    <artifact>
-                                        <path>target/{{distributionName}}.jar</path>
-                                    </artifact>
-                                </artifacts>
+                                <type>JAVA_BINARY</type>
                             </solarpos-cli>
                         </distributions>
                     </jreleaser>
@@ -137,7 +167,7 @@
         <dependency>
             <groupId>net.e175.klaus</groupId>
             <artifactId>solarpositioning</artifactId>
-            <version>0.1.6</version>
+            <version>0.1.7</version>
         </dependency>
         <dependency>
             <groupId>info.picocli</groupId>
