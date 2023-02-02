@@ -4,9 +4,20 @@ on:
   push:
     branches: [ "main" ]
 
+env:
+  JAVA_VERSION: '17'
+  GRAAL_VERSION: '22.3.1'
+
+
 jobs:
+  # Build native executable per runner
   build:
-    runs-on: ubuntu-latest
+    name: 'Build with Graal on ${{ matrix.os }}'
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ macos-latest ]
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout
@@ -14,14 +25,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up JDK
-        uses: actions/setup-java@v3
+      - name: 'Add Developer Command Prompt for Microsoft Visual C++ '
+        if: ${{ runner.os == 'Windows' }}
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - uses: graalvm/setup-graalvm@v1
         with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: maven
+          version: ${{ env.GRAAL_VERSION }}
+          java-version: ${{ env.JAVA_VERSION }}
+          components: 'native-image'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build with Maven
         env:
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./mvnw -B package jreleaser:full-release
+        run: ./mvnw -B package jreleaser:assemble jreleaser:full-release

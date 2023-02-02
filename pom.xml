@@ -32,6 +32,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>17</java.version>
         <maven.compiler.release>${java.version}</maven.compiler.release>
+        <picocli.version>4.7.1</picocli.version>
     </properties>
 
     <scm>
@@ -44,12 +45,25 @@
     <build>
         <!-- The idea here is to
                 1) build an executable fat (shaded) JAR
-                2) build an "assembly" (archive) for distribution using JReleaser
+                2) optionally build a native image using GraalVM (if available)
+                3) build "assemblies" (archives) for distribution using JReleaser
          -->
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.10.1</version>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>info.picocli</groupId>
+                            <artifactId>picocli-codegen</artifactId>
+                            <version>${picocli.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                    <compilerArgs>
+                        <arg>-Aproject=${project.groupId}/${project.artifactId}</arg>
+                    </compilerArgs>
+                </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -80,31 +94,10 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.skife.maven</groupId>
-                <artifactId>really-executable-jar-maven-plugin</artifactId>
-                <version>2.0.0</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>really-executable-jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>org.jreleaser</groupId>
                 <artifactId>jreleaser-maven-plugin</artifactId>
                 <version>1.4.0</version>
                 <inherited>false</inherited>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>assemble</goal>
-                        </goals>
-                    </execution>
-                </executions>
                 <configuration>
                     <jreleaser>
                         <project>
@@ -112,6 +105,7 @@
                             <java>
                                 <mainClass>${app.main.class}</mainClass>
                             </java>
+                            <stereotype>CLI</stereotype>
                         </project>
                         <assemble>
                             <javaArchive>
@@ -135,6 +129,18 @@
                                     </mainJar>
                                 </solarpos>
                             </javaArchive>
+                            <nativeImage>
+                                <solarpos-native>
+                                    <active>ALWAYS</active>
+                                    <mainJar>
+                                        <path>target/solarpos-{{projectVersion}}.jar</path>
+                                    </mainJar>
+                                    <args>
+                                        <arg>--no-fallback</arg>
+                                        <arg>--verbose</arg>
+                                    </args>
+                                </solarpos-native>
+                            </nativeImage>
                         </assemble>
                         <release>
                             <github>
@@ -142,18 +148,13 @@
                                 <overwrite>true</overwrite>
                             </github>
                         </release>
-                        <distributions>
-                            <solarpos>
-                                <stereotype>CLI</stereotype>
-                            </solarpos>
-                        </distributions>
                     </jreleaser>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M7</version>
+                <version>3.0.0-M8</version>
             </plugin>
         </plugins>
     </build>
@@ -167,7 +168,7 @@
         <dependency>
             <groupId>info.picocli</groupId>
             <artifactId>picocli</artifactId>
-            <version>4.7.0</version>
+            <version>${picocli.version}</version>
         </dependency>
 
         <dependency>

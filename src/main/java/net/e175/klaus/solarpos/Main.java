@@ -3,17 +3,17 @@ package net.e175.klaus.solarpos;
 import net.e175.klaus.solarpositioning.DeltaT;
 import picocli.CommandLine;
 
-import java.time.*;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
-import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAccessor;
 import java.util.Optional;
 
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 import static java.time.temporal.ChronoField.*;
 
-@CommandLine.Command(name = "solarpos", subcommands = {PositionCommand.class, SunriseCommand.class}, mixinStandardHelpOptions = true, description = "Calculates topocentric solar coordinates or sunrise/sunset times.", versionProvider = ManifestBasedVersionProviderWithVariables.class)
+@CommandLine.Command(name = "solarpos", subcommands = {PositionCommand.class, SunriseCommand.class}, mixinStandardHelpOptions = true, description = "Calculates topocentric solar coordinates or sunrise/sunset times.", versionProvider = Main.ManifestBasedVersionProviderWithVariables.class)
 public final class Main {
     static final String INPUT_DATE_TIME_PATTERN = "yyyy[-MM[-dd[['T'][ ]HH:mm:ss[.SSS][XXX['['VV']']]]]]";
     static final DateTimeFormatter INPUT_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(INPUT_DATE_TIME_PATTERN);
@@ -69,34 +69,12 @@ public final class Main {
         System.exit(exitCode);
     }
 
-}
-
-/**
- * A somewhat tolerant parser of ZonedDateTimes.
- */
-final class DateTimeConverter implements CommandLine.ITypeConverter<TemporalAccessor> {
-
-    static TemporalAccessor lenientlyParseDateTime(String arg, Clock clock) {
-        return arg.equals("now") ?
-                ZonedDateTime.now(clock) :
-                Main.INPUT_DATE_TIME_FORMATTER.parseBest(arg,
-                        ZonedDateTime::from, LocalDateTime::from, LocalDate::from, YearMonth::from, Year::from);
-    }
-
-    @Override
-    public TemporalAccessor convert(String arg) {
-        try {
-            return lenientlyParseDateTime(arg, Clock.systemDefaultZone());
-        } catch (DateTimeParseException e) {
-            throw new CommandLine.TypeConversionException("failed to parse date/time " + arg);
+    static final class ManifestBasedVersionProviderWithVariables implements CommandLine.IVersionProvider {
+        public String[] getVersion() {
+            // this requires Implementation-Version in the MANIFEST file to work
+            String version = getClass().getPackage().getImplementationVersion();
+            return new String[]{"${COMMAND-FULL-NAME} " + (version == null ? "" : version)};
         }
     }
 }
 
-final class ManifestBasedVersionProviderWithVariables implements CommandLine.IVersionProvider {
-    public String[] getVersion() {
-        // this requires Implementation-Version in the MANIFEST file to work
-        String version = getClass().getPackage().getImplementationVersion();
-        return new String[]{"${COMMAND-FULL-NAME} " + (version == null ? "" : version)};
-    }
-}
