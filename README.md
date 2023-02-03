@@ -10,7 +10,7 @@ Status: **early stage**, "alpha" quality. Basic functionality works, but lacks r
 
 ## Requirements
 
-Java 17 or newer. (Unsure how to get a recent Java version? Try [Adoptium](https://adoptium.net/).)
+Java 17 or newer. (If unsure how to get a recent Java version, try [Adoptium](https://adoptium.net/).)
 
 ## Usage
 
@@ -21,9 +21,10 @@ yourself) and run as usual:
 java -jar solarpos.jar
 ```
 
-On Linux, macOS and other POSIX-like systems, it should be enough to set the executable flag and run the JAR directly.
+For some platforms, native builds are now available. These don't require a separate Java runtime and can be started
+directly like any other command-line program. However, they are generally less tested than the JAR distribution.
 
-Then, see built-in help.
+For detailed usage, see built-in help.
 
 ```
 Usage: solarpos [-hV] [--show-inputs] [--deltat[=<deltaT>]]
