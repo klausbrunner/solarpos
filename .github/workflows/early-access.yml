@@ -37,6 +37,34 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build with Maven
+        run: ./mvnw -B package jreleaser:assemble
+
+      - name: 'Upload build artifacts'
+        uses: actions/upload-artifact@v3
+        with:
+          name: artifacts
+          path: |
+            target/**/*
+
+  release:
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: 'Download all build artifacts'
+        uses: actions/download-artifact@v3
+
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          version: ${{ env.GRAAL_VERSION }}
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: 'Release with JReleaser'
         env:
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./mvnw -B package jreleaser:assemble jreleaser:full-release
+        run: ./mvnw -ntp -B jreleaser:full-release
+
