@@ -1,9 +1,15 @@
 package net.e175.klaus.solarpos;
 
 import com.google.gson.JsonParser;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.io.StringReader;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 
 class PositionTest {
 
@@ -57,14 +63,17 @@ class PositionTest {
     }
 
     @Test
-    void testSeriesUsageWithCsv() {
+    void testSeriesUsageWithCsv() throws IOException {
         String lat = "52.0";
         String lon = "25.0";
         String dateTime = "2003-10-17";
 
         var result = TestUtil.executeIt(lat, lon, dateTime, "--format=csv", "--deltat=69", "--timezone=UTC", "position", "--step=7200");
         assertEquals(0, result.returnCode());
-        assertEquals("""
+
+        var outputRecords = CSVFormat.DEFAULT.parse(new StringReader(result.output()));
+
+        var referenceRecords = CSVFormat.DEFAULT.parse(new StringReader("""
                         2003-10-17T00:00:00Z,38.87778,131.09385
                         2003-10-17T02:00:00Z,69.90910,116.13739
                         2003-10-17T04:00:00Z,94.54534,97.98688
@@ -76,8 +85,9 @@ class PositionTest {
                         2003-10-17T16:00:00Z,263.21613,96.46308
                         2003-10-17T18:00:00Z,287.52922,114.74832
                         2003-10-17T20:00:00Z,317.71947,130.28269
-                        2003-10-17T22:00:00Z,358.05561,137.33998""",
-                result.output().strip());
+                        2003-10-17T22:00:00Z,358.05561,137.33998"""));
+
+        assertIterableEquals(referenceRecords, outputRecords);
     }
 
 
