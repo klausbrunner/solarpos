@@ -55,16 +55,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 'Download all build artifacts'
-        uses: actions/download-artifact@v3
-
       - uses: graalvm/setup-graalvm@v1
         with:
           version: ${{ env.GRAAL_VERSION }}
           java-version: ${{ env.JAVA_VERSION }}
 
+      - name: 'Download all build artifacts'
+        uses: actions/download-artifact@v3
+        with:
+          name: artifacts
+          path: target
+
+      - name: 'List files'
+        run: ls -R
+
       - name: 'Release with JReleaser'
         env:
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./mvnw -ntp -B jreleaser:full-release
-
