@@ -66,23 +66,23 @@
                 </configuration>
             </plugin>
             <plugin>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.3.0</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>${app.main.class}</mainClass>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-            <plugin>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.4.1</version>
                 <configuration>
                     <createDependencyReducedPom>false</createDependencyReducedPom>
                     <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+                    <transformers>
+                        <transformer
+                                implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                            <manifestEntries>
+                                <Main-Class>${app.main.class}</Main-Class>
+                                <Implementation-Version>${project.version}</Implementation-Version>
+                            </manifestEntries>
+                        </transformer>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                            <resource>MANIFEST.MF</resource>
+                        </transformer>
+                    </transformers>
                 </configuration>
                 <executions>
                     <execution>
@@ -122,7 +122,6 @@
                                     </fileSets>
                                     <formats>
                                         <format>ZIP</format>
-                                        <format>TAR_GZ</format>
                                     </formats>
                                     <mainJar>
                                         <path>target/{{distributionName}}-{{projectVersion}}.jar</path>
@@ -132,6 +131,7 @@
                             <nativeImage>
                                 <solarpos-native>
                                     <active>ALWAYS</active>
+                                    <executable>${project.name}</executable>
                                     <mainJar>
                                         <path>target/solarpos-{{projectVersion}}.jar</path>
                                     </mainJar>
@@ -142,6 +142,23 @@
                                 </solarpos-native>
                             </nativeImage>
                         </assemble>
+                        <distributions>
+                            <solarpos> <!-- this might be redundant in jreleaser 1.5? -->
+                                <name>${project.name}</name>
+                                <type>BINARY</type>
+                                <artifacts>
+                                    <artifact>
+                                        <path>target/jreleaser/assemble/{{distributionName}}-native/native-image/{{artifactsDir}}/{{distributionName}}-{{projectVersion}}-windows-x86_64.zip</path>
+                                        <platform>windows-x86_64</platform>
+                                    </artifact>
+                                    <artifact>
+                                        <path>target/jreleaser/assemble/{{distributionName}}-native/native-image/{{artifactsDir}}/{{distributionName}}-{{projectVersion}}-osx-x86_64.zip</path>
+                                        <platform>osx-x86_64</platform>
+                                    </artifact>
+                                </artifacts>
+                            </solarpos>
+                        </distributions>
+
                         <release>
                             <github>
                                 <owner>KlausBrunner</owner>
