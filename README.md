@@ -12,24 +12,30 @@ Status: **early stage**, "alpha" quality. Basic functionality works, but lacks r
 
 Java 17 or newer. (If unsure how to get a recent Java version, try [Adoptium](https://adoptium.net/).)
 
+For some platforms, native builds are now available. These don't require a separate Java runtime and can be started
+directly like any other command-line program. However, they are generally less tested than the JAR distribution.
+
 ## Usage
 
-Get executable JAR for [latest release](https://github.com/KlausBrunner/solarpos/releases/latest) (or build it
-yourself) and run as usual:
+For the plain Java distribution, get executable JAR for [latest release](https://github.com/KlausBrunner/solarpos/releases/latest) (or build it
+yourself) and run as:
 
 ```
 java -jar solarpos.jar
 ```
 
-For some platforms, native builds are now available. These don't require a separate Java runtime and can be started
-directly like any other command-line program. However, they are generally less tested than the JAR distribution.
+Native builds can be started directly, i.e.
+
+```
+solarpos
+```
 
 For detailed usage, see built-in help.
 
 ```
-Usage: solarpos [-hV] [--show-inputs] [--deltat[=<deltaT>]]
-                    [--format=<format>] [--timezone=<timezone>] <latitude>
-                    <longitude> <dateTime> [COMMAND]
+Usage: solarpos [-hV] [--show-inputs] [--deltat[=<deltaT>]] [--format=<format>]
+                [--timezone=<timezone>] <latitude> <longitude> <dateTime>
+                [COMMAND]
 Calculates topocentric solar coordinates or sunrise/sunset times.
       <latitude>            latitude in decimal degrees (positive North of
                               equator)
