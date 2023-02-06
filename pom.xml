@@ -149,20 +149,19 @@
                             </nativeImage>
                         </assemble>
                         <distributions>
-                            <solarpos> <!-- this might be redundant in jreleaser 1.5? -->
-                                <name>${project.name}</name>
+                            <solarpos-native> <!-- this might be redundant in jreleaser 1.5? -->
                                 <type>BINARY</type>
                                 <artifacts>
                                     <artifact>
-                                        <path>target/jreleaser/assemble/{{distributionName}}-native/native-image/{{artifactsDir}}/{{distributionName}}-{{projectVersion}}-windows-x86_64.zip</path>
+                                        <path>target/jreleaser/assemble/{{distributionName}}/native-image/${project.name}-{{projectVersion}}-windows-x86_64.zip</path>
                                         <platform>windows-x86_64</platform>
                                     </artifact>
                                     <artifact>
-                                        <path>target/jreleaser/assemble/{{distributionName}}-native/native-image/{{artifactsDir}}/{{distributionName}}-{{projectVersion}}-osx-x86_64.zip</path>
+                                        <path>target/jreleaser/assemble/{{distributionName}}/native-image/${project.name}-{{projectVersion}}-osx-x86_64.zip</path>
                                         <platform>osx-x86_64</platform>
                                     </artifact>
                                 </artifacts>
-                            </solarpos>
+                            </solarpos-native>
                         </distributions>
 
                         <release>
