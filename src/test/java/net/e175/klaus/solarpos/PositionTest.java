@@ -2,7 +2,6 @@ package net.e175.klaus.solarpos;
 
 import com.google.gson.JsonParser;
 import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -15,9 +14,9 @@ class PositionTest {
 
     @Test
     void testBasicUsageWithJson() {
-        String lat = "52.0";
-        String lon = "25.0";
-        String dateTime = "2022-10-17T12:00:00Z";
+        var lat = "52.0";
+        var lon = "25.0";
+        var dateTime = "2022-10-17T12:00:00Z";
 
         var result = TestUtil.executeIt(lat, lon, dateTime, "--format=json", "--deltat=69", "--show-inputs", "position");
         assertEquals(0, result.returnCode());
@@ -33,9 +32,9 @@ class PositionTest {
 
     @Test
     void testBasicUsageWithJsonGrena() {
-        String lat = "52.0";
-        String lon = "25.0";
-        String dateTime = "2022-10-17T12:00:00Z";
+        var lat = "52.0";
+        var lon = "25.0";
+        var dateTime = "2022-10-17T12:00:00Z";
 
         var result = TestUtil.executeIt(lat, lon, dateTime, "--format=json", "--deltat=69", "position", "--algorithm=grena3");
         assertEquals(0, result.returnCode());
@@ -48,9 +47,9 @@ class PositionTest {
 
     @Test
     void testBasicUsageWithCsv() {
-        String lat = "52.0";
-        String lon = "25.0";
-        String dateTime = "2003-10-17T12:00:00Z";
+        var lat = "52.0";
+        var lon = "25.0";
+        var dateTime = "2003-10-17T12:00:00Z";
 
         var result = TestUtil.executeIt(lat, lon, dateTime, "--format=csv", "--deltat=69", "position");
         assertEquals(0, result.returnCode());
@@ -64,9 +63,9 @@ class PositionTest {
 
     @Test
     void testSeriesUsageWithCsv() throws IOException {
-        String lat = "52.0";
-        String lon = "25.0";
-        String dateTime = "2003-10-17";
+        var lat = "52.0";
+        var lon = "25.0";
+        var dateTime = "2003-10-17";
 
         var result = TestUtil.executeIt(lat, lon, dateTime, "--format=csv", "--deltat=69", "--timezone=UTC", "position", "--step=7200");
         assertEquals(0, result.returnCode());
@@ -74,21 +73,51 @@ class PositionTest {
         var outputRecords = CSVFormat.DEFAULT.parse(new StringReader(result.output()));
 
         var referenceRecords = CSVFormat.DEFAULT.parse(new StringReader("""
-                        2003-10-17T00:00:00Z,38.87778,131.09385
-                        2003-10-17T02:00:00Z,69.90910,116.13739
-                        2003-10-17T04:00:00Z,94.54534,97.98688
-                        2003-10-17T06:00:00Z,118.48590,80.31973
-                        2003-10-17T08:00:00Z,146.00826,66.76720
-                        2003-10-17T10:00:00Z,178.46662,61.15144
-                        2003-10-17T12:00:00Z,211.20726,65.92346
-                        2003-10-17T14:00:00Z,239.15181,78.97740
-                        2003-10-17T16:00:00Z,263.21613,96.46308
-                        2003-10-17T18:00:00Z,287.52922,114.74832
-                        2003-10-17T20:00:00Z,317.71947,130.28269
-                        2003-10-17T22:00:00Z,358.05561,137.33998"""));
+                2003-10-17T00:00:00Z,38.87778,131.09385
+                2003-10-17T02:00:00Z,69.90910,116.13739
+                2003-10-17T04:00:00Z,94.54534,97.98688
+                2003-10-17T06:00:00Z,118.48590,80.31973
+                2003-10-17T08:00:00Z,146.00826,66.76720
+                2003-10-17T10:00:00Z,178.46662,61.15144
+                2003-10-17T12:00:00Z,211.20726,65.92346
+                2003-10-17T14:00:00Z,239.15181,78.97740
+                2003-10-17T16:00:00Z,263.21613,96.46308
+                2003-10-17T18:00:00Z,287.52922,114.74832
+                2003-10-17T20:00:00Z,317.71947,130.28269
+                2003-10-17T22:00:00Z,358.05561,137.33998"""));
 
         assertIterableEquals(referenceRecords, outputRecords);
     }
 
+    @Test
+    void testFullYearWithCsv() throws IOException {
+        var lat = "52.0";
+        var lon = "25.0";
+        var dateTime = "2003";
 
+        var result = TestUtil.executeIt(lat, lon, dateTime, "--format=csv", "--deltat=69", "--timezone=UTC", "position", "--step=7200");
+        assertEquals(0, result.returnCode());
+
+        var outputRecords = CSVFormat.DEFAULT.parse(new StringReader(result.output())).getRecords();
+
+        assertEquals(4380, outputRecords.size());
+        assertEquals("2003-01-01T00:00:00Z", outputRecords.get(0).get(0));
+        assertEquals("2003-12-31T22:00:00Z", outputRecords.get(outputRecords.size() - 1).get(0));
+    }
+
+    @Test
+    void testFullMonthWithCsv() throws IOException {
+        var lat = "52.0";
+        var lon = "25.0";
+        var dateTime = "2024-02";
+
+        var result = TestUtil.executeIt(lat, lon, dateTime, "--format=csv", "--deltat=69", "--timezone=UTC", "position", "--step=7200");
+        assertEquals(0, result.returnCode());
+
+        var outputRecords = CSVFormat.DEFAULT.parse(new StringReader(result.output())).getRecords();
+
+        assertEquals(348, outputRecords.size());
+        assertEquals("2024-02-01T00:00:00Z", outputRecords.get(0).get(0));
+        assertEquals("2024-02-29T22:00:00Z", outputRecords.get(outputRecords.size() - 1).get(0));
+    }
 }

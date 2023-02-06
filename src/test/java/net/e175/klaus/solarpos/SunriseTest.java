@@ -2,17 +2,22 @@ package net.e175.klaus.solarpos;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.apache.commons.csv.CSVFormat;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.io.StringReader;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 class SunriseTest {
 
     @Test
     void testBasicUsageWithJson() {
-        String lat = "52.0";
-        String lon = "25.0";
-        String dateTime = "2022-10-17T12:00:00Z";
+        var lat = "52.0";
+        var lon = "25.0";
+        var dateTime = "2022-10-17T12:00:00Z";
 
         var result = TestUtil.executeIt(lat, lon, dateTime, "--format=json", "--deltat=69", "--show-inputs", "sunrise");
         assertEquals(0, result.returnCode());
@@ -29,12 +34,52 @@ class SunriseTest {
 
     @Test
     void testBasicUsageWithCsv() {
-        String lat = "52.0";
-        String lon = "25.0";
-        String dateTime = "2022-10-17T12:00:00Z";
+        var lat = "52.0";
+        var lon = "25.0";
+        var dateTime = "2022-10-17T12:00:00Z";
 
         var result = TestUtil.executeIt(lat, lon, dateTime, "--format=csv", "--deltat=69", "--show-inputs", "sunrise");
         assertEquals(0, result.returnCode());
         assertEquals("52.00000,25.00000,2022-10-17T12:00:00Z,69.000,2022-10-17T04:47:51Z,2022-10-17T10:05:21Z,2022-10-17T15:22:00Z", result.output().strip());
+    }
+
+    @Test
+    void testNonsenseCoords() {
+        var lat = "352.0";
+        var lon = "925.0";
+        var dateTime = "2023";
+
+        var result = TestUtil.executeIt(lat, lon, dateTime, "sunrise");
+        assertNotEquals(0, result.returnCode());
+    }
+
+    @Test
+    void testFullYearWithCsv() throws IOException {
+        var lat = "52.0";
+        var lon = "25.0";
+        var dateTime = "2023";
+
+        var result = TestUtil.executeIt(lat, lon, dateTime, "--format=csv", "--deltat", "--show-inputs", "--timezone=UTC", "sunrise");
+        assertEquals(0, result.returnCode());
+
+        var outputRecords = CSVFormat.DEFAULT.parse(new StringReader(result.output())).getRecords();
+        assertEquals(365, outputRecords.size());
+        assertEquals("2023-01-01T00:00:00Z", outputRecords.get(0).get(2));
+        assertEquals("2023-12-31T00:00:00Z", outputRecords.get(364).get(2));
+    }
+
+    @Test
+    void testFullMonthWithCsv() throws IOException {
+        var lat = "52.0";
+        var lon = "25.0";
+        var dateTime = "2023-02";
+
+        var result = TestUtil.executeIt(lat, lon, dateTime, "--format=csv", "--deltat", "--show-inputs", "--timezone=UTC", "sunrise");
+        assertEquals(0, result.returnCode());
+
+        var outputRecords = CSVFormat.DEFAULT.parse(new StringReader(result.output())).getRecords();
+        assertEquals(28, outputRecords.size());
+        assertEquals("2023-02-01T00:00:00Z", outputRecords.get(0).get(2));
+        assertEquals("2023-02-28T00:00:00Z", outputRecords.get(27).get(2));
     }
 }
