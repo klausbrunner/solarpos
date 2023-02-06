@@ -1,0 +1,26 @@
+name: Named Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      git-ref:
+        description: 'Existing git ref (tag) for this release.'
+        required: true
+        type: string
+
+jobs:
+  check-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (to validate ref before calling actual build)
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.git-ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  call-build-and-release:
+    uses: ./.github/workflows/build-and-release.yml
+    with:
+      git-ref: ${{ inputs.git-ref }}
+      jreleaser-do-not-tag: true
+    secrets: inherit

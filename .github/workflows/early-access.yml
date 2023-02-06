@@ -1,85 +1,10 @@
-name: Snapshot Release
+name: CI Release
 
 on:
   push:
     branches: [ "main" ]
 
-env:
-  JAVA_VERSION: '17'
-  GRAAL_VERSION: '22.3.1'
-
-
 jobs:
-  # Build native executable per runner
-  build:
-    name: 'Build with Graal on ${{ matrix.os }}'
-    strategy:
-      fail-fast: true
-      matrix:
-        os: [ macos-latest, ubuntu-latest, windows-latest ]
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: 'Add Developer Command Prompt for Microsoft Visual C++ '
-        if: ${{ runner.os == 'Windows' }}
-        uses: ilammy/msvc-dev-cmd@v1
-
-      - uses: graalvm/setup-graalvm@v1
-        with:
-          version: ${{ env.GRAAL_VERSION }}
-          java-version: ${{ env.JAVA_VERSION }}
-          components: 'native-image'
-          cache: 'maven'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build with Maven
-        run: ./mvnw -B package jreleaser:assemble
-
-      - name: 'Run smoke test'
-        if: ${{ runner.os != 'Windows' }}
-        run: target/jreleaser/assemble/solarpos-native/native-image/solarpos 51.0 0 now position
-
-      - name: 'Run smoke test'
-        if: ${{ runner.os == 'Windows' }}
-        run: target\jreleaser\assemble\solarpos-native\native-image\solarpos.exe 51.0 0 now position
-
-      - name: 'Upload build artifacts'
-        uses: actions/upload-artifact@v3
-        with:
-          name: artifacts
-          path: |
-            target/**/*
-
-  release:
-    needs: [ build ]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - uses: graalvm/setup-graalvm@v1
-        with:
-          version: ${{ env.GRAAL_VERSION }}
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: 'maven'
-
-      - name: 'Download all build artifacts'
-        uses: actions/download-artifact@v3
-        with:
-          name: artifacts
-          path: target
-
-      - name: 'List files'
-        run: ls -R
-
-      - name: 'Release with JReleaser'
-        env:
-          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./mvnw -ntp -B jreleaser:full-release
+  call-build-and-release:
+    uses: ./.github/workflows/build-and-release.yml
+    secrets: inherit

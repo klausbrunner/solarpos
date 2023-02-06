@@ -1,0 +1,97 @@
+on:
+  workflow_call:
+    inputs:
+      git-ref:
+        description: 'A ref (tag) to check out before building'
+        default: ''
+        required: false
+        type: string
+      jreleaser-do-not-tag:
+        description: 'Should JReleaser NOT set a tag?'
+        default: false
+        required: false
+        type: boolean
+
+env:
+  JAVA_VERSION: '17'
+  GRAAL_VERSION: '22.3.1'
+
+jobs:
+  # Build native executable per runner
+  build:
+    name: 'Build with Graal on ${{ matrix.os }}'
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.git-ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 'Add Developer Command Prompt for Microsoft Visual C++ '
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          version: ${{ env.GRAAL_VERSION }}
+          java-version: ${{ env.JAVA_VERSION }}
+          components: 'native-image'
+          cache: 'maven'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build with Maven
+        run: ./mvnw -B package jreleaser:assemble
+
+      - name: 'Run smoke test (POSIX)'
+        if: ${{ runner.os != 'Windows' }}
+        run: target/jreleaser/assemble/solarpos-native/native-image/solarpos 51.5 0 now position
+
+      - name: 'Run smoke test (Windows)'
+        if: ${{ runner.os == 'Windows' }}
+        run: target\jreleaser\assemble\solarpos-native\native-image\solarpos.exe 51.5 0 now position
+
+      - name: 'Upload build artifacts'
+        uses: actions/upload-artifact@v3
+        with:
+          name: artifacts
+          path: |
+            target/**/*
+
+  release:
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.git-ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          version: ${{ env.GRAAL_VERSION }}
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'maven'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 'Download all build artifacts'
+        uses: actions/download-artifact@v3
+        with:
+          name: artifacts
+          path: target
+
+      - name: 'List files'
+        run: ls -R
+
+      - name: 'Release with JReleaser'
+        env:
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JRELEASER_SKIP_TAG: ${{ inputs.jreleaser-do-not-tag }}
+        run: ./mvnw -ntp -B jreleaser:full-release
