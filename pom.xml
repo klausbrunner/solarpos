@@ -44,7 +44,7 @@
 
     <build>
         <!-- The idea here is to
-                1) build an executable fat (shaded) JAR
+                1) build an executable fat (shaded) JAR as the primary output
                 2) optionally build a native image using GraalVM (if available)
                 3) build "assemblies" (archives) for distribution using JReleaser
          -->
@@ -92,6 +92,14 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>3.0.0-M7</version>
+                <configuration>
+                    <tagNameFormat>v@{project.version}</tagNameFormat>
+                    <goals>install</goals>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.jreleaser</groupId>
