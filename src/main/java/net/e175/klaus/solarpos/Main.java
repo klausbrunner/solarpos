@@ -35,7 +35,7 @@ public final class Main {
     @CommandLine.Parameters(index = "2", description = "date/time in ISO format " + INPUT_DATE_TIME_PATTERN + ". use 'now' for current time and date.", converter = DateTimeConverter.class)
     TemporalAccessor dateTime;
 
-    @CommandLine.Option(names = {"--timezone"}, description = "timezone as offset (e.g. +01:00) and/or zone id (e.g. America/Los_Angeles). overrides any timezone info found in date/time parameter.")
+    @CommandLine.Option(names = {"--timezone"}, description = "timezone as offset (e.g. +01:00) and/or zone id (e.g. America/Los_Angeles). overrides any timezone info found in dateTime.")
     Optional<ZoneId> timezone;
 
     @CommandLine.Option(names = {"--show-inputs"}, description = "show all inputs in output")
@@ -73,7 +73,11 @@ public final class Main {
         public String[] getVersion() {
             // this requires Implementation-Version in the MANIFEST file to work
             String version = getClass().getPackage().getImplementationVersion();
-            return new String[]{"${COMMAND-FULL-NAME} " + (version == null ? "" : version)};
+            return new String[]{
+                    "${COMMAND-FULL-NAME} " + (version == null ? "" : version),
+                    String.format(" %s %s", System.getProperty("java.vm.name"), System.getProperty("java.vm.version")),
+                    String.format(" %s %s %s", System.getProperty("os.name"), System.getProperty("os.version"), System.getProperty("os.arch"))
+            };
         }
     }
 }
