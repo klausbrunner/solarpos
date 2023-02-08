@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.TemporalAccessor;
+import java.util.Map;
 import java.util.Optional;
 
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
@@ -20,6 +21,13 @@ public final class Main {
     static final DateTimeFormatter ISO_LOCAL_TIME_REDUCED = new DateTimeFormatterBuilder().appendValue(HOUR_OF_DAY, 2).appendLiteral(':').appendValue(MINUTE_OF_HOUR, 2).optionalStart().appendLiteral(':').appendValue(SECOND_OF_MINUTE, 2).appendOffsetId().toFormatter();
     static final DateTimeFormatter ISO_LOCAL_DATE_TIME_REDUCED = new DateTimeFormatterBuilder().parseCaseInsensitive().append(ISO_LOCAL_DATE).appendLiteral('T').append(ISO_LOCAL_TIME_REDUCED).toFormatter();
     static final DateTimeFormatter ISO_HUMAN_LOCAL_DATE_TIME_REDUCED = new DateTimeFormatterBuilder().parseCaseInsensitive().append(ISO_LOCAL_DATE).appendLiteral(' ').append(ISO_LOCAL_TIME_REDUCED).toFormatter();
+
+    void printAnyHeaders(Map<Main.Format, Map<Boolean, String>> headersMap) {
+        if (this.headers && headersMap.containsKey(this.format)) {
+            var headers = headersMap.get(this.format).get(this.showInput);
+            spec.commandLine().getOut().println(headers);
+        }
+    }
 
     enum Format {HUMAN, CSV, JSON}
 
@@ -43,6 +51,9 @@ public final class Main {
 
     @CommandLine.Option(names = {"--format"}, description = "output format, one of ${COMPLETION-CANDIDATES}", defaultValue = "human")
     Format format;
+
+    @CommandLine.Option(names = {"--headers"}, description = "show headers in output (currently applies only to CSV)")
+    boolean headers;
 
     @CommandLine.Option(names = {"--deltat"}, arity = "0..1", defaultValue = "0", fallbackValue = "NaN", description = "delta T in seconds; an estimate is used if this option is given without a value")
     double deltaT;

@@ -1,8 +1,9 @@
 # solarpos
 
 A simple command-line application to calculate topocentric solar coordinates and sunrise/sunset times, based
-on [solarpositioning](https://github.com/KlausBrunner/solarpositioning). It supports timeseries and various output 
-formats for easy processing by other tools to create e.g. [sun-path diagrams](https://github.com/KlausBrunner/sunpath-r/blob/main/sunpath.md).
+on [solarpositioning](https://github.com/KlausBrunner/solarpositioning). It supports timeseries and various output
+formats for easy processing by other tools to create
+e.g. [sun-path diagrams](https://github.com/KlausBrunner/sunpath-r/blob/main/sunpath.md).
 
 Status: **"beta"** quality. Basic functionality works without known bugs, but needs more testing and polish.
 
@@ -15,7 +16,8 @@ directly like any other command-line program. However, they are generally less t
 
 ## Usage
 
-For the plain Java distribution, get executable JAR for [latest release](https://github.com/KlausBrunner/solarpos/releases/latest) (or build it
+For the plain Java distribution, get executable JAR
+for [latest release](https://github.com/KlausBrunner/solarpos/releases/latest) (or build it
 yourself) and run as:
 
 ```
@@ -31,9 +33,9 @@ solarpos
 For detailed usage, see built-in help.
 
 ```
-Usage: solarpos [-hV] [--show-inputs] [--deltat[=<deltaT>]] [--format=<format>]
-                [--timezone=<timezone>] <latitude> <longitude> <dateTime>
-                [COMMAND]
+Usage: solarpos [-hV] [--headers] [--show-inputs] [--deltat[=<deltaT>]]
+                [--format=<format>] [--timezone=<timezone>] <latitude>
+                <longitude> <dateTime> [COMMAND]
 Calculates topocentric solar coordinates or sunrise/sunset times.
       <latitude>            latitude in decimal degrees (positive North of
                               equator)
@@ -46,10 +48,12 @@ Calculates topocentric solar coordinates or sunrise/sunset times.
                               option is given without a value
       --format=<format>     output format, one of HUMAN, CSV, JSON
   -h, --help                Show this help message and exit.
+      --headers             show headers in output (currently applies only to
+                              CSV)
       --show-inputs         show all inputs in output
       --timezone=<timezone> timezone as offset (e.g. +01:00) and/or zone id (e.
                               g. America/Los_Angeles). overrides any timezone
-                              info found in date/time parameter.
+                              info found in dateTime.
   -V, --version             Print version information and exit.
 Commands:
   position  calculates topocentric solar coordinates
@@ -64,10 +68,11 @@ There is built-in support for calculating time series.
   each day of that year or month.
 * Similarly, the position command will calculate a time series of sun positions for the given day, month or even year.
   The interval is determined by the step option (default: 1 hour).
-  
+
 ### Date and Time Formats
 
-Dates and times should be given in ISO 8601 format like 2011-12-03T10:15:30+01:00 or a subset thereof, such as 2011-12-03 for a date without a time and timezone offset.
+Dates and times should be given in ISO 8601 format like 2011-12-03T10:15:30+01:00 or a subset thereof, such as
+2011-12-03 for a date without a time and timezone offset.
 
 ### Usage examples
 

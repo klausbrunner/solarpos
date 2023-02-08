@@ -36,7 +36,7 @@ class PositionTest {
         var lon = "25.0";
         var dateTime = "2022-10-17T12:00:00Z";
 
-        var result = TestUtil.executeIt(lat, lon, dateTime, "--format=json", "--deltat=69", "position", "--algorithm=grena3");
+        var result = TestUtil.executeIt(lat, lon, dateTime, "--headers", "--format=json", "--deltat=69", "position", "--algorithm=grena3");
         assertEquals(0, result.returnCode());
 
         var jsonObject = JsonParser.parseString(result.output()).getAsJsonObject();
@@ -119,5 +119,21 @@ class PositionTest {
         assertEquals(348, outputRecords.size());
         assertEquals("2024-02-01T00:00:00Z", outputRecords.get(0).get(0));
         assertEquals("2024-02-29T22:00:00Z", outputRecords.get(outputRecords.size() - 1).get(0));
+    }
+
+    @Test
+    void testFullMonthWithCsvHeaders() throws IOException {
+        var lat = "52.0";
+        var lon = "25.0";
+        var dateTime = "2024-02";
+
+        var result = TestUtil.executeIt(lat, lon, dateTime, "--headers", "--format=csv", "--deltat=69", "--show-inputs", "--timezone=UTC", "position", "--step=7200");
+        assertEquals(0, result.returnCode());
+
+        var outputRecords = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(new StringReader(result.output())).getRecords();
+
+        assertEquals(348, outputRecords.size());
+        assertEquals("2024-02-01T00:00:00Z", outputRecords.get(0).get("dateTime"));
+        assertEquals("2024-02-29T22:00:00Z", outputRecords.get(outputRecords.size() - 1).get("dateTime"));
     }
 }

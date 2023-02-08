@@ -82,4 +82,19 @@ class SunriseTest {
         assertEquals("2023-02-01T00:00:00Z", outputRecords.get(0).get(2));
         assertEquals("2023-02-28T00:00:00Z", outputRecords.get(27).get(2));
     }
+
+    @Test
+    void testFullMonthWithHeaders() throws IOException {
+        var lat = "52.0";
+        var lon = "25.0";
+        var dateTime = "2023-02";
+
+        var result = TestUtil.executeIt(lat, lon, dateTime, "--headers", "--format=csv", "--deltat", "--show-inputs", "--timezone=UTC", "sunrise");
+        assertEquals(0, result.returnCode());
+
+        var outputRecords = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(new StringReader(result.output())).getRecords();
+        assertEquals(28, outputRecords.size());
+        assertEquals("2023-02-01T00:00:00Z", outputRecords.get(0).get("dateTime"));
+        assertEquals("2023-02-28T00:00:00Z", outputRecords.get(27).get("dateTime"));
+    }
 }
