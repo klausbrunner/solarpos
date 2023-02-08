@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.StringReader;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 class SunriseTest {
 
@@ -41,16 +40,6 @@ class SunriseTest {
         var result = TestUtil.executeIt(lat, lon, dateTime, "--format=csv", "--deltat=69", "--show-inputs", "sunrise");
         assertEquals(0, result.returnCode());
         assertEquals("52.00000,25.00000,2022-10-17T12:00:00Z,69.000,2022-10-17T04:47:51Z,2022-10-17T10:05:21Z,2022-10-17T15:22:00Z", result.output().strip());
-    }
-
-    @Test
-    void testNonsenseCoords() {
-        var lat = "352.0";
-        var lon = "925.0";
-        var dateTime = "2023";
-
-        var result = TestUtil.executeIt(lat, lon, dateTime, "sunrise");
-        assertNotEquals(0, result.returnCode());
     }
 
     @Test

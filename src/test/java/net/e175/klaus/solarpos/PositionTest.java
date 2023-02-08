@@ -7,8 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.StringReader;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertIterableEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class PositionTest {
 
@@ -103,6 +102,19 @@ class PositionTest {
         assertEquals(4380, outputRecords.size());
         assertEquals("2003-01-01T00:00:00Z", outputRecords.get(0).get(0));
         assertEquals("2003-12-31T22:00:00Z", outputRecords.get(outputRecords.size() - 1).get(0));
+    }
+
+    @Test
+    void testRejectsInvalidStepValues() {
+        var lat = "52.0";
+        var lon = "25.0";
+        var dateTime = "2003";
+
+        var result = TestUtil.executeIt(lat, lon, dateTime, "position", "--step=0.1");
+        assertNotEquals(0, result.returnCode());
+
+        result = TestUtil.executeIt(lat, lon, dateTime, "position", "--step=999999");
+        assertNotEquals(0, result.returnCode());
     }
 
     @Test
