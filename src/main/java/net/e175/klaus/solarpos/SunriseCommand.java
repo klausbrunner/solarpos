@@ -25,14 +25,14 @@ final class SunriseCommand implements Callable<Integer> {
         parent.validate();
 
         final Stream<ZonedDateTime> dateTimes = getDatetimes(parent.dateTime, parent.timezone);
-        final PrintWriter out = parent.spec.commandLine().getOut();
+        parent.printAnyHeaders(HEADERS);
 
+        final PrintWriter out = parent.spec.commandLine().getOut();
         dateTimes.forEach(dateTime -> {
             final double deltaT = parent.getBestGuessDeltaT(dateTime);
             SunriseTransitSet result = SPA.calculateSunriseTransitSet(dateTime, parent.latitude, parent.longitude,
                     deltaT);
-            String output = buildOutput(parent.format, dateTime, deltaT, result, parent.showInput);
-            out.print(output);
+            out.print(buildOutput(parent.format, dateTime, deltaT, result, parent.showInput));
         });
         out.flush();
 
@@ -71,6 +71,10 @@ final class SunriseCommand implements Callable<Integer> {
                     {"sunrise":"%5$s","transit":"%6$s","sunset":"%7$s"}
                     """);
 
+    private static final Map<Boolean, String> CSV_HEADERS = Map.of(
+            true, "latitude,longitude,dateTime,deltaT,sunrise,transit,sunset",
+            false, "sunrise,transit,sunset");
+
     private static final Map<Boolean, String> CSV_FORMATS = Map.of(
             true, "%.5f,%.5f,%s,%.3f,%s,%s,%s%n",
             false, "%5$s,%6$s,%7$s%n");
@@ -90,6 +94,9 @@ final class SunriseCommand implements Callable<Integer> {
                     transit:    %6$s
                     sunset:     %7$s
                     """);
+
+    private static final Map<Main.Format, Map<Boolean, String>> HEADERS =
+            Map.of(Main.Format.CSV, CSV_HEADERS);
 
     private static final Map<Main.Format, Map<Boolean, String>> TEMPLATES =
             Map.of(Main.Format.CSV, CSV_FORMATS, Main.Format.JSON, JSON_FORMATS, HUMAN, HUMAN_FORMATS);

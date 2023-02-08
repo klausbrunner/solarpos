@@ -50,8 +50,9 @@ final class PositionCommand implements Callable<Integer> {
         }
 
         final Stream<ZonedDateTime> dateTimes = getDatetimes(parent.dateTime, parent.timezone, step);
-        final PrintWriter out = parent.spec.commandLine().getOut();
+        parent.printAnyHeaders(HEADERS);
 
+        final PrintWriter out = parent.spec.commandLine().getOut();
         dateTimes.forEach(dateTime -> {
             final double deltaT = parent.getBestGuessDeltaT(dateTime);
             AzimuthZenithAngle position = switch (this.algorithm) {
@@ -61,8 +62,7 @@ final class PositionCommand implements Callable<Integer> {
                         Grena3.calculateSolarPosition(dateTime, parent.latitude, parent.longitude, deltaT, pressure, temperature);
             };
 
-            String output = buildOutput(parent.format, dateTime, deltaT, position, parent.showInput);
-            out.print(output);
+            out.print(buildOutput(parent.format, dateTime, deltaT, position, parent.showInput));
         });
         out.flush();
 
@@ -107,6 +107,10 @@ final class PositionCommand implements Callable<Integer> {
                     {"dateTime":"%6$s","azimuth":%8$.5f,"zenith":%9$.5f}
                     """);
 
+    private static final Map<Boolean, String> CSV_HEADERS = Map.of(
+            true, "latitude,longitude,elevation,pressure,temperature,dateTime,deltaT,azimuth,zenith",
+            false, "dateTime,azimuth,zenith");
+
     private static final Map<Boolean, String> CSV_FORMATS = Map.of(
             true, "%.5f,%.5f,%.3f,%.3f,%.3f,%s,%.3f,%.5f,%.5f%n",
             false, "%6$s,%8$.5f,%9$.5f%n");
@@ -128,6 +132,9 @@ final class PositionCommand implements Callable<Integer> {
                     azimuth:     %8$24.4f
                     zenith:      %9$24.4f
                     """);
+
+    private static final Map<Main.Format, Map<Boolean, String>> HEADERS =
+            Map.of(Main.Format.CSV, CSV_HEADERS);
 
     private static final Map<Main.Format, Map<Boolean, String>> TEMPLATES =
             Map.of(Main.Format.CSV, CSV_FORMATS, Main.Format.JSON, JSON_FORMATS, HUMAN, HUMAN_FORMATS);
