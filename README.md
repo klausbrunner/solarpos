@@ -1,7 +1,7 @@
 # solarpos
 
 A simple command-line application to calculate topocentric solar coordinates and sunrise/sunset times, based
-on [solarpositioning](https://github.com/KlausBrunner/solarpositioning). It supports timeseries and various output
+on [solarpositioning](https://github.com/KlausBrunner/solarpositioning). It supports time series and various output
 formats for easy processing by other tools to create
 e.g. [sun-path diagrams](https://github.com/KlausBrunner/sunpath-r/blob/main/sunpath.md).
 
@@ -71,8 +71,11 @@ There is built-in support for calculating time series.
 
 ### Date and Time Formats
 
-Dates and times should be given in ISO 8601 format like 2011-12-03T10:15:30+01:00 or a subset thereof, such as
-2011-12-03 for a date without a time and timezone offset.
+Dates and times should be given in ISO 8601 format like 2011-12-03T10:15:30+01:00 or an unambiguous subset, such as:
+
+* 2025-12-03 for a local date (timezone is taken from the timezone parameter if available, else the system default is used)
+* 11:00 for a local time (today's date is assumed, timezone is determined as above)
+* 14:00:13.312Z for a UTC time (today's date is assumed, timezone is UTC unless overriden by the timezone parameter)
 
 ### Usage examples
 

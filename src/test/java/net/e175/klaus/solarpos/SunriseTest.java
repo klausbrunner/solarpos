@@ -4,9 +4,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.csv.CSVFormat;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.time.ZonedDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -29,6 +32,22 @@ class SunriseTest {
 
         assertEquals(Double.parseDouble(lat), jsonObject.get("latitude").getAsDouble());
         assertEquals(Double.parseDouble(lon), jsonObject.get("longitude").getAsDouble());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"12:00:00Z", "12:00:00+00:00", "12:00:00.000+00:00", "12:00Z", "12:00", "12:00:00"})
+    void testTimePatterns(String time) {
+        var lat = "52.0";
+        var lon = "25.0";
+
+        try (var withClock = new TestUtil.WithFixedClock(ZonedDateTime.now())) {
+            var result = TestUtil.executeIt(lat, lon, time, "--format=json", "sunrise");
+            assertEquals(0, result.returnCode());
+
+            var jsonObject = JsonParser.parseString(result.output()).getAsJsonObject();
+            var resultZdt = ZonedDateTime.parse(jsonObject.get("transit").getAsString());
+            assertEquals(withClock.get().toLocalDate(), resultZdt.toLocalDate());
+        }
     }
 
     @Test
