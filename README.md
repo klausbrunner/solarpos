@@ -75,7 +75,7 @@ Dates and times should be given in ISO 8601 format like 2011-12-03T10:15:30+01:0
 
 * 2025-12-03 for a local date (timezone is taken from the timezone parameter if available, else the system default is used)
 * 11:00 for a local time (today's date is assumed, timezone is determined as above)
-* 14:00:13.312Z for a UTC time (today's date is assumed, timezone is UTC unless overriden by the timezone parameter)
+* 14:00:13.312Z for a UTC time (today's date is assumed, timezone is UTC unless overridden by the timezone parameter)
 
 ### Usage examples
 

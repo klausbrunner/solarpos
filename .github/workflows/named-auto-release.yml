@@ -30,7 +30,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Maven verify just to be sure
-        run: mvn -ntp -B verify clean
+        run: ./mvnw -ntp -B verify clean
 
       - name: Configure Git user
         run: |
@@ -38,7 +38,7 @@ jobs:
           git config user.name "GitHub Actions"
 
       - name: Run Maven release plugin (without push)
-        run: mvn -ntp -B release:prepare -DpushChanges=false -DreleaseVersion=${{ inputs.release-version }}
+        run: ./mvnw -ntp -B release:prepare -DpushChanges=false -DreleaseVersion=${{ inputs.release-version }}
 
       - name: Push changes
         run: |
