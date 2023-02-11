@@ -12,10 +12,6 @@ on:
         required: false
         type: boolean
 
-env:
-  JAVA_VERSION: '17'
-  GRAAL_VERSION: '22.3.1'
-
 jobs:
   # Build native executable per runner
   build:
@@ -34,10 +30,15 @@ jobs:
           ref: ${{ inputs.git-ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - uses: cardinalby/export-env-action@v2
+        with:
+          envFile: '.github/workflows/env.txt'
+
       - name: 'Add Developer Command Prompt for Microsoft Visual C++ '
         uses: ilammy/msvc-dev-cmd@v1
 
-      - uses: graalvm/setup-graalvm@v1
+      - name: Set up GraalVM JDK
+        uses: graalvm/setup-graalvm@v1
         with:
           version: ${{ env.GRAAL_VERSION }}
           java-version: ${{ env.JAVA_VERSION }}
@@ -74,7 +75,12 @@ jobs:
           ref: ${{ inputs.git-ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: graalvm/setup-graalvm@v1
+      - uses: cardinalby/export-env-action@v2
+        with:
+          envFile: '.github/workflows/env.txt'
+
+      - name: Set up GraalVM JDK
+        uses: graalvm/setup-graalvm@v1
         with:
           version: ${{ env.GRAAL_VERSION }}
           java-version: ${{ env.JAVA_VERSION }}

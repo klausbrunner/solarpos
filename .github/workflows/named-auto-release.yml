@@ -1,0 +1,54 @@
+name: Create new named release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release-version:
+        description: 'Version of this new release (e.g. 1.2.3 - no SNAPSHOTs etc.)'
+        required: true
+        type: string
+
+jobs:
+  prepare-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: cardinalby/export-env-action@v2
+        with:
+          envFile: '.github/workflows/env.txt'
+
+      - name: Set up GraalVM JDK
+        uses: graalvm/setup-graalvm@v1
+        with:
+          version: ${{ env.GRAAL_VERSION }}
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'maven'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Maven verify just to be sure
+        run: mvn -ntp -B verify clean
+
+      - name: Configure Git user
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+
+      - name: Run Maven release plugin (without push)
+        run: mvn -ntp -B release:prepare -DpushChanges=false -DreleaseVersion=${{ inputs.release-version }}
+
+      - name: Push changes
+        run: |
+          git log -n 3
+          git push origin --follow-tags
+
+  call-build-and-release:
+    needs: [ prepare-release ]
+    uses: ./.github/workflows/build-and-release.yml
+    with:
+      git-ref: v${{ inputs.release-version }}
+      jreleaser-do-not-tag: true
+    secrets: inherit
