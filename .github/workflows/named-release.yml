@@ -1,4 +1,4 @@
-name: Named Release
+name: Release already tagged release
 
 on:
   workflow_dispatch:
