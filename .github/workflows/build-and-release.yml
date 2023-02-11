@@ -51,11 +51,15 @@ jobs:
 
       - name: 'Run smoke test (POSIX)'
         if: ${{ runner.os != 'Windows' }}
-        run: target/jreleaser/assemble/solarpos-native/native-image/solarpos 51.5 0 now position
+        run: |
+          target/jreleaser/assemble/solarpos-native/native-image/solarpos -V
+          target/jreleaser/assemble/solarpos-native/native-image/solarpos 51.5 0 now position
 
       - name: 'Run smoke test (Windows)'
         if: ${{ runner.os == 'Windows' }}
-        run: target\jreleaser\assemble\solarpos-native\native-image\solarpos.exe 51.5 0 now position
+        run: |
+          target\jreleaser\assemble\solarpos-native\native-image\solarpos.exe -V
+          target\jreleaser\assemble\solarpos-native\native-image\solarpos.exe 51.5 0 now position
 
       - name: 'Upload build artifacts'
         uses: actions/upload-artifact@v3
@@ -92,9 +96,6 @@ jobs:
         with:
           name: artifacts
           path: target
-
-      - name: 'List files'
-        run: ls -R
 
       - name: 'Release with JReleaser'
         env:
