@@ -4,6 +4,8 @@ import picocli.CommandLine;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 final class TestUtil {
     record Result(int returnCode, String output) {
@@ -17,5 +19,22 @@ final class TestUtil {
         String output = outputWriter.toString();
         return new Result(exitCode, output);
     }
+
+    record WithFixedClock(ZonedDateTime zonedDateTime) implements AutoCloseable {
+        WithFixedClock(ZonedDateTime zonedDateTime) {
+            this.zonedDateTime = zonedDateTime;
+            System.setProperty(DateTimeConverter.CLOCK_PROPERTY, zonedDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        }
+
+        ZonedDateTime get() {
+            return zonedDateTime;
+        }
+
+        @Override
+        public void close() {
+            System.clearProperty(DateTimeConverter.CLOCK_PROPERTY);
+        }
+    }
+
 }
 

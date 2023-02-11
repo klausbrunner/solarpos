@@ -90,12 +90,17 @@ final class PositionCommand implements Callable<Integer> {
                     i -> i.plusSeconds(step));
         } else if (dateTime instanceof LocalDateTime ldt) {
             return Stream.of(ZonedDateTime.of(ldt, overrideTz));
+        } else if (dateTime instanceof LocalTime lt) {
+            return Stream.of(ZonedDateTime.of(LocalDate.now(), lt, overrideTz));
+        } else if (dateTime instanceof OffsetTime ot) {
+            return Stream.of(ZonedDateTime.of(LocalDate.now(), ot.toLocalTime(),
+                    zoneId.isPresent() ? overrideTz : ot.getOffset()));
         } else if (dateTime instanceof ZonedDateTime zdt) {
             return Stream.of(zoneId.isPresent() ?
                     ZonedDateTime.of(zdt.toLocalDate(), zdt.toLocalTime(), overrideTz) :
                     zdt);
         } else {
-            throw new IllegalStateException("unexpected date/time type");
+            throw new IllegalStateException("unexpected date/time type " + dateTime);
         }
     }
 

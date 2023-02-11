@@ -3,9 +3,14 @@ package net.e175.klaus.solarpos;
 import com.google.gson.JsonParser;
 import org.apache.commons.csv.CSVFormat;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.time.LocalDateTime;
+import java.time.OffsetTime;
+import java.time.ZonedDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -27,6 +32,26 @@ class PositionTest {
 
         assertEquals(Double.parseDouble(lat), jsonObject.get("latitude").getAsDouble());
         assertEquals(Double.parseDouble(lon), jsonObject.get("longitude").getAsDouble());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"12:00:00Z", "12:00:00+00:00", "12:00:00.000+00:00", "12:00Z"})
+    void testTimePatterns(String time) {
+        var lat = "52.0";
+        var lon = "25.0";
+
+        var inputTime = OffsetTime.parse(time);
+        try (var withClock = new TestUtil.WithFixedClock(ZonedDateTime.now())) {
+            var result = TestUtil.executeIt(lat, lon, time, "--format=json", "position");
+            assertEquals(0, result.returnCode());
+
+            var jsonObject = JsonParser.parseString(result.output()).getAsJsonObject();
+            var resultZdt = ZonedDateTime.parse(jsonObject.get("dateTime").getAsString());
+            assertEquals(
+                    ZonedDateTime.of(LocalDateTime.of(withClock.get().toLocalDate(),
+                            inputTime.toLocalTime()), inputTime.getOffset()),
+                    resultZdt);
+        }
     }
 
     @Test

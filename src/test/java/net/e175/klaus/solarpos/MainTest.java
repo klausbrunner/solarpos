@@ -2,10 +2,7 @@ package net.e175.klaus.solarpos;
 
 import org.junit.jupiter.api.Test;
 
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.time.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -14,41 +11,59 @@ class MainTest {
 
     @Test
     void testDateParsing() {
+        final DateTimeConverter dtc = new DateTimeConverter(this.clock);
+
         assertEquals(
                 ZonedDateTime.now(clock),
-                DateTimeConverter.lenientlyParseDateTime("now", clock));
+                dtc.convert("now"));
 
         assertEquals(
                 ZonedDateTime.parse("2023-01-01T13:30:15Z"),
-                DateTimeConverter.lenientlyParseDateTime("2023-01-01T13:30:15Z", clock));
+                dtc.convert("2023-01-01T13:30:15Z"));
 
         assertEquals(
                 ZonedDateTime.parse("2023-01-01T13:30:15Z"),
-                DateTimeConverter.lenientlyParseDateTime("2023-01-01 13:30:15Z", clock));
+                dtc.convert("2023-01-01 13:30:15Z"));
 
         assertEquals(
                 ZonedDateTime.parse("2011-12-03T10:15:30+01:00[Europe/Paris]"),
-                DateTimeConverter.lenientlyParseDateTime("2011-12-03T10:15:30+01:00[Europe/Paris]", clock));
+                dtc.convert("2011-12-03T10:15:30+01:00[Europe/Paris]"));
 
         assertEquals(
                 ZonedDateTime.parse("2011-12-03T10:15:30+01:00[Europe/Paris]"),
-                DateTimeConverter.lenientlyParseDateTime("2011-12-03 10:15:30+01:00[Europe/Paris]", clock));
+                dtc.convert("2011-12-03 10:15:30+01:00[Europe/Paris]"));
 
         assertEquals(
                 ZonedDateTime.parse("2023-01-01T13:30:15+03:00"),
-                DateTimeConverter.lenientlyParseDateTime("2023-01-01T13:30:15+03:00", clock));
+                dtc.convert("2023-01-01T13:30:15+03:00"));
 
         assertEquals(
                 ZonedDateTime.parse("2023-01-01T13:30:15Z"),
-                DateTimeConverter.lenientlyParseDateTime("2023-01-01T13:30:15.000Z", clock));
+                dtc.convert("2023-01-01T13:30:15.000Z"));
+
+        assertEquals(
+                ZonedDateTime.parse("2023-01-01T13:30:00Z"),
+                dtc.convert("2023-01-01T13:30Z"));
 
         assertEquals(
                 ZonedDateTime.parse("2023-01-01T13:30:15.750Z"),
-                DateTimeConverter.lenientlyParseDateTime("2023-01-01T13:30:15.750Z", clock));
+                dtc.convert("2023-01-01T13:30:15.750Z"));
 
         assertEquals(
                 ZonedDateTime.parse("2023-01-01T13:30:15.250+03:00"),
-                DateTimeConverter.lenientlyParseDateTime("2023-01-01T13:30:15.250+03:00", clock));
+                dtc.convert("2023-01-01T13:30:15.250+03:00"));
+
+        assertEquals(
+                OffsetTime.parse("13:30:15.250+03:00"),
+                dtc.convert("13:30:15.250+03:00"));
+
+        assertEquals(
+                OffsetTime.parse("13:30:15.000+03:00"),
+                dtc.convert("13:30:15+03:00"));
+
+        assertEquals(
+                OffsetTime.parse("13:30:00.000+03:00"),
+                dtc.convert("13:30+03:00"));
     }
 
     @Test
