@@ -1,9 +1,9 @@
 # solarpos
 
 A simple command-line application to calculate topocentric solar coordinates and sunrise/sunset times, based
-on [solarpositioning](https://github.com/KlausBrunner/solarpositioning). It supports time series and various output
+on [solarpositioning](https://github.com/klausbrunner/solarpositioning). It supports time series and various output
 formats for easy processing by other tools to create
-e.g. [sun-path diagrams](https://github.com/KlausBrunner/sunpath-r/blob/main/sunpath.md).
+e.g. [sun-path diagrams](https://github.com/klausbrunner/sunpath-r/blob/main/sunpath.md).
 
 Status: **"beta"** quality. Basic functionality works without known bugs, but needs more testing and polish.
 
@@ -17,7 +17,7 @@ directly like any other command-line program. However, they are generally less t
 ## Usage
 
 For the plain Java distribution, get executable JAR
-for [latest release](https://github.com/KlausBrunner/solarpos/releases/latest) (or build it
+for [latest release](https://github.com/klausbrunner/solarpos/releases/latest) (or build it
 yourself) and run as:
 
 ```

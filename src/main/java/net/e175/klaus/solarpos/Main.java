@@ -24,13 +24,6 @@ public final class Main {
     static final DateTimeFormatter ISO_LOCAL_DATE_TIME_REDUCED = new DateTimeFormatterBuilder().parseCaseInsensitive().append(ISO_LOCAL_DATE).appendLiteral('T').append(ISO_LOCAL_TIME_REDUCED).toFormatter();
     static final DateTimeFormatter ISO_HUMAN_LOCAL_DATE_TIME_REDUCED = new DateTimeFormatterBuilder().parseCaseInsensitive().append(ISO_LOCAL_DATE).appendLiteral(' ').append(ISO_LOCAL_TIME_REDUCED).toFormatter();
 
-    void printAnyHeaders(Map<Main.Format, Map<Boolean, String>> headersMap) {
-        if (this.headers && headersMap.containsKey(this.format)) {
-            var headers = headersMap.get(this.format).get(this.showInput);
-            spec.commandLine().getOut().println(headers);
-        }
-    }
-
     enum Format {HUMAN, CSV, JSON}
 
     @CommandLine.Spec
@@ -71,6 +64,13 @@ public final class Main {
 
     double getBestGuessDeltaT(ZonedDateTime dateTime) {
         return Double.isNaN(deltaT) ? DeltaT.estimate(dateTime.toLocalDate()) : deltaT;
+    }
+
+    void printAnyHeaders(Map<Main.Format, Map<Boolean, String>> headersMap) {
+        if (this.headers && headersMap.containsKey(this.format)) {
+            var headers = headersMap.get(this.format).get(this.showInput);
+            spec.commandLine().getOut().println(headers);
+        }
     }
 
     static CommandLine createCommandLine() {
