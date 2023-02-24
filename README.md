@@ -1,9 +1,8 @@
 # solarpos
 
 A simple command-line application to calculate topocentric solar coordinates and sunrise/sunset times, based
-on [solarpositioning](https://github.com/klausbrunner/solarpositioning). It supports time series and various output
-formats for easy processing by other tools to create
-e.g. [sun-path diagrams](https://github.com/klausbrunner/sunpath-r/blob/main/sunpath.md).
+on [solarpositioning](https://github.com/klausbrunner/solarpositioning), a library of high-quality solar 
+positioning algorithms. It supports time series and output formats like JSON and CSV for easy processing by other tools.
 
 Status: **"beta"** quality. Basic functionality works without known bugs, but needs more testing and polish.
 
@@ -98,3 +97,4 @@ output, in local timezone and using a delta T estimate:
 solarpos 52.5219 13.4132 2023-01-15 --timezone Europe/Berlin --deltat --format=csv position --step=600
 ```
 
+Sample R notebooks demonstrating how to use timeseries output to create diagrams can be found at [klausbrunner/sunpath-r](https://github.com/klausbrunner/sunpath-r/blob/main/sunpath.md).
