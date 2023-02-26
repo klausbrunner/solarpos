@@ -97,6 +97,11 @@ jobs:
           name: artifacts
           path: target
 
+      - name: 'List files'
+        run: |
+          sudo apt-get -y install tree
+          tree
+
       - name: 'Release with JReleaser'
         env:
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
