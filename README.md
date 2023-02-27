@@ -6,24 +6,31 @@ positioning algorithms. It supports time series and output formats like JSON and
 
 Status: **"beta"** quality. Basic functionality works without known bugs, but needs more testing and polish.
 
-## Requirements
+## Requirements and installation
 
-Java 17 or newer. (If unsure how to get a recent Java version, try [Adoptium](https://adoptium.net/).)
+Solarpos is a Java application, requiring Java 17 or newer. See the [latest release](https://github.com/klausbrunner/solarpos/releases/latest) or build yourself from source using Maven.
 
-For some platforms, native builds are now available. These don't require a separate Java runtime and can be started
-directly like any other command-line program. However, they are generally less tested than the JAR distribution.
+### Native builds
+
+Native builds are available for some platforms. These do not require a Java runtime and can be used like any other command-line program.
+
+### macOS: Homebrew installation (experimental)
+
+A [Homebrew](https://brew.sh) tap for solarpos is available. This takes care of downloading and all requirements automatically with a single command:
+
+```sh
+$ brew install klausbrunner/tap/solarpos
+```
 
 ## Usage
 
-For the plain Java distribution, get executable JAR
-for [latest release](https://github.com/klausbrunner/solarpos/releases/latest) (or build it
-yourself) and run as:
+For the plain Java distribution, you may have to use the java command:
 
 ```
 java -jar solarpos.jar
 ```
 
-Native builds can be started directly:
+Native (and homebrew) builds can be started directly:
 
 ```
 solarpos
