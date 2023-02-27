@@ -156,6 +156,11 @@
                             </nativeImage>
                         </assemble>
                         <distributions>
+                            <solarpos>
+                                <brew>
+                                    <active>RELEASE</active>
+                                </brew>
+                            </solarpos>
                             <solarpos-native>
                                 <type>BINARY</type>
                                 <artifacts>
@@ -180,6 +185,14 @@
                                 </artifacts>
                             </solarpos-native>
                         </distributions>
+                        <packagers>
+                            <brew>
+                                <active>ALWAYS</active>
+                                <tap>
+                                    <name>homebrew-solarpos</name>
+                                </tap>
+                            </brew>
+                        </packagers>
                         <release>
                             <github>
                                 <owner>klausbrunner</owner>

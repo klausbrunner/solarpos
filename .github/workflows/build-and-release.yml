@@ -104,6 +104,6 @@ jobs:
 
       - name: 'Release with JReleaser'
         env:
-          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           JRELEASER_SKIP_TAG: ${{ inputs.jreleaser-do-not-tag }}
         run: ./mvnw -ntp -B jreleaser:full-release
