@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.e175.klaus</groupId>
     <artifactId>solarpos</artifactId>
-    <version>0.1.2-SNAPSHOT</version>
+    <version>0.1.2</version>
 
     <name>solarpos</name>
     <description>A simple command-line application to calculate topocentric solar coordinates and sunrise/sunset
@@ -39,7 +38,7 @@
         <connection>scm:git:git@github.com:klausbrunner/solarpos.git</connection>
         <developerConnection>scm:git:git@github.com:klausbrunner/solarpos.git</developerConnection>
         <url>https://github.com/klausbrunner/solarpos/tree/${project.scm.tag}</url>
-        <tag>HEAD</tag>
+        <tag>v0.1.2</tag>
     </scm>
 
     <build>
@@ -74,15 +73,13 @@
                     <createDependencyReducedPom>false</createDependencyReducedPom>
                     <outputDirectory>${project.build.outputDirectory}</outputDirectory>
                     <transformers>
-                        <transformer
-                                implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                             <manifestEntries>
                                 <Main-Class>${app.main.class}</Main-Class>
                                 <Implementation-Version>${project.version}</Implementation-Version>
                             </manifestEntries>
                         </transformer>
-                        <transformer
-                                implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
                             <resource>MANIFEST.MF</resource>
                         </transformer>
                     </transformers>
