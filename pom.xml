@@ -4,7 +4,7 @@
 
     <groupId>net.e175.klaus</groupId>
     <artifactId>solarpos</artifactId>
-    <version>0.1.3-SNAPSHOT</version>
+    <version>0.1.3</version>
 
     <name>solarpos</name>
     <description>A simple command-line application to calculate topocentric solar coordinates and sunrise/sunset
@@ -38,7 +38,7 @@
         <connection>scm:git:git@github.com:klausbrunner/solarpos.git</connection>
         <developerConnection>scm:git:git@github.com:klausbrunner/solarpos.git</developerConnection>
         <url>https://github.com/klausbrunner/solarpos/tree/${project.scm.tag}</url>
-        <tag>HEAD</tag>
+        <tag>v0.1.3</tag>
     </scm>
 
     <build>
