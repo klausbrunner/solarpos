@@ -156,7 +156,7 @@
                             </nativeImage>
                         </assemble>
                         <distributions>
-                            <solarpos-native> <!-- this might be redundant in jreleaser 1.x? -->
+                            <solarpos-native>
                                 <type>BINARY</type>
                                 <artifacts>
                                     <artifact>
@@ -170,6 +170,12 @@
                                             target/jreleaser/assemble/{{distributionName}}/native-image/${project.artifactId}-${project.version}-osx-x86_64.zip
                                         </path>
                                         <platform>osx-x86_64</platform>
+                                    </artifact>
+                                    <artifact>
+                                        <path>
+                                            target/jreleaser/assemble/{{distributionName}}/native-image/${project.artifactId}-${project.version}-linux-x86_64.zip
+                                        </path>
+                                        <platform>linux-x86_64</platform>
                                     </artifact>
                                 </artifacts>
                             </solarpos-native>
