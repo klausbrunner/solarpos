@@ -2,7 +2,6 @@ package net.e175.klaus.solarpos;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.apache.commons.csv.CSVFormat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -70,7 +69,7 @@ class SunriseTest {
         var result = TestUtil.executeIt(lat, lon, dateTime, "--format=csv", "--deltat", "--show-inputs", "--timezone=UTC", "sunrise");
         assertEquals(0, result.returnCode());
 
-        var outputRecords = CSVFormat.DEFAULT.parse(new StringReader(result.output())).getRecords();
+        var outputRecords = TestUtil.CSV.parse(new StringReader(result.output())).getRecords();
         assertEquals(365, outputRecords.size());
         assertEquals("2023-01-01T00:00:00Z", outputRecords.get(0).get(2));
         assertEquals("2023-12-31T00:00:00Z", outputRecords.get(364).get(2));
@@ -85,7 +84,7 @@ class SunriseTest {
         var result = TestUtil.executeIt(lat, lon, dateTime, "--format=csv", "--deltat", "--show-inputs", "--timezone=UTC", "sunrise");
         assertEquals(0, result.returnCode());
 
-        var outputRecords = CSVFormat.DEFAULT.parse(new StringReader(result.output())).getRecords();
+        var outputRecords = TestUtil.CSV.parse(new StringReader(result.output())).getRecords();
         assertEquals(28, outputRecords.size());
         assertEquals("2023-02-01T00:00:00Z", outputRecords.get(0).get(2));
         assertEquals("2023-02-28T00:00:00Z", outputRecords.get(27).get(2));
@@ -100,7 +99,7 @@ class SunriseTest {
         var result = TestUtil.executeIt(lat, lon, dateTime, "--headers", "--format=csv", "--deltat", "--show-inputs", "--timezone=UTC", "sunrise");
         assertEquals(0, result.returnCode());
 
-        var outputRecords = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(new StringReader(result.output())).getRecords();
+        var outputRecords = TestUtil.CSV_WITH_HEADER.parse(new StringReader(result.output())).getRecords();
         assertEquals(28, outputRecords.size());
         assertEquals("2023-02-01T00:00:00Z", outputRecords.get(0).get("dateTime"));
         assertEquals("2023-02-28T00:00:00Z", outputRecords.get(27).get("dateTime"));
