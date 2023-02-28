@@ -4,19 +4,19 @@ A simple command-line application to calculate topocentric solar coordinates and
 on [solarpositioning](https://github.com/klausbrunner/solarpositioning), a library of high-quality solar 
 positioning algorithms. It supports time series and output formats like JSON and CSV for easy processing by other tools.
 
-Status: **"beta"** quality. Basic functionality works without known bugs, but needs more testing and polish.
+Status: "beta" quality. Current functionality works without known bugs, but needs more testing and polish.
 
 ## Requirements and installation
 
-Solarpos is a Java application, requiring Java 17 or newer. See the [latest release](https://github.com/klausbrunner/solarpos/releases/latest) or build yourself from source using Maven.
+Solarpos is a Java application, requiring Java 17 or newer. See the [latest release](https://github.com/klausbrunner/solarpos/releases/latest) or build it from source using Maven.
 
 ### Native builds
 
 Native builds are available for some platforms. These do not require a Java runtime and can be used like any other command-line program.
 
-### macOS: Homebrew installation (experimental)
+### macOS: Homebrew installation
 
-A [Homebrew](https://brew.sh) tap for solarpos is available. This takes care of downloading and all requirements automatically with a single command:
+A [Homebrew](https://brew.sh) formula for solarpos is available in a separate tap. This takes care of downloading and all requirements automatically with a single command:
 
 ```sh
 $ brew install klausbrunner/tap/solarpos
@@ -82,6 +82,18 @@ Dates and times should be given in ISO 8601 format like 2011-12-03T10:15:30+01:0
 * 2025-12-03 for a local date (timezone is taken from the timezone parameter if available, else the system default is used)
 * 11:00 for a local time (today's date is assumed, timezone is determined as above)
 * 14:00:13.312Z for a UTC time (today's date is assumed, timezone is UTC unless overridden by the timezone parameter)
+
+### Timezones
+
+Timezones may be specified as part of the time specification or with the separate --timezone parameter. The format variants are:
+
+* A fixed offset specified in minutes and hours, e.g. "-03:00".
+* The "Z" shorthand for UTC (fixed zero offset).
+* A TZ database name, such as "Asia/Singapore" (see the [Wikipedia article](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for a full list). If one of these is used, daylight savings time (if any) will be applied automatically according to the location's rules. 
+
+### Delta T
+
+The difference between universal and terrestrial time affects all solar position calculations. This is an observed value that cannot be reliably predicted into the (far) future, but past values are known at least for the last few centuries and decent estimates can be given for the next few years. Use the delta-t parameter without a value to request such an estimate. See the documentation of [solarpositioning](https://github.com/klausbrunner/solarpositioning) for more detail.
 
 ### Usage examples
 
