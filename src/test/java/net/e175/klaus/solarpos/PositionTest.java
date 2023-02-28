@@ -1,7 +1,6 @@
 package net.e175.klaus.solarpos;
 
 import com.google.gson.JsonParser;
-import org.apache.commons.csv.CSVFormat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -94,9 +93,9 @@ class PositionTest {
         var result = TestUtil.executeIt(lat, lon, dateTime, "--format=csv", "--deltat=69", "--timezone=UTC", "position", "--step=7200");
         assertEquals(0, result.returnCode());
 
-        var outputRecords = CSVFormat.DEFAULT.parse(new StringReader(result.output()));
+        var outputRecords = TestUtil.CSV.parse(new StringReader(result.output()));
 
-        var referenceRecords = CSVFormat.DEFAULT.parse(new StringReader("""
+        var referenceRecords = TestUtil.CSV.parse(new StringReader("""
                 2003-10-17T00:00:00Z,38.87778,131.09385
                 2003-10-17T02:00:00Z,69.90910,116.13739
                 2003-10-17T04:00:00Z,94.54534,97.98688
@@ -122,7 +121,7 @@ class PositionTest {
         var result = TestUtil.executeIt(lat, lon, dateTime, "--format=csv", "--deltat=69", "--timezone=UTC", "position", "--step=7200");
         assertEquals(0, result.returnCode());
 
-        var outputRecords = CSVFormat.DEFAULT.parse(new StringReader(result.output())).getRecords();
+        var outputRecords = TestUtil.CSV.parse(new StringReader(result.output())).getRecords();
 
         assertEquals(4380, outputRecords.size());
         assertEquals("2003-01-01T00:00:00Z", outputRecords.get(0).get(0));
@@ -151,7 +150,7 @@ class PositionTest {
         var result = TestUtil.executeIt(lat, lon, dateTime, "--format=csv", "--deltat=69", "--timezone=UTC", "position", "--step=7200");
         assertEquals(0, result.returnCode());
 
-        var outputRecords = CSVFormat.DEFAULT.parse(new StringReader(result.output())).getRecords();
+        var outputRecords = TestUtil.CSV.parse(new StringReader(result.output())).getRecords();
 
         assertEquals(348, outputRecords.size());
         assertEquals("2024-02-01T00:00:00Z", outputRecords.get(0).get(0));
@@ -167,7 +166,7 @@ class PositionTest {
         var result = TestUtil.executeIt(lat, lon, dateTime, "--headers", "--format=csv", "--deltat=69", "--show-inputs", "--timezone=UTC", "position", "--step=7200");
         assertEquals(0, result.returnCode());
 
-        var outputRecords = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(new StringReader(result.output())).getRecords();
+        var outputRecords = TestUtil.CSV_WITH_HEADER.parse(new StringReader(result.output())).getRecords();
 
         assertEquals(348, outputRecords.size());
         assertEquals("2024-02-01T00:00:00Z", outputRecords.get(0).get("dateTime"));

@@ -1,5 +1,6 @@
 package net.e175.klaus.solarpos;
 
+import org.apache.commons.csv.CSVFormat;
 import picocli.CommandLine;
 
 import java.io.PrintWriter;
@@ -8,6 +9,9 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 final class TestUtil {
+    static final CSVFormat CSV_WITH_HEADER = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).build();
+    static final CSVFormat CSV = CSVFormat.DEFAULT;
+
     record Result(int returnCode, String output) {
     }
 
