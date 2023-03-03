@@ -1,8 +1,6 @@
 package net.e175.klaus.solarpos;
 
-import net.e175.klaus.solarpositioning.SPA;
-import net.e175.klaus.solarpositioning.SunriseTransitSet;
-import picocli.CommandLine;
+import static net.e175.klaus.solarpos.Main.Format.HUMAN;
 
 import java.io.PrintWriter;
 import java.time.*;
@@ -12,80 +10,94 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
-
-import static net.e175.klaus.solarpos.Main.Format.HUMAN;
+import net.e175.klaus.solarpositioning.SPA;
+import net.e175.klaus.solarpositioning.SunriseTransitSet;
+import picocli.CommandLine;
 
 @CommandLine.Command(name = "sunrise", description = "calculates sunrise, transit, and sunset")
 final class SunriseCommand implements Callable<Integer> {
-    @CommandLine.ParentCommand
-    Main parent;
+  @CommandLine.ParentCommand Main parent;
 
-    @Override
-    public Integer call() {
-        parent.validate();
+  @Override
+  public Integer call() {
+    parent.validate();
 
-        final Stream<ZonedDateTime> dateTimes = getDatetimes(parent.dateTime, parent.timezone);
-        parent.printAnyHeaders(HEADERS);
+    final Stream<ZonedDateTime> dateTimes = getDatetimes(parent.dateTime, parent.timezone);
+    parent.printAnyHeaders(HEADERS);
 
-        final PrintWriter out = parent.spec.commandLine().getOut();
-        dateTimes.forEach(dateTime -> {
-            final double deltaT = parent.getBestGuessDeltaT(dateTime);
-            SunriseTransitSet result = SPA.calculateSunriseTransitSet(dateTime, parent.latitude, parent.longitude,
-                    deltaT);
-            out.print(buildOutput(parent.format, dateTime, deltaT, result, parent.showInput));
+    final PrintWriter out = parent.spec.commandLine().getOut();
+    dateTimes.forEach(
+        dateTime -> {
+          final double deltaT = parent.getBestGuessDeltaT(dateTime);
+          SunriseTransitSet result =
+              SPA.calculateSunriseTransitSet(dateTime, parent.latitude, parent.longitude, deltaT);
+          out.print(buildOutput(parent.format, dateTime, deltaT, result, parent.showInput));
         });
-        out.flush();
+    out.flush();
 
-        return 0;
+    return 0;
+  }
+
+  static Stream<ZonedDateTime> getDatetimes(TemporalAccessor dateTime, Optional<ZoneId> zoneId) {
+    final ZoneId overrideTz = zoneId.orElse(ZoneId.systemDefault());
+
+    if (dateTime instanceof Year y) {
+      return Stream.iterate(
+          ZonedDateTime.of(
+              LocalDate.of(y.getValue(), Month.JANUARY, 1), LocalTime.of(0, 0), overrideTz),
+          i -> i.getYear() == y.getValue(),
+          i -> i.plusDays(1));
+    } else if (dateTime instanceof YearMonth ym) {
+      return Stream.iterate(
+          ZonedDateTime.of(
+              LocalDate.of(ym.getYear(), ym.getMonth(), 1), LocalTime.of(0, 0), overrideTz),
+          i -> i.getMonth() == ym.getMonth(),
+          i -> i.plusDays(1));
+    } else if (dateTime instanceof LocalDate ld) {
+      return Stream.of(ZonedDateTime.of(ld, LocalTime.of(0, 0), overrideTz));
+    } else if (dateTime instanceof LocalDateTime ldt) {
+      return Stream.of(ZonedDateTime.of(ldt, overrideTz));
+    } else if (dateTime instanceof LocalTime lt) {
+      return Stream.of(ZonedDateTime.of(LocalDate.now(), lt, overrideTz));
+    } else if (dateTime instanceof OffsetTime ot) {
+      return Stream.of(
+          ZonedDateTime.of(
+              LocalDate.now(), ot.toLocalTime(), zoneId.isPresent() ? overrideTz : ot.getOffset()));
+    } else if (dateTime instanceof ZonedDateTime zdt) {
+      return Stream.of(
+          zoneId.isPresent()
+              ? ZonedDateTime.of(zdt.toLocalDate(), zdt.toLocalTime(), overrideTz)
+              : zdt);
+    } else {
+      throw new IllegalStateException("unexpected date/time type " + dateTime);
     }
+  }
 
-    static Stream<ZonedDateTime> getDatetimes(TemporalAccessor dateTime, Optional<ZoneId> zoneId) {
-        final ZoneId overrideTz = zoneId.orElse(ZoneId.systemDefault());
-
-        if (dateTime instanceof Year y) {
-            return Stream.iterate(ZonedDateTime.of(LocalDate.of(y.getValue(), Month.JANUARY, 1), LocalTime.of(0, 0), overrideTz),
-                    i -> i.getYear() == y.getValue(),
-                    i -> i.plusDays(1));
-        } else if (dateTime instanceof YearMonth ym) {
-            return Stream.iterate(ZonedDateTime.of(LocalDate.of(ym.getYear(), ym.getMonth(), 1), LocalTime.of(0, 0), overrideTz),
-                    i -> i.getMonth() == ym.getMonth(),
-                    i -> i.plusDays(1));
-        } else if (dateTime instanceof LocalDate ld) {
-            return Stream.of(ZonedDateTime.of(ld, LocalTime.of(0, 0), overrideTz));
-        } else if (dateTime instanceof LocalDateTime ldt) {
-            return Stream.of(ZonedDateTime.of(ldt, overrideTz));
-        } else if (dateTime instanceof LocalTime lt) {
-            return Stream.of(ZonedDateTime.of(LocalDate.now(), lt, overrideTz));
-        } else if (dateTime instanceof OffsetTime ot) {
-            return Stream.of(ZonedDateTime.of(LocalDate.now(), ot.toLocalTime(),
-                    zoneId.isPresent() ? overrideTz : ot.getOffset()));
-        } else if (dateTime instanceof ZonedDateTime zdt) {
-            return Stream.of(zoneId.isPresent() ?
-                    ZonedDateTime.of(zdt.toLocalDate(), zdt.toLocalTime(), overrideTz) :
-                    zdt);
-        } else {
-            throw new IllegalStateException("unexpected date/time type " + dateTime);
-        }
-    }
-
-    private static final Map<Boolean, String> JSON_FORMATS = Map.of(
-            true, """
+  private static final Map<Boolean, String> JSON_FORMATS =
+      Map.of(
+          true,
+              """
                     {"latitude":%.5f,"longitude":%5f,"dateTime":"%s","deltaT":%.3f,"sunrise":"%s","transit":"%s","sunset":"%s"}
                     """,
-            false, """
+          false,
+              """
                     {"sunrise":"%5$s","transit":"%6$s","sunset":"%7$s"}
                     """);
 
-    private static final Map<Boolean, String> CSV_HEADERS = Map.of(
-            true, "latitude,longitude,dateTime,deltaT,sunrise,transit,sunset",
-            false, "sunrise,transit,sunset");
+  private static final Map<Boolean, String> CSV_HEADERS =
+      Map.of(
+          true, "latitude,longitude,dateTime,deltaT,sunrise,transit,sunset",
+          false, "sunrise,transit,sunset");
 
-    private static final Map<Boolean, String> CSV_FORMATS = Map.of(
-            true, "%.5f,%.5f,%s,%.3f,%s,%s,%s%n",
-            false, "%5$s,%6$s,%7$s%n");
+  private static final Map<Boolean, String> CSV_FORMATS =
+      Map.of(
+          true, "%.5f,%.5f,%s,%.3f,%s,%s,%s%n",
+          false, "%5$s,%6$s,%7$s%n");
 
-    private static final Map<Boolean, String> HUMAN_FORMATS = Map.of(
-            true, """
+  private static final Map<Boolean, String> HUMAN_FORMATS =
+      Map.of(
+          true,
+              """
                     latitude:    %24.4f
                     longitude:   %24.4f
                     date/time:  %s
@@ -94,28 +106,37 @@ final class SunriseCommand implements Callable<Integer> {
                     transit:    %s
                     sunset:     %s
                     """,
-            false, """
+          false,
+              """
                     sunrise:    %5$s
                     transit:    %6$s
                     sunset:     %7$s
                     """);
 
-    private static final Map<Main.Format, Map<Boolean, String>> HEADERS =
-            Map.of(Main.Format.CSV, CSV_HEADERS);
+  private static final Map<Main.Format, Map<Boolean, String>> HEADERS =
+      Map.of(Main.Format.CSV, CSV_HEADERS);
 
-    private static final Map<Main.Format, Map<Boolean, String>> TEMPLATES =
-            Map.of(Main.Format.CSV, CSV_FORMATS, Main.Format.JSON, JSON_FORMATS, HUMAN, HUMAN_FORMATS);
+  private static final Map<Main.Format, Map<Boolean, String>> TEMPLATES =
+      Map.of(Main.Format.CSV, CSV_FORMATS, Main.Format.JSON, JSON_FORMATS, HUMAN, HUMAN_FORMATS);
 
-    private String buildOutput(Main.Format format, ZonedDateTime dateTime, double deltaT, SunriseTransitSet result, boolean showInput) {
-        String template = TEMPLATES.get(format).get(showInput);
-        DateTimeFormatter dtf = (format == HUMAN) ? Main.ISO_HUMAN_LOCAL_DATE_TIME_REDUCED : Main.ISO_LOCAL_DATE_TIME_REDUCED;
-        return template.formatted(parent.latitude,
-                parent.longitude,
-                dtf.format(dateTime),
-                deltaT,
-                dtf.format(result.getSunrise()),
-                dtf.format(result.getTransit()),
-                dtf.format(result.getSunset()));
-    }
-
+  private String buildOutput(
+      Main.Format format,
+      ZonedDateTime dateTime,
+      double deltaT,
+      SunriseTransitSet result,
+      boolean showInput) {
+    String template = TEMPLATES.get(format).get(showInput);
+    DateTimeFormatter dtf =
+        (format == HUMAN)
+            ? Main.ISO_HUMAN_LOCAL_DATE_TIME_REDUCED
+            : Main.ISO_LOCAL_DATE_TIME_REDUCED;
+    return template.formatted(
+        parent.latitude,
+        parent.longitude,
+        dtf.format(dateTime),
+        deltaT,
+        dtf.format(result.getSunrise()),
+        dtf.format(result.getTransit()),
+        dtf.format(result.getSunset()));
+  }
 }
