@@ -6,6 +6,12 @@
     <artifactId>solarpos</artifactId>
     <version>0.1.4-SNAPSHOT</version>
 
+    <parent>
+        <groupId>org.basepom</groupId>
+        <artifactId>basepom-minimal</artifactId>
+        <version>52</version>
+    </parent>
+
     <name>solarpos</name>
     <description>A simple command-line application to calculate topocentric solar coordinates and sunrise/sunset
         times.
@@ -27,11 +33,11 @@
     </developers>
 
     <properties>
-        <app.main.class>net.e175.klaus.solarpos.Main</app.main.class>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>17</java.version>
-        <maven.compiler.release>${java.version}</maven.compiler.release>
+        <basepom.shaded.main-class>net.e175.klaus.solarpos.Main</basepom.shaded.main-class>
+        <project.build.targetJdk>17</project.build.targetJdk>
         <picocli.version>4.7.1</picocli.version>
+        <basepom.check.skip-dependency>true</basepom.check.skip-dependency>
+        <basepom.check.fail-checkstyle>false</basepom.check.fail-checkstyle>
     </properties>
 
     <scm>
@@ -42,16 +48,10 @@
     </scm>
 
     <build>
-        <!-- The idea here is to
-                1) build an executable fat (shaded) JAR as the primary output
-                2) optionally build a native image using GraalVM (if available)
-                3) build "assemblies" (archives) for distribution using JReleaser
-         -->
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.10.1</version>
                 <configuration>
                     <annotationProcessorPaths>
                         <path>
@@ -67,36 +67,7 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.4.1</version>
-                <configuration>
-                    <createDependencyReducedPom>false</createDependencyReducedPom>
-                    <outputDirectory>${project.build.outputDirectory}</outputDirectory>
-                    <transformers>
-                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                            <manifestEntries>
-                                <Main-Class>${app.main.class}</Main-Class>
-                                <Implementation-Version>${project.version}</Implementation-Version>
-                            </manifestEntries>
-                        </transformer>
-                        <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
-                            <resource>MANIFEST.MF</resource>
-                        </transformer>
-                    </transformers>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>3.0.0-M7</version>
                 <configuration>
                     <tagNameFormat>v@{project.version}</tagNameFormat>
                     <scmCommentPrefix>build: [maven-release-plugin] [skip ci]</scmCommentPrefix>
@@ -113,7 +84,7 @@
                         <project>
                             <copyright>2023 Klaus A. Brunner</copyright>
                             <java>
-                                <mainClass>${app.main.class}</mainClass>
+                                <mainClass>${basepom.shaded.main-class}</mainClass>
                             </java>
                             <stereotype>CLI</stereotype>
                         </project>
@@ -134,7 +105,7 @@
                                         <format>ZIP</format>
                                     </formats>
                                     <mainJar>
-                                        <path>target/${project.artifactId}-${project.version}.jar</path>
+                                        <path>target/${project.artifactId}-${project.version}-shaded.jar</path>
                                     </mainJar>
                                 </solarpos>
                             </javaArchive>
@@ -143,7 +114,7 @@
                                     <active>ALWAYS</active>
                                     <executable>${project.artifactId}</executable>
                                     <mainJar>
-                                        <path>target/${project.artifactId}-${project.version}.jar</path>
+                                        <path>target/${project.artifactId}-${project.version}-shaded.jar</path>
                                     </mainJar>
                                     <args>
                                         <arg>--no-fallback</arg>
@@ -193,11 +164,6 @@
                         </release>
                     </jreleaser>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M9</version>
             </plugin>
         </plugins>
     </build>
