@@ -15,7 +15,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 class PositionTest {
 
   @Test
-  void testBasicUsageWithJson() {
+  void basicUsageWithJson() {
     var lat = "52.0";
     var lon = "25.0";
     var dateTime = "2022-10-17T12:00:00Z";
@@ -36,7 +36,7 @@ class PositionTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"12:00:00Z", "12:00:00+00:00", "12:00:00.000+00:00", "12:00Z"})
-  void testTimePatterns(String time) {
+  void timePatterns(String time) {
     var lat = "52.0";
     var lon = "25.0";
 
@@ -56,7 +56,7 @@ class PositionTest {
   }
 
   @Test
-  void testBasicUsageWithJsonGrena() {
+  void basicUsageWithJsonGrena() {
     var lat = "52.0";
     var lon = "25.0";
     var dateTime = "2022-10-17T12:00:00Z";
@@ -80,7 +80,7 @@ class PositionTest {
   }
 
   @Test
-  void testBasicUsageWithCsv() {
+  void basicUsageWithCsv() {
     var lat = "52.0";
     var lon = "25.0";
     var dateTime = "2003-10-17T12:00:00Z";
@@ -100,7 +100,7 @@ class PositionTest {
   }
 
   @Test
-  void testSeriesUsageWithCsv() throws IOException {
+  void seriesUsageWithCsv() throws IOException {
     var lat = "52.0";
     var lon = "25.0";
     var dateTime = "2003-10-17";
@@ -140,7 +140,7 @@ class PositionTest {
   }
 
   @Test
-  void testFullYearWithCsv() throws IOException {
+  void fullYearWithCsv() throws IOException {
     var lat = "52.0";
     var lon = "25.0";
     var dateTime = "2003";
@@ -165,7 +165,7 @@ class PositionTest {
   }
 
   @Test
-  void testRejectsInvalidStepValues() {
+  void rejectsInvalidStepValues() {
     var lat = "52.0";
     var lon = "25.0";
     var dateTime = "2003";
@@ -178,7 +178,7 @@ class PositionTest {
   }
 
   @Test
-  void testFullMonthWithCsv() throws IOException {
+  void fullMonthWithCsv() throws IOException {
     var lat = "52.0";
     var lon = "25.0";
     var dateTime = "2024-02";
@@ -203,7 +203,7 @@ class PositionTest {
   }
 
   @Test
-  void testFullMonthWithCsvHeaders() throws IOException {
+  void fullMonthWithCsvHeaders() throws IOException {
     var lat = "52.0";
     var lon = "25.0";
     var dateTime = "2024-02";

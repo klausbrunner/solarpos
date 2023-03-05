@@ -1,6 +1,7 @@
 package net.e175.klaus.solarpos;
 
 import static net.e175.klaus.solarpos.Main.Format.HUMAN;
+import static net.e175.klaus.solarpos.Main.Format.JSON;
 
 import java.io.PrintWriter;
 import java.time.*;
@@ -77,22 +78,22 @@ final class SunriseCommand implements Callable<Integer> {
       Map.of(
           true,
               """
-                    {"latitude":%.5f,"longitude":%5f,"dateTime":"%s","deltaT":%.3f,"sunrise":"%s","transit":"%s","sunset":"%s"}
+                    {"latitude":%.5f,"longitude":%5f,"dateTime":%s,"deltaT":%.3f,"type":"%s","sunrise":%s,"transit":%s,"sunset":%s}
                     """,
           false,
               """
-                    {"sunrise":"%5$s","transit":"%6$s","sunset":"%7$s"}
+                    {"type":"%5$s","sunrise":%6$s,"transit":%7$s,"sunset":%8$s}
                     """);
 
   private static final Map<Boolean, String> CSV_HEADERS =
       Map.of(
-          true, "latitude,longitude,dateTime,deltaT,sunrise,transit,sunset",
-          false, "sunrise,transit,sunset");
+          true, "latitude,longitude,dateTime,deltaT,type,sunrise,transit,sunset",
+          false, "type,sunrise,transit,sunset");
 
   private static final Map<Boolean, String> CSV_FORMATS =
       Map.of(
-          true, "%.5f,%.5f,%s,%.3f,%s,%s,%s%n",
-          false, "%5$s,%6$s,%7$s%n");
+          true, "%.5f,%.5f,%s,%.3f,%s,%s,%s,%s%n",
+          false, "%5$s,%6$s,%7$s,%8$s%n");
 
   private static final Map<Boolean, String> HUMAN_FORMATS =
       Map.of(
@@ -102,22 +103,27 @@ final class SunriseCommand implements Callable<Integer> {
                     longitude:   %24.4f
                     date/time:  %s
                     delta T:     %22.2f
+                    type:       %s
                     sunrise:    %s
                     transit:    %s
                     sunset:     %s
                     """,
           false,
               """
-                    sunrise:    %5$s
-                    transit:    %6$s
-                    sunset:     %7$s
+                    type:       %5$s
+                    sunrise:    %6$s
+                    transit:    %7$s
+                    sunset:     %8$s
                     """);
 
   private static final Map<Main.Format, Map<Boolean, String>> HEADERS =
       Map.of(Main.Format.CSV, CSV_HEADERS);
 
   private static final Map<Main.Format, Map<Boolean, String>> TEMPLATES =
-      Map.of(Main.Format.CSV, CSV_FORMATS, Main.Format.JSON, JSON_FORMATS, HUMAN, HUMAN_FORMATS);
+      Map.of(Main.Format.CSV, CSV_FORMATS, JSON, JSON_FORMATS, HUMAN, HUMAN_FORMATS);
+
+  private static final Map<Main.Format, String> NULL_DATE =
+      Map.of(Main.Format.CSV, "", JSON, "null", HUMAN, "none");
 
   private String buildOutput(
       Main.Format format,
@@ -126,17 +132,32 @@ final class SunriseCommand implements Callable<Integer> {
       SunriseTransitSet result,
       boolean showInput) {
     String template = TEMPLATES.get(format).get(showInput);
+
+    return template.formatted(
+        parent.latitude,
+        parent.longitude,
+        formatDate(format, dateTime),
+        deltaT,
+        formatType(format, result.getType()),
+        formatDate(format, result.getSunrise()),
+        formatDate(format, result.getTransit()),
+        formatDate(format, result.getSunset()));
+  }
+
+  private static String formatDate(Main.Format format, TemporalAccessor temporal) {
+    if (temporal == null) {
+      return NULL_DATE.get(format);
+    }
+
     DateTimeFormatter dtf =
         (format == HUMAN)
             ? Main.ISO_HUMAN_LOCAL_DATE_TIME_REDUCED
             : Main.ISO_LOCAL_DATE_TIME_REDUCED;
-    return template.formatted(
-        parent.latitude,
-        parent.longitude,
-        dtf.format(dateTime),
-        deltaT,
-        dtf.format(result.getSunrise()),
-        dtf.format(result.getTransit()),
-        dtf.format(result.getSunset()));
+
+    return format == JSON ? '"' + dtf.format(temporal) + '"' : dtf.format(temporal);
+  }
+
+  private static Object formatType(Main.Format format, SunriseTransitSet.Type type) {
+    return format == HUMAN ? type.toString().toLowerCase().replace('_', ' ') : type;
   }
 }
