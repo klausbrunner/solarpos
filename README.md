@@ -4,7 +4,7 @@ A simple command-line application to calculate topocentric solar coordinates and
 on [solarpositioning](https://github.com/klausbrunner/solarpositioning), a library of high-quality solar
 positioning algorithms. It supports time series and output formats like JSON and CSV for easy processing by other tools.
 
-Status: "beta" quality. Current functionality works without known bugs, but needs more testing and polish.
+Status: "beta" quality. Current functionality works (with a few known [issues](https://github.com/klausbrunner/solarpos/issues)), but needs more testing and polish.
 
 ## Requirements and installation
 
