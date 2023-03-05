@@ -10,7 +10,7 @@ class MainTest {
       Clock.fixed(Instant.parse("2020-03-03T10:15:30.00Z"), ZoneOffset.ofHoursMinutes(3, 0));
 
   @Test
-  void testDateParsing() {
+  void dateParsing() {
     final DateTimeConverter dtc = new DateTimeConverter(this.clock);
 
     assertEquals(ZonedDateTime.now(clock), dtc.convert("now"));
@@ -50,14 +50,14 @@ class MainTest {
   }
 
   @Test
-  void testVersion() {
+  void version() {
     var result = TestUtil.executeIt("-V");
     assertEquals(0, result.returnCode());
     assertTrue(result.output().contains("solarpos"));
   }
 
   @Test
-  void testRejectsBadDates() {
+  void rejectsBadDates() {
     var result = TestUtil.executeIt("25", "50", "20", "position");
     assertNotEquals(0, result.returnCode());
 
@@ -69,7 +69,7 @@ class MainTest {
   }
 
   @Test
-  void testRejectsBadCoords() {
+  void rejectsBadCoords() {
     var dateTime = "2023";
 
     var result = TestUtil.executeIt("91", "0", dateTime, "position");
