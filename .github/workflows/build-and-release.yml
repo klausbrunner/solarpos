@@ -1,3 +1,5 @@
+name: 'Build and release'
+
 on:
   workflow_call:
     inputs:
