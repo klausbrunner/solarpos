@@ -2,13 +2,13 @@
 
 A simple command-line application to calculate topocentric solar coordinates and sunrise/sunset times, based
 on [solarpositioning](https://github.com/klausbrunner/solarpositioning), a library of high-quality solar
-positioning algorithms. It supports time series and output formats like JSON and CSV for easy processing by other tools.
+positioning algorithms. It supports time series and output formats like JSON and CSV for easy scripting and processing by other tools.
 
-Status: "beta" quality. Current functionality works (with a few known [issues](https://github.com/klausbrunner/solarpos/issues)), but needs more testing and polish.
+Status: _beta_. Current functionality works (with a few known [issues](https://github.com/klausbrunner/solarpos/issues)), but needs more testing and polish.
 
 ## Requirements and installation
 
-Solarpos is a Java application, requiring Java 17 or newer. See the [latest release](https://github.com/klausbrunner/solarpos/releases/latest) or build it from source using Maven.
+Solarpos is a Java application, requiring Java 17 or newer. See the [latest release](https://github.com/klausbrunner/solarpos/releases/latest) or build from source using `mvn package`.
 
 ### Native builds
 
@@ -62,6 +62,9 @@ Calculates topocentric solar coordinates or sunrise/sunset times.
                               g. America/Los_Angeles). overrides any timezone
                               info found in dateTime.
   -V, --version             Print version information and exit.
+Commands:
+  position  calculates topocentric solar coordinates
+  sunrise   calculates sunrise, transit, and sunset
 ```
 
 ### Time series
@@ -75,30 +78,38 @@ There is built-in support for calculating time series.
 
 ### Date and Time Formats
 
-Dates and times should be given in ISO 8601 format like 2011-12-03T10:15:30+01:00 or an unambiguous subset, such as:
+Dates and times should be given in ISO 8601 format like "2011-12-03T10:15:30+01:00" or an unambiguous subset, such as:
 
-* 2025-12-03 for a local date (timezone is taken from the timezone parameter if available, else the system default is used)
-* 11:00 for a local time (today's date is assumed, timezone is determined as above)
-* 14:00:13.312Z for a UTC time (today's date is assumed, timezone is UTC unless overridden by the timezone parameter)
+* "2025-12-03" for a local date (timezone is taken from the timezone parameter if available, else the system default is used)
+* "11:00" for a local time (today's date is assumed, timezone is determined as above)
+* "14:00:13.312Z" for a UTC time (today's date is assumed, timezone is UTC unless overridden by the timezone parameter)
 
 ### Timezones
 
-Timezones may be specified as part of the time specification or with the separate --timezone parameter. The format variants are:
+Timezones may be specified as part of the time specification or with the separate `--timezone` parameter. The format variants are:
 
-* A fixed offset specified in minutes and hours, e.g. "-03:00".
+* A fixed offset specified in hours and minutes, e.g. "-03:00".
 * The "Z" shorthand for UTC (fixed zero offset).
 * A TZ database name, such as "Asia/Singapore" (see the [Wikipedia article](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for a full list). If one of these is used, daylight savings time (if any) will be applied automatically according to the location's rules.
 
 ### Delta T
 
-The difference between universal and terrestrial time affects all solar position calculations. This is an observed value that cannot be reliably predicted into the (far) future, but past values are known at least for the last few centuries and decent estimates can be given for the next few years. Use the --deltat option without a value to request such an estimate. See the documentation of [solarpositioning](https://github.com/klausbrunner/solarpositioning) for more detail.
+The difference between universal and terrestrial time affects all solar position calculations. This is an observed value that cannot be reliably predicted into the (far) future, but past values are known at least for the last few centuries and decent estimates can be given for the next few years. Use the `--deltat` option without a value to request such an estimate. See the documentation of [solarpositioning](https://github.com/klausbrunner/solarpositioning) for more detail.
+
+### Output formats
+
+The tool supports three output formats selectable with the `--format` parameter:
+
+* `human`: Default. Simple text output for, well, humans. Most useful for single values.
+* `csv`: The popular comma-separated values format, most useful for time series output and processing in various tools. Use the `--headers` parameter to add a header row.
+* `json`: JSON, or more precisely JSON Lines (one object on each line, without an enclosing array).
 
 ### Usage examples
 
 Get today's sunrise and sunset for Madrid, Spain, in UTC:
 
 ```shell
-solarpos 40.4168 -3.7038 now --timezone UTC sunrise
+solarpos 40.417 -3.704 now --timezone UTC sunrise
 ```
 
 Get the sun's position in Stockholm, Sweden, on 15 January 2023 at 12:30 Central European Time:
@@ -107,11 +118,17 @@ Get the sun's position in Stockholm, Sweden, on 15 January 2023 at 12:30 Central
 solarpos 59.334 18.063 2023-01-15T12:30:00+01:00 position 
 ```
 
-Get a time series of sun positions for Berlin Alexanderplatz on 15 January 2023, one position every 10 minutes, with CSV
-output, in local timezone and using a delta T estimate:
+Get a time series of sun positions for Berlin, Germany, on 26 March 2023, one position every 10 minutes, with CSV
+output, in local timezone and using a delta T estimate. As the transition to DST happens on this day, you'll see the changed offset in the data.
 
 ```shell
-solarpos 52.5219 13.4132 2023-01-15 --timezone Europe/Berlin --deltat --format=csv position --step=600
+solarpos 52.522 13.413 2023-03-26 --timezone Europe/Berlin --deltat --format=csv position --step=600
+```
+
+Get a full calendar of sunrise/sunset times for Mumbai, India for the year 2025 assuming a delta T of 69 seconds, in JSON lines format. Use the local timezone, which is Asia/Kolkata as per the tz database.
+
+```shell
+solarpos 18.97 72.83 2025 --timezone Asia/Kolkata --deltat=69 --format=json sunrise
 ```
 
 Sample R notebooks demonstrating how to use timeseries output to create diagrams can be found at [klausbrunner/sunpath-r](https://github.com/klausbrunner/sunpath-r/blob/main/sunpath.md).
