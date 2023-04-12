@@ -34,6 +34,74 @@ class SunriseTest {
     assertEquals(Double.parseDouble(lon), jsonObject.get("longitude").getAsDouble());
   }
 
+  @Test
+  void basicUsageWithTwilightsWithJson() {
+    var lat = "52.49";
+    var lon = "-1.89";
+    var dateTime = "2023-05-01T12:00:00+01:00";
+
+    var result =
+        TestUtil.executeIt(
+            lat,
+            lon,
+            dateTime,
+            "--format=json",
+            "--deltat=69",
+            "--show-inputs",
+            "sunrise",
+            "--twilight");
+    assertEquals(0, result.returnCode());
+
+    JsonObject jsonObject = JsonParser.parseString(result.output()).getAsJsonObject();
+    assertEquals(dateTime, jsonObject.get("dateTime").getAsString());
+    assertEquals("2023-05-01T05:36:58+01:00", jsonObject.get("sunrise").getAsString());
+    assertEquals("2023-05-01T20:33:32+01:00", jsonObject.get("sunset").getAsString());
+    assertEquals("2023-05-01T04:57:41+01:00", jsonObject.get("civil_start").getAsString());
+    assertEquals("2023-05-01T21:13:05+01:00", jsonObject.get("civil_end").getAsString());
+    assertEquals("2023-05-01T04:06:25+01:00", jsonObject.get("nautical_start").getAsString());
+    assertEquals("2023-05-01T22:04:53+01:00", jsonObject.get("nautical_end").getAsString());
+    assertEquals("2023-05-01T03:01:18+01:00", jsonObject.get("astronomical_start").getAsString());
+    assertEquals("2023-05-01T23:11:26+01:00", jsonObject.get("astronomical_end").getAsString());
+
+    assertEquals(Double.parseDouble(lat), jsonObject.get("latitude").getAsDouble());
+    assertEquals(Double.parseDouble(lon), jsonObject.get("longitude").getAsDouble());
+  }
+
+  @Test
+  void basicUsageWithTwilightsWithCsv() throws IOException {
+    var lat = "52.49";
+    var lon = "-1.89";
+    var dateTime = "2023-05-01T12:00:00+01:00";
+
+    var result =
+        TestUtil.executeIt(
+            lat,
+            lon,
+            dateTime,
+            "--format=csv",
+            "--deltat=69",
+            "--headers",
+            "--show-inputs",
+            "sunrise",
+            "--twilight");
+    assertEquals(0, result.returnCode());
+
+    var outputRecords =
+            TestUtil.CSV_WITH_HEADER.parse(new StringReader(result.output())).getRecords();
+    assertEquals(1, outputRecords.size());
+    var record = outputRecords.get(0);
+    assertEquals(dateTime, record.get("dateTime"));
+
+    assertEquals("2023-05-01T05:36:58+01:00", record.get("sunrise"));
+    assertEquals("2023-05-01T20:33:32+01:00", record.get("sunset"));
+    assertEquals("2023-05-01T04:57:41+01:00", record.get("civil_start"));
+    assertEquals("2023-05-01T21:13:05+01:00", record.get("civil_end"));
+    assertEquals("2023-05-01T04:06:25+01:00", record.get("nautical_start"));
+    assertEquals("2023-05-01T22:04:53+01:00", record.get("nautical_end"));
+    assertEquals("2023-05-01T03:01:18+01:00", record.get("astronomical_start"));
+    assertEquals("2023-05-01T23:11:26+01:00", record.get("astronomical_end"));
+  }
+
   @ParameterizedTest
   @ValueSource(
       strings = {
