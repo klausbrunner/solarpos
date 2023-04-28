@@ -64,7 +64,7 @@ Calculates topocentric solar coordinates or sunrise/sunset times.
   -V, --version             Print version information and exit.
 Commands:
   position  calculates topocentric solar coordinates
-  sunrise   calculates sunrise, transit, and sunset
+  sunrise   calculates sunrise, transit, sunset and (optionally) twilight times
 ```
 
 ### Time series
@@ -125,10 +125,10 @@ output, in local timezone and using a delta T estimate. As the transition to DST
 solarpos 52.522 13.413 2023-03-26 --timezone Europe/Berlin --deltat --format=csv position --step=600
 ```
 
-Get a full calendar of sunrise/sunset times for Mumbai, India for the year 2025 assuming a delta T of 69 seconds, in JSON lines format. Use the local timezone, which is Asia/Kolkata as per the tz database.
+Get a full calendar of sunrise/sunset and twilight times for Mumbai, India for the year 2025 assuming a delta T of 69 seconds, in JSON lines format. Use the local timezone, which is Asia/Kolkata as per the tz database.
 
 ```shell
-solarpos 18.97 72.83 2025 --timezone Asia/Kolkata --deltat=69 --format=json sunrise
+solarpos 18.97 72.83 2025 --timezone Asia/Kolkata --deltat=69 --format=json sunrise --twilight
 ```
 
 Sample R notebooks demonstrating how to use timeseries output to create diagrams can be found at [klausbrunner/sunpath-r](https://github.com/klausbrunner/sunpath-r/blob/main/sunpath.md).
