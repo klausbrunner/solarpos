@@ -93,7 +93,7 @@
             <plugin>
                 <groupId>org.jreleaser</groupId>
                 <artifactId>jreleaser-maven-plugin</artifactId>
-                <version>1.5.1</version>
+                <version>1.6.0</version>
                 <inherited>false</inherited>
                 <configuration>
                     <jreleaser>
@@ -170,6 +170,9 @@
                                 <tap>
                                     <name>homebrew-tap</name>
                                 </tap>
+                                <extraProperties>
+                                    <useVersionedJava>false</useVersionedJava>
+                                </extraProperties>
                             </brew>
                         </packagers>
                         <release>
