@@ -15,7 +15,9 @@ import net.e175.klaus.solarpositioning.SPA;
 import net.e175.klaus.solarpositioning.SunriseTransitSet;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "sunrise", description = "calculates sunrise, transit, sunset and (optionally) twilight times")
+@CommandLine.Command(
+    name = "sunrise",
+    description = "calculates sunrise, transit, sunset and (optionally) twilight times")
 final class SunriseCommand implements Callable<Integer> {
   @CommandLine.ParentCommand Main parent;
 

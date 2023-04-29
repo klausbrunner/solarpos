@@ -87,7 +87,7 @@ class SunriseTest {
     assertEquals(0, result.returnCode());
 
     var outputRecords =
-            TestUtil.CSV_WITH_HEADER.parse(new StringReader(result.output())).getRecords();
+        TestUtil.CSV_WITH_HEADER.parse(new StringReader(result.output())).getRecords();
     assertEquals(1, outputRecords.size());
     var record = outputRecords.get(0);
     assertEquals(dateTime, record.get("dateTime"));
