@@ -127,7 +127,7 @@ public final class Main {
   void printAnyHeaders(Map<Main.Format, Map<Boolean, String>> headersMap) {
     if (this.headers && headersMap.containsKey(this.format)) {
       var headers = headersMap.get(this.format).get(this.showInput);
-      spec.commandLine().getOut().println(headers);
+      spec.commandLine().getOut().print(headers);
     }
   }
 

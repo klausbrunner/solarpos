@@ -134,22 +134,20 @@ final class PositionCommand implements Callable<Integer> {
       Map.of(
           true,
               """
-                    {"latitude":%.5f,"longitude":%5f,"elevation":%.3f,"pressure":%.3f,"temperature":%.3f,"dateTime":"%s","deltaT":%.3f,"azimuth":%.5f,"zenith":%.5f}
-                    """,
+                    {"latitude":%.5f,"longitude":%5f,"elevation":%.3f,"pressure":%.3f,"temperature":%.3f,"dateTime":"%s","deltaT":%.3f,"azimuth":%.5f,"zenith":%.5f}""" + "\n",
           false,
               """
-                    {"dateTime":"%6$s","azimuth":%8$.5f,"zenith":%9$.5f}
-                    """);
+                    {"dateTime":"%6$s","azimuth":%8$.5f,"zenith":%9$.5f}""" + "\n");
 
   private static final Map<Boolean, String> CSV_HEADERS =
       Map.of(
-          true, "latitude,longitude,elevation,pressure,temperature,dateTime,deltaT,azimuth,zenith",
-          false, "dateTime,azimuth,zenith");
+          true, "latitude,longitude,elevation,pressure,temperature,dateTime,deltaT,azimuth,zenith\r\n",
+          false, "dateTime,azimuth,zenith\r\n");
 
   private static final Map<Boolean, String> CSV_FORMATS =
       Map.of(
-          true, "%.5f,%.5f,%.3f,%.3f,%.3f,%s,%.3f,%.5f,%.5f%n",
-          false, "%6$s,%8$.5f,%9$.5f%n");
+          true, "%.5f,%.5f,%.3f,%.3f,%.3f,%s,%.3f,%.5f,%.5f\r\n",
+          false, "%6$s,%8$.5f,%9$.5f\r\n");
 
   private static final Map<Boolean, String> HUMAN_FORMATS =
       Map.of(
