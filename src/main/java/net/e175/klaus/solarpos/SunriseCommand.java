@@ -103,17 +103,17 @@ final class SunriseCommand implements Callable<Integer> {
       Map.of(
           Main.Format.CSV,
           Map.of(
-              true, "latitude,longitude,dateTime,deltaT,type,sunrise,transit,sunset",
-              false, "type,sunrise,transit,sunset"));
+              true, "latitude,longitude,dateTime,deltaT,type,sunrise,transit,sunset\r\n",
+              false, "type,sunrise,transit,sunset\r\n"));
 
   private static final Map<Main.Format, Map<Boolean, String>> TWILIGHT_HEADERS =
       Map.of(
           Main.Format.CSV,
           Map.of(
               true,
-                  "latitude,longitude,dateTime,deltaT,type,sunrise,transit,sunset,civil_start,civil_end,nautical_start,nautical_end,astronomical_start,astronomical_end",
+                  "latitude,longitude,dateTime,deltaT,type,sunrise,transit,sunset,civil_start,civil_end,nautical_start,nautical_end,astronomical_start,astronomical_end\r\n",
               false,
-                  "type,sunrise,transit,sunset,civil_start,civil_end,nautical_start,nautical_end,astronomical_start,astronomical_end"));
+                  "type,sunrise,transit,sunset,civil_start,civil_end,nautical_start,nautical_end,astronomical_start,astronomical_end\r\n"));
 
   private static final Map<Main.Format, String> NULL_DATE =
       Map.of(Main.Format.CSV, "", JSON, "null", HUMAN, "none");
