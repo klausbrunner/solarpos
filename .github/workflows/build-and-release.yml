@@ -49,7 +49,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build with Maven
-        run: ./mvnw -ntp -B package jreleaser:assemble
+        run: ./mvnw -ntp -B verify jreleaser:assemble
 
       - name: 'Run smoke test (POSIX)'
         if: ${{ runner.os != 'Windows' }}
