@@ -9,7 +9,7 @@
     <parent>
         <groupId>org.basepom</groupId>
         <artifactId>basepom-minimal</artifactId>
-        <version>53</version>
+        <version>54</version>
     </parent>
 
     <name>solarpos</name>
@@ -33,7 +33,7 @@
     </developers>
 
     <properties>
-        <basepom.shaded.main-class>net.e175.klaus.solarpos.Main</basepom.shaded.main-class>
+        <basepom.main-class>net.e175.klaus.solarpos.Main</basepom.main-class>
         <project.build.targetJdk>17</project.build.targetJdk>
         <picocli.version>4.7.3</picocli.version>
 
