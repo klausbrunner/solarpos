@@ -17,13 +17,13 @@ import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "sunrise",
-    description = "calculates sunrise, transit, sunset and (optionally) twilight times")
+    description = "Calculates sunrise, transit, sunset and (optionally) twilight times.")
 final class SunriseCommand implements Callable<Integer> {
   @CommandLine.ParentCommand Main parent;
 
   @CommandLine.Option(
       names = {"--twilight"},
-      description = "show twilight times")
+      description = "Show twilight times.")
   boolean twilight;
 
   @Override
