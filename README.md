@@ -38,33 +38,34 @@ solarpos
 
 For detailed usage, see built-in help.
 
-```
+```text
 Usage: solarpos [-hV] [--headers] [--show-inputs] [--deltat[=<deltaT>]]
                 [--format=<format>] [--timezone=<timezone>] [@<filename>...]
                 <latitude> <longitude> <dateTime> [COMMAND]
 Calculates topocentric solar coordinates or sunrise/sunset times.
       [@<filename>...]      One or more argument files containing options.
-      <latitude>            latitude in decimal degrees (positive North of
-                              equator)
-      <longitude>           longitude in decimal degrees (positive East of
-                              Greenwich)
-      <dateTime>            date/time in ISO format yyyy[-MM[-dd[['T'][ ]HH:mm[:
-                              ss[.SSS]][XXX['['VV']']]]]]. use 'now' for
+      <latitude>            Latitude in decimal degrees (positive North of
+                              equator).
+      <longitude>           Longitude in decimal degrees (positive East of
+                              Greenwich).
+      <dateTime>            Date/time in ISO format yyyy[-MM[-dd[['T'][ ]HH:mm[:
+                              ss[.SSS]][XXX['['VV']']]]]]. Use 'now' for
                               current time and date.
-      --deltat[=<deltaT>]   delta T in seconds; an estimate is used if this
-                              option is given without a value
-      --format=<format>     output format, one of HUMAN, CSV, JSON
+      --deltat[=<deltaT>]   Delta T in seconds; an estimate is used if this
+                              option is given without a value.
+      --format=<format>     Output format, one of HUMAN, CSV, JSON.
   -h, --help                Show this help message and exit.
-      --headers             show headers in output (currently applies only to
-                              CSV)
-      --show-inputs         show all inputs in output
-      --timezone=<timezone> timezone as offset (e.g. +01:00) and/or zone id (e.
-                              g. America/Los_Angeles). overrides any timezone
+      --headers             Show headers in output (currently applies only to
+                              CSV).
+      --show-inputs         Show all inputs in output.
+      --timezone=<timezone> Timezone as offset (e.g. +01:00) and/or zone id (e.
+                              g. America/Los_Angeles). Overrides any timezone
                               info found in dateTime.
   -V, --version             Print version information and exit.
 Commands:
-  position  calculates topocentric solar coordinates
-  sunrise   calculates sunrise, transit, sunset and (optionally) twilight times
+  help      Display help information about the specified command.
+  position  Calculates topocentric solar coordinates.
+  sunrise   Calculates sunrise, transit, sunset and (optionally) twilight times.
 ```
 
 ### Time series

@@ -84,7 +84,7 @@ public final class Main {
   @CommandLine.Option(
       names = {"--timezone"},
       description =
-          "Timezone as offset (e.g. +01:00) and/or zone id (e.g. America/Los_Angeles). overrides any timezone info found in dateTime.")
+          "Timezone as offset (e.g. +01:00) and/or zone id (e.g. America/Los_Angeles). Overrides any timezone info found in dateTime.")
   Optional<ZoneId> timezone;
 
   @CommandLine.Option(
