@@ -15,7 +15,7 @@ import net.e175.klaus.solarpositioning.Grena3;
 import net.e175.klaus.solarpositioning.SPA;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "position", description = "calculates topocentric solar coordinates")
+@CommandLine.Command(name = "position", description = "Calculates topocentric solar coordinates.")
 final class PositionCommand implements Callable<Integer> {
 
   enum Algorithm {
@@ -29,31 +29,31 @@ final class PositionCommand implements Callable<Integer> {
 
   @CommandLine.Option(
       names = {"-a", "--algorithm"},
-      description = "one of ${COMPLETION-CANDIDATES}",
+      description = "One of ${COMPLETION-CANDIDATES}.",
       defaultValue = "spa")
   Algorithm algorithm;
 
   @CommandLine.Option(
       names = {"--elevation"},
-      description = "elevation above sea level, in meters",
+      description = "Elevation above sea level, in meters.",
       defaultValue = "0")
   double elevation;
 
   @CommandLine.Option(
       names = {"--pressure"},
-      description = "avg. air pressure in millibars/hectopascals",
+      description = "Avg. air pressure in millibars/hectopascals.",
       defaultValue = "1000")
   double pressure;
 
   @CommandLine.Option(
       names = {"--temperature"},
-      description = "avg. air temperature in degrees Celsius",
+      description = "Avg. air temperature in degrees Celsius.",
       defaultValue = "0")
   double temperature;
 
   @CommandLine.Option(
       names = {"--step"},
-      description = "step interval for time series, in seconds",
+      description = "Step interval for time series, in seconds.",
       defaultValue = "3600")
   int step;
 
