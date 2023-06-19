@@ -2,9 +2,9 @@
 
 A simple command-line application to calculate topocentric solar coordinates and sunrise/sunset times, based
 on [solarpositioning](https://github.com/klausbrunner/solarpositioning), a library of high-quality solar
-positioning algorithms. It supports time series and output formats like JSON and CSV for easy scripting and processing by other tools.
+positioning algorithms. Supports time series and output formats like JSON and CSV for easy scripting and processing by other tools.
 
-Status: _beta_. Current functionality works (with a few known [issues](https://github.com/klausbrunner/solarpos/issues)), but needs more testing and polish.
+Status: _beta_. Current functionality works, but needs more user testing and polish.
 
 ## Requirements and installation
 
@@ -12,7 +12,7 @@ Solarpos is a Java application, requiring Java 17 or newer. See the [latest rele
 
 ### Native builds
 
-Native builds are available for some platforms. These do not require a Java runtime and can be used like any other command-line program.
+Native builds are available for some platforms. These do not require a Java runtime and can be used stand-alone, like any other native application.
 
 ### macOS: Homebrew installation
 
@@ -75,7 +75,7 @@ There is built-in support for calculating time series.
 * If you pass only a year (e.g. 2023) or a year-month (e.g. 2023-01) to the sunrise command, you will get results for
   each day of that year or month.
 * Similarly, the position command will calculate a time series of sun positions for the given day, month or even year.
-  The interval is determined by the step option (default: 1 hour).
+  The interval is determined by the `--step` option (default: 1 hour).
 
 ### Date and Time Formats
 
