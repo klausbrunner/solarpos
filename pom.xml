@@ -93,14 +93,14 @@
             <plugin>
                 <groupId>org.jreleaser</groupId>
                 <artifactId>jreleaser-maven-plugin</artifactId>
-                <version>1.6.0</version>
+                <version>1.7.0</version>
                 <inherited>false</inherited>
                 <configuration>
                     <jreleaser>
                         <project>
                             <copyright>2023 Klaus A. Brunner</copyright>
                             <java>
-                                <mainClass>${basepom.shaded.main-class}</mainClass>
+                                <mainClass>${basepom.main-class}</mainClass>
                             </java>
                             <stereotype>CLI</stereotype>
                         </project>
