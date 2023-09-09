@@ -27,7 +27,7 @@ final class DateTimeConverter implements CommandLine.ITypeConverter<TemporalAcce
   }
 
   private TemporalAccessor lenientlyParseDateTime(String arg, Clock clock) {
-    if (arg.equals("now")) {
+    if (arg.equalsIgnoreCase("now")) {
       return ZonedDateTime.now(clock);
     }
     try {
