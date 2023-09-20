@@ -41,7 +41,6 @@ jobs:
         with:
           distribution: ${{ env.GRAAL_DISTRO }}
           java-version: ${{ env.JAVA_VERSION }}
-          components: 'native-image'
           cache: 'maven'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
