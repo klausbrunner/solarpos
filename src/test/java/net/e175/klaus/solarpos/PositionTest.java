@@ -21,7 +21,7 @@ class PositionTest {
     var dateTime = "2022-10-17T12:00:00Z";
 
     var result =
-        TestUtil.executeIt(
+        TestUtil.run(
             lat, lon, dateTime, "--format=json", "--deltat=69", "--show-inputs", "position");
     assertEquals(0, result.returnCode());
 
@@ -42,14 +42,14 @@ class PositionTest {
 
     var inputTime = OffsetTime.parse(time);
     try (var withClock = new TestUtil.WithFixedClock(ZonedDateTime.now())) {
-      var result = TestUtil.executeIt(lat, lon, time, "--format=json", "position");
+      var result = TestUtil.run(lat, lon, time, "--format=json", "position");
       assertEquals(0, result.returnCode());
 
       var jsonObject = JsonParser.parseString(result.output()).getAsJsonObject();
       var resultZdt = ZonedDateTime.parse(jsonObject.get("dateTime").getAsString());
       assertEquals(
           ZonedDateTime.of(
-              LocalDateTime.of(withClock.get().toLocalDate(), inputTime.toLocalTime()),
+              LocalDateTime.of(withClock.dateTime().toLocalDate(), inputTime.toLocalTime()),
               inputTime.getOffset()),
           resultZdt);
     }
@@ -62,7 +62,7 @@ class PositionTest {
     var dateTime = "2022-10-17T12:00:00Z";
 
     var result =
-        TestUtil.executeIt(
+        TestUtil.run(
             lat,
             lon,
             dateTime,
@@ -85,12 +85,12 @@ class PositionTest {
     var lon = "25.0";
     var dateTime = "2003-10-17T12:00:00Z";
 
-    var result = TestUtil.executeIt(lat, lon, dateTime, "--format=csv", "--deltat=69", "position");
+    var result = TestUtil.run(lat, lon, dateTime, "--format=csv", "--deltat=69", "position");
     assertEquals(0, result.returnCode());
     assertEquals("2003-10-17T12:00:00Z,211.20726,65.92346", result.output().strip());
 
     result =
-        TestUtil.executeIt(
+        TestUtil.run(
             lat, lon, dateTime, "--format=csv", "--show-inputs", "--deltat=69", "position");
     assertEquals(0, result.returnCode());
 
@@ -106,7 +106,7 @@ class PositionTest {
     var dateTime = "2003-10-17";
 
     var result =
-        TestUtil.executeIt(
+        TestUtil.run(
             lat,
             lon,
             dateTime,
@@ -146,7 +146,7 @@ class PositionTest {
     var dateTime = "2003";
 
     var result =
-        TestUtil.executeIt(
+        TestUtil.run(
             lat,
             lon,
             dateTime,
@@ -170,10 +170,10 @@ class PositionTest {
     var lon = "25.0";
     var dateTime = "2003";
 
-    var result = TestUtil.executeIt(lat, lon, dateTime, "position", "--step=0.1");
+    var result = TestUtil.run(lat, lon, dateTime, "position", "--step=0.1");
     assertNotEquals(0, result.returnCode());
 
-    result = TestUtil.executeIt(lat, lon, dateTime, "position", "--step=999999");
+    result = TestUtil.run(lat, lon, dateTime, "position", "--step=999999");
     assertNotEquals(0, result.returnCode());
   }
 
@@ -184,7 +184,7 @@ class PositionTest {
     var dateTime = "2024-02";
 
     var result =
-        TestUtil.executeIt(
+        TestUtil.run(
             lat,
             lon,
             dateTime,
@@ -209,7 +209,7 @@ class PositionTest {
     var dateTime = "2024-02";
 
     var result =
-        TestUtil.executeIt(
+        TestUtil.run(
             lat,
             lon,
             dateTime,

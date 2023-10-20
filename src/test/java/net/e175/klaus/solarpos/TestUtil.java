@@ -14,7 +14,7 @@ final class TestUtil {
 
   record Result(int returnCode, String output) {}
 
-  static Result executeIt(String... args) {
+  static Result run(String... args) {
     CommandLine cmd = Main.createCommandLine();
     StringWriter outputWriter = new StringWriter();
     cmd.setOut(new PrintWriter(outputWriter));
@@ -23,16 +23,12 @@ final class TestUtil {
     return new Result(exitCode, output);
   }
 
-  record WithFixedClock(ZonedDateTime zonedDateTime) implements AutoCloseable {
-    WithFixedClock(ZonedDateTime zonedDateTime) {
-      this.zonedDateTime = zonedDateTime;
+  record WithFixedClock(ZonedDateTime dateTime) implements AutoCloseable {
+    WithFixedClock(ZonedDateTime dateTime) {
+      this.dateTime = dateTime;
       System.setProperty(
           DateTimeConverter.CLOCK_PROPERTY,
-          zonedDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-    }
-
-    ZonedDateTime get() {
-      return zonedDateTime;
+          dateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
     }
 
     @Override
