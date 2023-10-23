@@ -10,9 +10,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
-import net.e175.klaus.solarpositioning.AzimuthZenithAngle;
 import net.e175.klaus.solarpositioning.Grena3;
 import net.e175.klaus.solarpositioning.SPA;
+import net.e175.klaus.solarpositioning.SolarPosition;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "position", description = "Calculates topocentric solar coordinates.")
@@ -71,7 +71,7 @@ final class PositionCommand implements Callable<Integer> {
     dateTimes.forEach(
         dateTime -> {
           final double deltaT = parent.getBestGuessDeltaT(dateTime);
-          AzimuthZenithAngle position =
+          SolarPosition position =
               switch (this.algorithm) {
                 case SPA -> SPA.calculateSolarPosition(
                     dateTime,
@@ -96,38 +96,31 @@ final class PositionCommand implements Callable<Integer> {
       TemporalAccessor dateTime, Optional<ZoneId> zoneId, int step) {
     final ZoneId overrideTz = zoneId.orElse(ZoneId.systemDefault());
 
-    if (dateTime instanceof Year y) {
-      return Stream.iterate(
+    return switch (dateTime) {
+      case Year y -> Stream.iterate(
           ZonedDateTime.of(LocalDate.of(y.getValue(), 1, 1), LocalTime.of(0, 0), overrideTz),
           i -> i.getYear() == y.getValue(),
           i -> i.plusSeconds(step));
-    } else if (dateTime instanceof YearMonth ym) {
-      return Stream.iterate(
+      case YearMonth ym -> Stream.iterate(
           ZonedDateTime.of(
               LocalDate.of(ym.getYear(), ym.getMonth(), 1), LocalTime.of(0, 0), overrideTz),
           i -> i.getMonth() == ym.getMonth(),
           i -> i.plusSeconds(step));
-    } else if (dateTime instanceof LocalDate ld) {
-      return Stream.iterate(
+      case LocalDate ld -> Stream.iterate(
           ZonedDateTime.of(ld, LocalTime.of(0, 0), overrideTz),
           i -> i.getDayOfMonth() == ld.getDayOfMonth(),
           i -> i.plusSeconds(step));
-    } else if (dateTime instanceof LocalDateTime ldt) {
-      return Stream.of(ZonedDateTime.of(ldt, overrideTz));
-    } else if (dateTime instanceof LocalTime lt) {
-      return Stream.of(ZonedDateTime.of(LocalDate.now(), lt, overrideTz));
-    } else if (dateTime instanceof OffsetTime ot) {
-      return Stream.of(
+      case LocalDateTime ldt -> Stream.of(ZonedDateTime.of(ldt, overrideTz));
+      case LocalTime lt -> Stream.of(ZonedDateTime.of(LocalDate.now(), lt, overrideTz));
+      case OffsetTime ot -> Stream.of(
           ZonedDateTime.of(
               LocalDate.now(), ot.toLocalTime(), zoneId.isPresent() ? overrideTz : ot.getOffset()));
-    } else if (dateTime instanceof ZonedDateTime zdt) {
-      return Stream.of(
+      case ZonedDateTime zdt -> Stream.of(
           zoneId.isPresent()
               ? ZonedDateTime.of(zdt.toLocalDate(), zdt.toLocalTime(), overrideTz)
               : zdt);
-    } else {
-      throw new IllegalStateException("unexpected date/time type " + dateTime);
-    }
+      default -> throw new IllegalStateException("unexpected date/time type " + dateTime);
+    };
   }
 
   private static final Map<Boolean, String> JSON_FORMATS =
@@ -183,7 +176,7 @@ final class PositionCommand implements Callable<Integer> {
       Main.Format format,
       ZonedDateTime dateTime,
       double deltaT,
-      AzimuthZenithAngle result,
+      SolarPosition result,
       boolean showInput) {
     String template = TEMPLATES.get(format).get(showInput);
     DateTimeFormatter dtf =
@@ -198,7 +191,7 @@ final class PositionCommand implements Callable<Integer> {
         temperature,
         dtf.format(dateTime),
         deltaT,
-        result.getAzimuth(),
-        result.getZenithAngle());
+        result.azimuth(),
+        result.zenithAngle());
   }
 }

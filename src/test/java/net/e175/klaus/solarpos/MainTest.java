@@ -51,20 +51,20 @@ class MainTest {
 
   @Test
   void version() {
-    var result = TestUtil.executeIt("-V");
+    var result = TestUtil.run("-V");
     assertEquals(0, result.returnCode());
     assertTrue(result.output().contains("solarpos"));
   }
 
   @Test
   void rejectsBadDates() {
-    var result = TestUtil.executeIt("25", "50", "20", "position");
+    var result = TestUtil.run("25", "50", "20", "position");
     assertNotEquals(0, result.returnCode());
 
-    result = TestUtil.executeIt("25", "50", "99999", "position");
+    result = TestUtil.run("25", "50", "99999", "position");
     assertNotEquals(0, result.returnCode());
 
-    result = TestUtil.executeIt("25", "50", "2024-12-32", "position");
+    result = TestUtil.run("25", "50", "2024-12-32", "position");
     assertNotEquals(0, result.returnCode());
   }
 
@@ -72,10 +72,10 @@ class MainTest {
   void rejectsBadCoords() {
     var dateTime = "2023";
 
-    var result = TestUtil.executeIt("91", "0", dateTime, "position");
+    var result = TestUtil.run("91", "0", dateTime, "position");
     assertNotEquals(0, result.returnCode());
 
-    result = TestUtil.executeIt("0", "200", dateTime, "position");
+    result = TestUtil.run("0", "200", dateTime, "position");
     assertNotEquals(0, result.returnCode());
   }
 }

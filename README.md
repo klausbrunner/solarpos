@@ -8,7 +8,7 @@ Status: _beta_. Current functionality works, but needs more user testing and pol
 
 ## Requirements and installation
 
-Solarpos is a Java application, requiring Java 17 or newer. See the [latest release](https://github.com/klausbrunner/solarpos/releases/latest) or build from source using `mvn package`.
+Solarpos is a Java application, requiring Java 21 or newer. See the [latest release](https://github.com/klausbrunner/solarpos/releases/latest) or build from source using `mvn package`.
 
 ### Native builds
 

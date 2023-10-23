@@ -4,12 +4,11 @@
 
     <groupId>net.e175.klaus</groupId>
     <artifactId>solarpos</artifactId>
-    <version>0.3.7-SNAPSHOT</version>
-
+    <version>0.4.0-SNAPSHOT</version>
     <parent>
         <groupId>org.basepom</groupId>
         <artifactId>basepom-minimal</artifactId>
-        <version>55</version>
+        <version>56</version>
     </parent>
 
     <name>solarpos</name>
@@ -34,7 +33,7 @@
 
     <properties>
         <basepom.main-class>net.e175.klaus.solarpos.Main</basepom.main-class>
-        <project.build.targetJdk>17</project.build.targetJdk>
+        <project.build.targetJdk>21</project.build.targetJdk>
         <picocli.version>4.7.5</picocli.version>
 
         <scmCommentPrefix>build: [maven-release-plugin] [skip ci]</scmCommentPrefix>
@@ -42,6 +41,8 @@
 
         <basepom.check.skip-dependency>true</basepom.check.skip-dependency>
         <basepom.check.skip-checkstyle>true</basepom.check.skip-checkstyle>
+        <basepom.check.skip-spotbugs>true</basepom.check.skip-spotbugs> <!-- temporary until it works with Java 21 -->
+        <basepom.check.skip-pmd>true</basepom.check.skip-pmd> <!-- temporary until it works with Java 21 -->
     </properties>
 
     <scm>
@@ -167,9 +168,9 @@
                         <packagers>
                             <brew>
                                 <active>RELEASE</active>
-                                <tap>
+                                <repository>
                                     <name>homebrew-tap</name>
-                                </tap>
+                                </repository>
                                 <extraProperties>
                                     <useVersionedJava>false</useVersionedJava>
                                 </extraProperties>
@@ -191,7 +192,7 @@
         <dependency>
             <groupId>net.e175.klaus</groupId>
             <artifactId>solarpositioning</artifactId>
-            <version>0.1.10</version>
+            <version>2.0.0</version>
         </dependency>
         <dependency>
             <groupId>info.picocli</groupId>

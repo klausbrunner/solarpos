@@ -20,7 +20,7 @@ class SunriseTest {
     var dateTime = "2022-10-17T12:00:00Z";
 
     var result =
-        TestUtil.executeIt(
+        TestUtil.run(
             lat, lon, dateTime, "--format=json", "--deltat=69", "--show-inputs", "sunrise");
     assertEquals(0, result.returnCode());
 
@@ -41,7 +41,7 @@ class SunriseTest {
     var dateTime = "2023-05-01T12:00:00+01:00";
 
     var result =
-        TestUtil.executeIt(
+        TestUtil.run(
             lat,
             lon,
             dateTime,
@@ -74,7 +74,7 @@ class SunriseTest {
     var dateTime = "2023-05-01T12:00:00+01:00";
 
     var result =
-        TestUtil.executeIt(
+        TestUtil.run(
             lat,
             lon,
             dateTime,
@@ -117,12 +117,12 @@ class SunriseTest {
     var lon = "25.0";
 
     try (var withClock = new TestUtil.WithFixedClock(ZonedDateTime.now())) {
-      var result = TestUtil.executeIt(lat, lon, time, "--format=json", "sunrise");
+      var result = TestUtil.run(lat, lon, time, "--format=json", "sunrise");
       assertEquals(0, result.returnCode());
 
       var jsonObject = JsonParser.parseString(result.output()).getAsJsonObject();
       var resultZdt = ZonedDateTime.parse(jsonObject.get("transit").getAsString());
-      assertEquals(withClock.get().toLocalDate(), resultZdt.toLocalDate());
+      assertEquals(withClock.dateTime().toLocalDate(), resultZdt.toLocalDate());
     }
   }
 
@@ -133,8 +133,7 @@ class SunriseTest {
     var dateTime = "2022-10-17T12:00:00Z";
 
     var result =
-        TestUtil.executeIt(
-            lat, lon, dateTime, "--format=csv", "--deltat=69", "--show-inputs", "sunrise");
+        TestUtil.run(lat, lon, dateTime, "--format=csv", "--deltat=69", "--show-inputs", "sunrise");
     assertEquals(0, result.returnCode());
     assertEquals(
         "52.00000,25.00000,2022-10-17T12:00:00Z,69.000,NORMAL,2022-10-17T04:47:51Z,2022-10-17T10:05:21Z,2022-10-17T15:22:00Z",
@@ -148,7 +147,7 @@ class SunriseTest {
     var dateTime = "2023";
 
     var result =
-        TestUtil.executeIt(
+        TestUtil.run(
             lat,
             lon,
             dateTime,
@@ -172,7 +171,7 @@ class SunriseTest {
     var dateTime = "2023-02";
 
     var result =
-        TestUtil.executeIt(
+        TestUtil.run(
             lat,
             lon,
             dateTime,
@@ -196,7 +195,7 @@ class SunriseTest {
     var dateTime = "2023-02";
 
     var result =
-        TestUtil.executeIt(
+        TestUtil.run(
             lat,
             lon,
             dateTime,
@@ -222,8 +221,7 @@ class SunriseTest {
     var dateTime = "2023-02";
 
     var result =
-        TestUtil.executeIt(
-            lat, lon, dateTime, "--headers", "--format=csv", "--timezone=UTC", "sunrise");
+        TestUtil.run(lat, lon, dateTime, "--headers", "--format=csv", "--timezone=UTC", "sunrise");
     assertEquals(0, result.returnCode());
 
     var outputRecords =
@@ -234,7 +232,7 @@ class SunriseTest {
     assertEquals("2023-02-28T07:38:45Z", outputRecords.get(27).get("sunrise"));
 
     result =
-        TestUtil.executeIt(
+        TestUtil.run(
             lat,
             lon,
             dateTime,
@@ -258,7 +256,7 @@ class SunriseTest {
     var lon = "15.63";
 
     var result =
-        TestUtil.executeIt(
+        TestUtil.run(
             lat, lon, "2023-02-01", "--headers", "--format=json", "--timezone=UTC", "sunrise");
     assertEquals(0, result.returnCode());
 
@@ -267,7 +265,7 @@ class SunriseTest {
     assertTrue(jsonObject.get("sunrise").isJsonNull());
 
     result =
-        TestUtil.executeIt(
+        TestUtil.run(
             lat, lon, "2023-02-28", "--show-inputs", "--format=json", "--timezone=UTC", "sunrise");
     assertEquals(0, result.returnCode());
 
