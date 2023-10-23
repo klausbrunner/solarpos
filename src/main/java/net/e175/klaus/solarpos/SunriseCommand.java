@@ -12,7 +12,7 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 import net.e175.klaus.solarpositioning.SPA;
-import net.e175.klaus.solarpositioning.SunriseTransitSet;
+import net.e175.klaus.solarpositioning.SunriseResult;
 import picocli.CommandLine;
 
 @CommandLine.Command(
@@ -47,7 +47,7 @@ final class SunriseCommand implements Callable<Integer> {
     dateTimes.forEach(
         dateTime -> {
           final double deltaT = parent.getBestGuessDeltaT(dateTime);
-          Map<SPA.Horizon, SunriseTransitSet> result =
+          Map<SPA.Horizon, SunriseResult> result =
               SPA.calculateSunriseTransitSet(
                   dateTime, parent.latitude, parent.longitude, deltaT, horizons);
           out.print(
@@ -69,36 +69,29 @@ final class SunriseCommand implements Callable<Integer> {
   static Stream<ZonedDateTime> getDatetimes(TemporalAccessor dateTime, Optional<ZoneId> zoneId) {
     final ZoneId overrideTz = zoneId.orElse(ZoneId.systemDefault());
 
-    if (dateTime instanceof Year y) {
-      return Stream.iterate(
+    return switch (dateTime) {
+      case Year y -> Stream.iterate(
           ZonedDateTime.of(
               LocalDate.of(y.getValue(), Month.JANUARY, 1), LocalTime.of(0, 0), overrideTz),
           i -> i.getYear() == y.getValue(),
           i -> i.plusDays(1));
-    } else if (dateTime instanceof YearMonth ym) {
-      return Stream.iterate(
+      case YearMonth ym -> Stream.iterate(
           ZonedDateTime.of(
               LocalDate.of(ym.getYear(), ym.getMonth(), 1), LocalTime.of(0, 0), overrideTz),
           i -> i.getMonth() == ym.getMonth(),
           i -> i.plusDays(1));
-    } else if (dateTime instanceof LocalDate ld) {
-      return Stream.of(ZonedDateTime.of(ld, LocalTime.of(0, 0), overrideTz));
-    } else if (dateTime instanceof LocalDateTime ldt) {
-      return Stream.of(ZonedDateTime.of(ldt, overrideTz));
-    } else if (dateTime instanceof LocalTime lt) {
-      return Stream.of(ZonedDateTime.of(LocalDate.now(), lt, overrideTz));
-    } else if (dateTime instanceof OffsetTime ot) {
-      return Stream.of(
+      case LocalDate ld -> Stream.of(ZonedDateTime.of(ld, LocalTime.of(0, 0), overrideTz));
+      case LocalDateTime ldt -> Stream.of(ZonedDateTime.of(ldt, overrideTz));
+      case LocalTime lt -> Stream.of(ZonedDateTime.of(LocalDate.now(), lt, overrideTz));
+      case OffsetTime ot -> Stream.of(
           ZonedDateTime.of(
               LocalDate.now(), ot.toLocalTime(), zoneId.isPresent() ? overrideTz : ot.getOffset()));
-    } else if (dateTime instanceof ZonedDateTime zdt) {
-      return Stream.of(
+      case ZonedDateTime zdt -> Stream.of(
           zoneId.isPresent()
               ? ZonedDateTime.of(zdt.toLocalDate(), zdt.toLocalTime(), overrideTz)
               : zdt);
-    } else {
-      throw new IllegalStateException("unexpected date/time type " + dateTime);
-    }
+      default -> throw new IllegalStateException("unexpected date/time type " + dateTime);
+    };
   }
 
   private static final Map<Main.Format, Map<Boolean, String>> HEADERS =
@@ -126,7 +119,7 @@ final class SunriseCommand implements Callable<Integer> {
       double longitude,
       ZonedDateTime dateTime,
       double deltaT,
-      Map<SPA.Horizon, SunriseTransitSet> result,
+      Map<SPA.Horizon, SunriseResult> result,
       boolean showInput,
       boolean twilight) {
 
@@ -211,26 +204,53 @@ final class SunriseCommand implements Callable<Integer> {
   }
 
   private static String twilightFragment(
-      Main.Format format, Map<SPA.Horizon, SunriseTransitSet> result, String pattern) {
-    final var civil = result.get(SPA.Horizon.CIVIL_TWILIGHT);
-    final var nautical = result.get(SPA.Horizon.NAUTICAL_TWILIGHT);
-    final var astronomical = result.get(SPA.Horizon.ASTRONOMICAL_TWILIGHT);
+      Main.Format format, Map<SPA.Horizon, SunriseResult> result, String pattern) {
+    final var civil = FormattedSunriseResult.of(format, result.get(SPA.Horizon.CIVIL_TWILIGHT));
+    final var nautical =
+        FormattedSunriseResult.of(format, result.get(SPA.Horizon.NAUTICAL_TWILIGHT));
+    final var astronomical =
+        FormattedSunriseResult.of(format, result.get(SPA.Horizon.ASTRONOMICAL_TWILIGHT));
     return pattern.formatted(
-        formatDate(format, civil.getSunrise()),
-        formatDate(format, civil.getSunset()),
-        formatDate(format, nautical.getSunrise()),
-        formatDate(format, nautical.getSunset()),
-        formatDate(format, astronomical.getSunrise()),
-        formatDate(format, astronomical.getSunset()));
+        civil.sunrise(),
+        civil.sunset(),
+        nautical.sunrise(),
+        nautical.sunset(),
+        astronomical.sunrise(),
+        astronomical.sunset());
   }
 
   private static String sunriseSunsetFragment(
-      Main.Format format, SunriseTransitSet sunriseSunset, String pattern) {
+      Main.Format format, SunriseResult sunriseSunset, String pattern) {
+    var formatted = FormattedSunriseResult.of(format, sunriseSunset);
+
     return pattern.formatted(
-        formatType(format, sunriseSunset.getType()),
-        formatDate(format, sunriseSunset.getSunrise()),
-        formatDate(format, sunriseSunset.getTransit()),
-        formatDate(format, sunriseSunset.getSunset()));
+        formatted.type(), formatted.sunrise(), formatted.transit(), formatted.sunset());
+  }
+
+  record FormattedSunriseResult(String sunrise, String transit, String sunset, String type) {
+    private FormattedSunriseResult(
+        Main.Format format,
+        TemporalAccessor sunrise,
+        TemporalAccessor transit,
+        TemporalAccessor sunset,
+        String type) {
+      this(
+          formatDate(format, sunrise),
+          formatDate(format, transit),
+          formatDate(format, sunset),
+          type);
+    }
+
+    public static FormattedSunriseResult of(Main.Format format, SunriseResult result) {
+      return switch (result) {
+        case SunriseResult.AllDay ad -> new FormattedSunriseResult(
+            format, null, ad.transit(), null, format == HUMAN ? "all day" : "ALL_DAY");
+        case SunriseResult.AllNight an -> new FormattedSunriseResult(
+            format, null, an.transit(), null, format == HUMAN ? "all night" : "ALL_NIGHT");
+        case SunriseResult.RegularDay rd -> new FormattedSunriseResult(
+            format, rd.sunrise(), rd.transit(), rd.sunset(), format == HUMAN ? "normal" : "NORMAL");
+      };
+    }
   }
 
   private static String formatDate(Main.Format format, TemporalAccessor temporal) {
@@ -244,9 +264,5 @@ final class SunriseCommand implements Callable<Integer> {
             : Main.ISO_LOCAL_DATE_TIME_REDUCED;
 
     return format == JSON ? '"' + dtf.format(temporal) + '"' : dtf.format(temporal);
-  }
-
-  private static Object formatType(Main.Format format, SunriseTransitSet.Type type) {
-    return format == HUMAN ? type.toString().toLowerCase().replace('_', ' ') : type;
   }
 }
