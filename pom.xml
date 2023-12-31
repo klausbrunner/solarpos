@@ -41,7 +41,6 @@
 
         <basepom.check.skip-dependency>true</basepom.check.skip-dependency>
         <basepom.check.skip-checkstyle>true</basepom.check.skip-checkstyle>
-        <basepom.check.skip-spotbugs>true</basepom.check.skip-spotbugs> <!-- temporary until it works with Java 21 -->
         <basepom.check.skip-pmd>true</basepom.check.skip-pmd> <!-- temporary until it works with Java 21 -->
     </properties>
 
