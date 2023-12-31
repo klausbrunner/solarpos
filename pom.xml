@@ -4,7 +4,7 @@
 
     <groupId>net.e175.klaus</groupId>
     <artifactId>solarpos</artifactId>
-    <version>0.4.1</version>
+    <version>0.4.2-SNAPSHOT</version>
     <parent>
         <groupId>org.basepom</groupId>
         <artifactId>basepom-minimal</artifactId>
@@ -48,7 +48,7 @@
         <connection>scm:git:git@github.com:klausbrunner/solarpos.git</connection>
         <developerConnection>scm:git:git@github.com:klausbrunner/solarpos.git</developerConnection>
         <url>https://github.com/klausbrunner/solarpos/tree/${project.scm.tag}</url>
-        <tag>v0.4.1</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <build>
