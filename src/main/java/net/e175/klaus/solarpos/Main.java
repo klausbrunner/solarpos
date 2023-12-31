@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.TemporalAccessor;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import net.e175.klaus.solarpositioning.DeltaT;
@@ -22,6 +23,11 @@ import picocli.CommandLine.HelpCommand;
     versionProvider = Main.ManifestBasedVersionProviderWithVariables.class,
     showAtFileInUsageHelp = true)
 public final class Main {
+  static {
+    // force English-language locale for formatting
+    Locale.setDefault(Locale.ENGLISH);
+  }
+
   static final String INPUT_DATE_TIME_PATTERN =
       "yyyy[-MM[-dd[['T'][ ]HH:mm[:ss[.SSS]][XXX['['VV']']]]]]";
   static final String INPUT_TIME_PATTERN = "HH:mm[:ss[.SSS]][XXX['['VV']']]";
