@@ -73,16 +73,18 @@ final class PositionCommand implements Callable<Integer> {
           final double deltaT = parent.getBestGuessDeltaT(dateTime);
           SolarPosition position =
               switch (this.algorithm) {
-                case SPA -> SPA.calculateSolarPosition(
-                    dateTime,
-                    parent.latitude,
-                    parent.longitude,
-                    elevation,
-                    deltaT,
-                    pressure,
-                    temperature);
-                case GRENA3 -> Grena3.calculateSolarPosition(
-                    dateTime, parent.latitude, parent.longitude, deltaT, pressure, temperature);
+                case SPA ->
+                    SPA.calculateSolarPosition(
+                        dateTime,
+                        parent.latitude,
+                        parent.longitude,
+                        elevation,
+                        deltaT,
+                        pressure,
+                        temperature);
+                case GRENA3 ->
+                    Grena3.calculateSolarPosition(
+                        dateTime, parent.latitude, parent.longitude, deltaT, pressure, temperature);
               };
 
           out.print(buildOutput(parent.format, dateTime, deltaT, position, parent.showInput));
@@ -97,28 +99,35 @@ final class PositionCommand implements Callable<Integer> {
     final ZoneId overrideTz = zoneId.orElse(ZoneId.systemDefault());
 
     return switch (dateTime) {
-      case Year y -> Stream.iterate(
-          ZonedDateTime.of(LocalDate.of(y.getValue(), 1, 1), LocalTime.of(0, 0), overrideTz),
-          i -> i.getYear() == y.getValue(),
-          i -> i.plusSeconds(step));
-      case YearMonth ym -> Stream.iterate(
-          ZonedDateTime.of(
-              LocalDate.of(ym.getYear(), ym.getMonth(), 1), LocalTime.of(0, 0), overrideTz),
-          i -> i.getMonth() == ym.getMonth(),
-          i -> i.plusSeconds(step));
-      case LocalDate ld -> Stream.iterate(
-          ZonedDateTime.of(ld, LocalTime.of(0, 0), overrideTz),
-          i -> i.getDayOfMonth() == ld.getDayOfMonth(),
-          i -> i.plusSeconds(step));
+      case Year y ->
+          Stream.iterate(
+              ZonedDateTime.of(LocalDate.of(y.getValue(), 1, 1), LocalTime.of(0, 0), overrideTz),
+              i -> i.getYear() == y.getValue(),
+              i -> i.plusSeconds(step));
+      case YearMonth ym ->
+          Stream.iterate(
+              ZonedDateTime.of(
+                  LocalDate.of(ym.getYear(), ym.getMonth(), 1), LocalTime.of(0, 0), overrideTz),
+              i -> i.getMonth() == ym.getMonth(),
+              i -> i.plusSeconds(step));
+      case LocalDate ld ->
+          Stream.iterate(
+              ZonedDateTime.of(ld, LocalTime.of(0, 0), overrideTz),
+              i -> i.getDayOfMonth() == ld.getDayOfMonth(),
+              i -> i.plusSeconds(step));
       case LocalDateTime ldt -> Stream.of(ZonedDateTime.of(ldt, overrideTz));
       case LocalTime lt -> Stream.of(ZonedDateTime.of(LocalDate.now(), lt, overrideTz));
-      case OffsetTime ot -> Stream.of(
-          ZonedDateTime.of(
-              LocalDate.now(), ot.toLocalTime(), zoneId.isPresent() ? overrideTz : ot.getOffset()));
-      case ZonedDateTime zdt -> Stream.of(
-          zoneId.isPresent()
-              ? ZonedDateTime.of(zdt.toLocalDate(), zdt.toLocalTime(), overrideTz)
-              : zdt);
+      case OffsetTime ot ->
+          Stream.of(
+              ZonedDateTime.of(
+                  LocalDate.now(),
+                  ot.toLocalTime(),
+                  zoneId.isPresent() ? overrideTz : ot.getOffset()));
+      case ZonedDateTime zdt ->
+          Stream.of(
+              zoneId.isPresent()
+                  ? ZonedDateTime.of(zdt.toLocalDate(), zdt.toLocalTime(), overrideTz)
+                  : zdt);
       default -> throw new IllegalStateException("unexpected date/time type " + dateTime);
     };
   }

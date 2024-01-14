@@ -70,26 +70,32 @@ final class SunriseCommand implements Callable<Integer> {
     final ZoneId overrideTz = zoneId.orElse(ZoneId.systemDefault());
 
     return switch (dateTime) {
-      case Year y -> Stream.iterate(
-          ZonedDateTime.of(
-              LocalDate.of(y.getValue(), Month.JANUARY, 1), LocalTime.of(0, 0), overrideTz),
-          i -> i.getYear() == y.getValue(),
-          i -> i.plusDays(1));
-      case YearMonth ym -> Stream.iterate(
-          ZonedDateTime.of(
-              LocalDate.of(ym.getYear(), ym.getMonth(), 1), LocalTime.of(0, 0), overrideTz),
-          i -> i.getMonth() == ym.getMonth(),
-          i -> i.plusDays(1));
+      case Year y ->
+          Stream.iterate(
+              ZonedDateTime.of(
+                  LocalDate.of(y.getValue(), Month.JANUARY, 1), LocalTime.of(0, 0), overrideTz),
+              i -> i.getYear() == y.getValue(),
+              i -> i.plusDays(1));
+      case YearMonth ym ->
+          Stream.iterate(
+              ZonedDateTime.of(
+                  LocalDate.of(ym.getYear(), ym.getMonth(), 1), LocalTime.of(0, 0), overrideTz),
+              i -> i.getMonth() == ym.getMonth(),
+              i -> i.plusDays(1));
       case LocalDate ld -> Stream.of(ZonedDateTime.of(ld, LocalTime.of(0, 0), overrideTz));
       case LocalDateTime ldt -> Stream.of(ZonedDateTime.of(ldt, overrideTz));
       case LocalTime lt -> Stream.of(ZonedDateTime.of(LocalDate.now(), lt, overrideTz));
-      case OffsetTime ot -> Stream.of(
-          ZonedDateTime.of(
-              LocalDate.now(), ot.toLocalTime(), zoneId.isPresent() ? overrideTz : ot.getOffset()));
-      case ZonedDateTime zdt -> Stream.of(
-          zoneId.isPresent()
-              ? ZonedDateTime.of(zdt.toLocalDate(), zdt.toLocalTime(), overrideTz)
-              : zdt);
+      case OffsetTime ot ->
+          Stream.of(
+              ZonedDateTime.of(
+                  LocalDate.now(),
+                  ot.toLocalTime(),
+                  zoneId.isPresent() ? overrideTz : ot.getOffset()));
+      case ZonedDateTime zdt ->
+          Stream.of(
+              zoneId.isPresent()
+                  ? ZonedDateTime.of(zdt.toLocalDate(), zdt.toLocalTime(), overrideTz)
+                  : zdt);
       default -> throw new IllegalStateException("unexpected date/time type " + dateTime);
     };
   }
@@ -243,12 +249,19 @@ final class SunriseCommand implements Callable<Integer> {
 
     public static FormattedSunriseResult of(Main.Format format, SunriseResult result) {
       return switch (result) {
-        case SunriseResult.AllDay ad -> new FormattedSunriseResult(
-            format, null, ad.transit(), null, format == HUMAN ? "all day" : "ALL_DAY");
-        case SunriseResult.AllNight an -> new FormattedSunriseResult(
-            format, null, an.transit(), null, format == HUMAN ? "all night" : "ALL_NIGHT");
-        case SunriseResult.RegularDay rd -> new FormattedSunriseResult(
-            format, rd.sunrise(), rd.transit(), rd.sunset(), format == HUMAN ? "normal" : "NORMAL");
+        case SunriseResult.AllDay ad ->
+            new FormattedSunriseResult(
+                format, null, ad.transit(), null, format == HUMAN ? "all day" : "ALL_DAY");
+        case SunriseResult.AllNight an ->
+            new FormattedSunriseResult(
+                format, null, an.transit(), null, format == HUMAN ? "all night" : "ALL_NIGHT");
+        case SunriseResult.RegularDay rd ->
+            new FormattedSunriseResult(
+                format,
+                rd.sunrise(),
+                rd.transit(),
+                rd.sunset(),
+                format == HUMAN ? "normal" : "NORMAL");
       };
     }
   }
