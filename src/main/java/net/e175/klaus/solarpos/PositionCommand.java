@@ -135,11 +135,11 @@ final class PositionCommand implements Callable<Integer> {
   private static final Map<Boolean, String> JSON_FORMATS =
       Map.of(
           true,
-              """
+                  """
                     {"latitude":%.5f,"longitude":%5f,"elevation":%.3f,"pressure":%.3f,"temperature":%.3f,"dateTime":"%s","deltaT":%.3f,"azimuth":%.5f,"zenith":%.5f}"""
                   + "\n",
           false,
-              """
+                  """
                     {"dateTime":"%6$s","azimuth":%8$.5f,"zenith":%9$.5f}"""
                   + "\n");
 
