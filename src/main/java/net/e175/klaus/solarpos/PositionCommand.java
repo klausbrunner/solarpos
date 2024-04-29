@@ -158,21 +158,21 @@ final class PositionCommand implements Callable<Integer> {
       Map.of(
           true,
               """
-                    latitude:    %24.4f
-                    longitude:   %24.4f
-                    elevation:   %22.2f
-                    pressure:    %22.2f
-                    temperature: %22.2f
+                    latitude:    %24.4f°
+                    longitude:   %24.4f°
+                    elevation:   %22.2f m
+                    pressure:    %22.2f hPa
+                    temperature: %22.2f °C
                     date/time:  %s
-                    delta T:     %22.2f
-                    azimuth:     %24.4f
-                    zenith:      %24.4f
+                    delta T:     %22.2f s
+                    azimuth:     %24.4f°
+                    zenith:      %24.4f°
                     """,
           false,
               """
                     date/time:  %6$s
-                    azimuth:     %8$24.4f
-                    zenith:      %9$24.4f
+                    azimuth:     %8$24.4f°
+                    zenith:      %9$24.4f°
                     """);
 
   private static final Map<Main.Format, Map<Boolean, String>> HEADERS =

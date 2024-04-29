@@ -137,10 +137,10 @@ final class SunriseCommand implements Callable<Integer> {
         if (showInput) {
           sb.append(
                   """
-                  latitude:            %24.4f
-                  longitude:           %24.4f
+                  latitude:            %24.4f°
+                  longitude:           %24.4f°
                   date/time:          %s
-                  delta T:             %22.2f
+                  delta T:             %22.2f s
                   """
                   .formatted(latitude, longitude, formatDate(format, dateTime), deltaT));
         }
