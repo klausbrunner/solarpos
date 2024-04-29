@@ -19,7 +19,7 @@ Native builds are available for some platforms. These do not require a Java runt
 A [Homebrew](https://brew.sh) formula for solarpos is available in a separate tap. This takes care of downloading and all requirements automatically with a single command:
 
 ```shell
-brew install klausbrunner/tap/solarpos
+brew install klausbrunner/tap/solarpos-native
 ```
 
 ## Usage
