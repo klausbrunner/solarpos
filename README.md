@@ -22,19 +22,9 @@ A [Homebrew](https://brew.sh) formula for solarpos is available in a separate ta
 brew install klausbrunner/tap/solarpos-native
 ```
 
+Use ``klausbrunner/tap/solarpos`` instead if there's no native build for your platform.
+
 ## Usage
-
-For the plain Java distribution, you may have to use the java command:
-
-```shell
-java -jar solarpos.jar
-```
-
-Native (and homebrew) builds can be started directly:
-
-```shell
-solarpos
-```
 
 For detailed usage, see built-in help.
 
