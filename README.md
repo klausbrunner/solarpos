@@ -8,21 +8,25 @@ Status: _beta_. Current functionality works, but needs more user testing and pol
 
 ## Requirements and installation
 
-Solarpos is a Java application, requiring Java 21 or newer. See the [latest release](https://github.com/klausbrunner/solarpos/releases/latest) or build from source using `mvn package`.
+Solarpos is a Java application, requiring a Java 21 or newer runtime. See the [latest release](https://github.com/klausbrunner/solarpos/releases/latest) or build from source using `mvn package`. 
+
+The application artifact is a single JAR file that requires no "installation". The release archive bundles this with shell scripts for simple usage, though.
+
+If you're unsure how to get a Java runtime for your system, [Adoptium](http://adoptium.net/) is recommended.
 
 ### Native builds
 
-Native builds are available for some platforms. These do not require a Java runtime and can be used stand-alone, like any other native application.
+Native builds are available for some common platforms. These do not require a Java runtime and consist of a single, stand-alone executable that can be used as is.
 
 ### macOS: Homebrew installation
 
-A [Homebrew](https://brew.sh) formula for solarpos is available in a separate tap. This takes care of downloading and all requirements automatically with a single command:
+A [Homebrew](https://brew.sh) formula for solarpos is available in a separate tap. This simplifies installation to one command:
 
 ```shell
 brew install klausbrunner/tap/solarpos-native
 ```
 
-Use ``klausbrunner/tap/solarpos`` instead if there's no native build for your platform.
+Use ``klausbrunner/tap/solarpos`` if there's no native build for your hardware architecture. This will install the Java version of solarpos, automatically downloading a Java runtime if needed.
 
 ## Usage
 
