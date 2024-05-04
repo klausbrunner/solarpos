@@ -62,7 +62,7 @@ jobs:
       - name: 'Upload build artifacts'
         uses: actions/upload-artifact@v4
         with:
-          name: artifacts
+          name: artifacts-${{ matrix.os }}
           path: |
             target/**/*
 
@@ -92,8 +92,9 @@ jobs:
       - name: 'Download all build artifacts'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          pattern: artifacts-*
           path: target
+          merge-multiple: true
 
       - name: 'List files'
         run: |
