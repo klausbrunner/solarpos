@@ -34,7 +34,7 @@
     <properties>
         <basepom.main-class>net.e175.klaus.solarpos.Main</basepom.main-class>
         <project.build.targetJdk>21</project.build.targetJdk>
-        <picocli.version>4.7.5</picocli.version>
+        <picocli.version>4.7.6</picocli.version>
 
         <scmCommentPrefix>build: [maven-release-plugin] [skip ci]</scmCommentPrefix>
         <basepom.release.tag-name-format>v@{project.version}</basepom.release.tag-name-format>
