@@ -135,6 +135,7 @@
                                     <args>
                                         <arg>--no-fallback</arg>
                                         <arg>--verbose</arg>
+                                        <arg>-Os</arg>
                                     </args>
                                 </solarpos-native>
                             </nativeImage>
