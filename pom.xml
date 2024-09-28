@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.basepom</groupId>
         <artifactId>basepom-minimal</artifactId>
-        <version>59</version>
+        <version>60</version>
     </parent>
 
     <name>solarpos</name>
@@ -41,7 +41,7 @@
 
         <basepom.check.skip-dependency>true</basepom.check.skip-dependency>
         <basepom.check.skip-checkstyle>true</basepom.check.skip-checkstyle>
-        <basepom.check.skip-pmd>true</basepom.check.skip-pmd> <!-- temporary until it works with Java 21 -->
+        <basepom.check.fail-spotbugs>false</basepom.check.fail-spotbugs>
     </properties>
 
     <scm>
