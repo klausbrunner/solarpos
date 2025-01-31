@@ -136,7 +136,7 @@ final class SunriseCommand implements Callable<Integer> {
       case HUMAN -> {
         if (showInput) {
           sb.append(
-                  """
+              """
                   latitude:            %24.4f°
                   longitude:           %24.4f°
                   date/time:          %s
@@ -173,7 +173,7 @@ final class SunriseCommand implements Callable<Integer> {
         sb.append("{");
         if (showInput) {
           sb.append(
-                  """
+              """
                   "latitude":%.5f,"longitude":%5f,"dateTime":%s,"deltaT":%.3f,"""
                   .formatted(latitude, longitude, formatDate(format, dateTime), deltaT));
         }
