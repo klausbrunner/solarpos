@@ -9,6 +9,8 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    allow:
+      - dependency-type: "production"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
