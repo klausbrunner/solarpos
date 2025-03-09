@@ -29,31 +29,33 @@ final class PositionCommand implements Callable<Integer> {
 
   @CommandLine.Option(
       names = {"-a", "--algorithm"},
-      description = "One of ${COMPLETION-CANDIDATES}.",
+      description = "One of ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}.",
       defaultValue = "spa")
   Algorithm algorithm;
 
   @CommandLine.Option(
       names = {"--elevation"},
-      description = "Elevation above sea level, in meters.",
+      description = "Elevation above sea level, in meters. Default: ${DEFAULT-VALUE}.",
       defaultValue = "0")
   double elevation;
 
   @CommandLine.Option(
       names = {"--pressure"},
-      description = "Avg. air pressure in millibars/hectopascals.",
-      defaultValue = "1000")
+      description =
+          "Avg. air pressure in millibars/hectopascals. Used for refraction correction. Default: ${DEFAULT-VALUE}.",
+      defaultValue = "1013")
   double pressure;
 
   @CommandLine.Option(
       names = {"--temperature"},
-      description = "Avg. air temperature in degrees Celsius.",
-      defaultValue = "0")
+      description =
+          "Avg. air temperature in degrees Celsius. Used for refraction correction. Default: ${DEFAULT-VALUE}.",
+      defaultValue = "15")
   double temperature;
 
   @CommandLine.Option(
       names = {"--step"},
-      description = "Step interval for time series, in seconds.",
+      description = "Step interval for time series, in seconds. Default: ${DEFAULT-VALUE}.",
       defaultValue = "3600")
   int step;
 
@@ -136,7 +138,7 @@ final class PositionCommand implements Callable<Integer> {
       Map.of(
           true,
               """
-                    {"latitude":%.5f,"longitude":%5f,"elevation":%.3f,"pressure":%.3f,"temperature":%.3f,"dateTime":"%s","deltaT":%.3f,"azimuth":%.5f,"zenith":%.5f}"""
+                    {"latitude":%.5f,"longitude":%.5f,"elevation":%.3f,"pressure":%.3f,"temperature":%.3f,"dateTime":"%s","deltaT":%.3f,"azimuth":%.5f,"zenith":%.5f}"""
                   + "\n",
           false,
               """

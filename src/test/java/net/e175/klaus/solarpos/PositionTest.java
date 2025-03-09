@@ -28,7 +28,7 @@ class PositionTest {
     var jsonObject = JsonParser.parseString(result.output()).getAsJsonObject();
     assertEquals(dateTime, jsonObject.get("dateTime").getAsString());
     assertEquals(211.17614, jsonObject.get("azimuth").getAsDouble());
-    assertEquals(66.06678, jsonObject.get("zenith").getAsDouble());
+    assertEquals(66.06832, jsonObject.get("zenith").getAsDouble());
 
     assertEquals(Double.parseDouble(lat), jsonObject.get("latitude").getAsDouble());
     assertEquals(Double.parseDouble(lon), jsonObject.get("longitude").getAsDouble());
@@ -76,7 +76,7 @@ class PositionTest {
     var jsonObject = JsonParser.parseString(result.output()).getAsJsonObject();
     assertEquals(dateTime, jsonObject.get("dateTime").getAsString());
     assertEquals(211.17436, jsonObject.get("azimuth").getAsDouble());
-    assertEquals(66.06694, jsonObject.get("zenith").getAsDouble());
+    assertEquals(66.0685, jsonObject.get("zenith").getAsDouble());
   }
 
   @Test
@@ -87,7 +87,7 @@ class PositionTest {
 
     var result = TestUtil.run(lat, lon, dateTime, "--format=csv", "--deltat=69", "position");
     assertEquals(0, result.returnCode());
-    assertEquals("2003-10-17T12:00:00Z,211.20726,65.92346", result.output().strip());
+    assertEquals("2003-10-17T12:00:00Z,211.20726,65.92499", result.output().strip());
 
     result =
         TestUtil.run(
@@ -95,7 +95,7 @@ class PositionTest {
     assertEquals(0, result.returnCode());
 
     assertEquals(
-        "52.00000,25.00000,0.000,1000.000,0.000,2003-10-17T12:00:00Z,69.000,211.20726,65.92346",
+        "52.00000,25.00000,0.000,1013.000,15.000,2003-10-17T12:00:00Z,69.000,211.20726,65.92499",
         result.output().strip());
   }
 
@@ -126,11 +126,11 @@ class PositionTest {
                 2003-10-17T00:00:00Z,38.87778,131.09385
                 2003-10-17T02:00:00Z,69.90910,116.13739
                 2003-10-17T04:00:00Z,94.54534,97.98688
-                2003-10-17T06:00:00Z,118.48590,80.31973
-                2003-10-17T08:00:00Z,146.00826,66.76720
-                2003-10-17T10:00:00Z,178.46662,61.15144
-                2003-10-17T12:00:00Z,211.20726,65.92346
-                2003-10-17T14:00:00Z,239.15181,78.97740
+                2003-10-17T06:00:00Z,118.48590,80.32356
+                2003-10-17T08:00:00Z,146.00826,66.76879
+                2003-10-17T10:00:00Z,178.46662,61.15269
+                2003-10-17T12:00:00Z,211.20726,65.92499
+                2003-10-17T14:00:00Z,239.15181,78.98078
                 2003-10-17T16:00:00Z,263.21613,96.46308
                 2003-10-17T18:00:00Z,287.52922,114.74832
                 2003-10-17T20:00:00Z,317.71947,130.28269
