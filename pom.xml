@@ -93,12 +93,12 @@
             <plugin>
                 <groupId>org.jreleaser</groupId>
                 <artifactId>jreleaser-maven-plugin</artifactId>
-                <version>1.15.0</version>
+                <version>1.17.0</version>
                 <inherited>false</inherited>
                 <configuration>
                     <jreleaser>
                         <project>
-                            <copyright>2023 Klaus A. Brunner</copyright>
+                            <copyright>2025 Klaus A. Brunner</copyright>
                             <java>
                                 <mainClass>${basepom.main-class}</mainClass>
                             </java>
