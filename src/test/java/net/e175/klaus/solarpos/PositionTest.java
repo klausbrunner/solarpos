@@ -160,8 +160,8 @@ class PositionTest {
     var outputRecords = TestUtil.CSV.parse(new StringReader(result.output())).getRecords();
 
     assertEquals(4380, outputRecords.size());
-    assertEquals("2003-01-01T00:00:00Z", outputRecords.get(0).get(0));
-    assertEquals("2003-12-31T22:00:00Z", outputRecords.get(outputRecords.size() - 1).get(0));
+    assertEquals("2003-01-01T00:00:00Z", outputRecords.getFirst().get(0));
+    assertEquals("2003-12-31T22:00:00Z", outputRecords.getLast().get(0));
   }
 
   @Test
@@ -198,8 +198,8 @@ class PositionTest {
     var outputRecords = TestUtil.CSV.parse(new StringReader(result.output())).getRecords();
 
     assertEquals(348, outputRecords.size());
-    assertEquals("2024-02-01T00:00:00Z", outputRecords.get(0).get(0));
-    assertEquals("2024-02-29T22:00:00Z", outputRecords.get(outputRecords.size() - 1).get(0));
+    assertEquals("2024-02-01T00:00:00Z", outputRecords.getFirst().get(0));
+    assertEquals("2024-02-29T22:00:00Z", outputRecords.getLast().get(0));
   }
 
   @Test
@@ -226,8 +226,7 @@ class PositionTest {
         TestUtil.CSV_WITH_HEADER.parse(new StringReader(result.output())).getRecords();
 
     assertEquals(348, outputRecords.size());
-    assertEquals("2024-02-01T00:00:00Z", outputRecords.get(0).get("dateTime"));
-    assertEquals(
-        "2024-02-29T22:00:00Z", outputRecords.get(outputRecords.size() - 1).get("dateTime"));
+    assertEquals("2024-02-01T00:00:00Z", outputRecords.getFirst().get("dateTime"));
+    assertEquals("2024-02-29T22:00:00Z", outputRecords.getLast().get("dateTime"));
   }
 }

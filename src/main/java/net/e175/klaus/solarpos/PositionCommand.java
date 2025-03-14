@@ -59,12 +59,18 @@ final class PositionCommand implements Callable<Integer> {
       defaultValue = "3600")
   int step;
 
+  @CommandLine.Option(
+      names = "--refraction",
+      negatable = true,
+      defaultValue = "true",
+      fallbackValue = "true",
+      description = "Apply refraction correction. Default: ${DEFAULT-VALUE}.")
+  boolean refraction;
+
   @Override
   public Integer call() {
     parent.validate();
-    if (step < 1 || step > 24 * 60 * 60) {
-      throw new CommandLine.ParameterException(spec.commandLine(), "invalid step value");
-    }
+    validate();
 
     final Stream<ZonedDateTime> dateTimes = getDatetimes(parent.dateTime, parent.timezone, step);
     parent.printAnyHeaders(HEADERS);
@@ -76,17 +82,28 @@ final class PositionCommand implements Callable<Integer> {
           SolarPosition position =
               switch (this.algorithm) {
                 case SPA ->
-                    SPA.calculateSolarPosition(
-                        dateTime,
-                        parent.latitude,
-                        parent.longitude,
-                        elevation,
-                        deltaT,
-                        pressure,
-                        temperature);
+                    this.refraction
+                        ? SPA.calculateSolarPosition(
+                            dateTime,
+                            parent.latitude,
+                            parent.longitude,
+                            elevation,
+                            deltaT,
+                            pressure,
+                            temperature)
+                        : SPA.calculateSolarPosition(
+                            dateTime, parent.latitude, parent.longitude, elevation, deltaT);
                 case GRENA3 ->
-                    Grena3.calculateSolarPosition(
-                        dateTime, parent.latitude, parent.longitude, deltaT, pressure, temperature);
+                    this.refraction
+                        ? Grena3.calculateSolarPosition(
+                            dateTime,
+                            parent.latitude,
+                            parent.longitude,
+                            deltaT,
+                            pressure,
+                            temperature)
+                        : Grena3.calculateSolarPosition(
+                            dateTime, parent.latitude, parent.longitude, deltaT);
               };
 
           out.print(buildOutput(parent.format, dateTime, deltaT, position, parent.showInput));
@@ -94,6 +111,20 @@ final class PositionCommand implements Callable<Integer> {
     out.flush();
 
     return 0;
+  }
+
+  private void validate() {
+    if (step < 1 || step > 24 * 60 * 60) {
+      throw new CommandLine.ParameterException(spec.commandLine(), "invalid step value");
+    }
+
+    if (pressure <= 0 || pressure > 2000) {
+      throw new CommandLine.ParameterException(spec.commandLine(), "invalid pressure value");
+    }
+
+    if (temperature < -100 || temperature > 100) {
+      throw new CommandLine.ParameterException(spec.commandLine(), "invalid temperature value");
+    }
   }
 
   static Stream<ZonedDateTime> getDatetimes(

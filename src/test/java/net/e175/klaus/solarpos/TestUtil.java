@@ -9,7 +9,7 @@ import picocli.CommandLine;
 
 final class TestUtil {
   static final CSVFormat CSV_WITH_HEADER =
-      CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).build();
+      CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).get();
   static final CSVFormat CSV = CSVFormat.DEFAULT;
 
   record Result(int returnCode, String output) {}
