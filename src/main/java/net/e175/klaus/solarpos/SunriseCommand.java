@@ -249,19 +249,15 @@ final class SunriseCommand implements Callable<Integer> {
 
     public static FormattedSunriseResult of(Main.Format format, SunriseResult result) {
       return switch (result) {
-        case SunriseResult.AllDay ad ->
+        case SunriseResult.AllDay(var transit) ->
             new FormattedSunriseResult(
-                format, null, ad.transit(), null, format == HUMAN ? "all day" : "ALL_DAY");
-        case SunriseResult.AllNight an ->
+                format, null, transit, null, format == HUMAN ? "all day" : "ALL_DAY");
+        case SunriseResult.AllNight(var transit) ->
             new FormattedSunriseResult(
-                format, null, an.transit(), null, format == HUMAN ? "all night" : "ALL_NIGHT");
-        case SunriseResult.RegularDay rd ->
+                format, null, transit, null, format == HUMAN ? "all night" : "ALL_NIGHT");
+        case SunriseResult.RegularDay(var sunrise, var transit, var sunset) ->
             new FormattedSunriseResult(
-                format,
-                rd.sunrise(),
-                rd.transit(),
-                rd.sunset(),
-                format == HUMAN ? "normal" : "NORMAL");
+                format, sunrise, transit, sunset, format == HUMAN ? "normal" : "NORMAL");
       };
     }
   }

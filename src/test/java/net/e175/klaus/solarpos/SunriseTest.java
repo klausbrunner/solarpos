@@ -89,7 +89,7 @@ class SunriseTest {
     var outputRecords =
         TestUtil.CSV_WITH_HEADER.parse(new StringReader(result.output())).getRecords();
     assertEquals(1, outputRecords.size());
-    var record = outputRecords.get(0);
+    var record = outputRecords.getFirst();
     assertEquals(dateTime, record.get("dateTime"));
 
     assertEquals("2023-05-01T05:36:58+01:00", record.get("sunrise"));
@@ -160,7 +160,7 @@ class SunriseTest {
 
     var outputRecords = TestUtil.CSV.parse(new StringReader(result.output())).getRecords();
     assertEquals(365, outputRecords.size());
-    assertEquals("2023-01-01T00:00:00Z", outputRecords.get(0).get(2));
+    assertEquals("2023-01-01T00:00:00Z", outputRecords.getFirst().get(2));
     assertEquals("2023-12-31T00:00:00Z", outputRecords.get(364).get(2));
   }
 
@@ -184,7 +184,7 @@ class SunriseTest {
 
     var outputRecords = TestUtil.CSV.parse(new StringReader(result.output())).getRecords();
     assertEquals(28, outputRecords.size());
-    assertEquals("2023-02-01T00:00:00Z", outputRecords.get(0).get(2));
+    assertEquals("2023-02-01T00:00:00Z", outputRecords.getFirst().get(2));
     assertEquals("2023-02-28T00:00:00Z", outputRecords.get(27).get(2));
   }
 
@@ -210,7 +210,7 @@ class SunriseTest {
     var outputRecords =
         TestUtil.CSV_WITH_HEADER.parse(new StringReader(result.output())).getRecords();
     assertEquals(28, outputRecords.size());
-    assertEquals("2023-02-01T00:00:00Z", outputRecords.get(0).get("dateTime"));
+    assertEquals("2023-02-01T00:00:00Z", outputRecords.getFirst().get("dateTime"));
     assertEquals("2023-02-28T00:00:00Z", outputRecords.get(27).get("dateTime"));
   }
 
@@ -228,7 +228,7 @@ class SunriseTest {
         TestUtil.CSV_WITH_HEADER.parse(new StringReader(result.output())).getRecords();
     assertEquals(28, outputRecords.size());
 
-    assertEquals("", outputRecords.get(0).get("sunrise"));
+    assertEquals("", outputRecords.getFirst().get("sunrise"));
     assertEquals("2023-02-28T07:38:45Z", outputRecords.get(27).get("sunrise"));
 
     result =
@@ -246,7 +246,7 @@ class SunriseTest {
     outputRecords = TestUtil.CSV_WITH_HEADER.parse(new StringReader(result.output())).getRecords();
     assertEquals(28, outputRecords.size());
 
-    assertEquals("", outputRecords.get(0).get("sunrise"));
+    assertEquals("", outputRecords.getFirst().get("sunrise"));
     assertEquals("2023-02-28T07:38:45Z", outputRecords.get(27).get("sunrise"));
   }
 

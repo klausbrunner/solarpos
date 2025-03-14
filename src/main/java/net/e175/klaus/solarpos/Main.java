@@ -106,7 +106,7 @@ public final class Main {
 
   @CommandLine.Option(
       names = {"--headers"},
-      description = "Show headers in output (currently applies only to CSV).")
+      description = "Show headers in output (CSV only).")
   boolean headers;
 
   @CommandLine.Option(
@@ -128,7 +128,7 @@ public final class Main {
   }
 
   double getBestGuessDeltaT(ZonedDateTime dateTime) {
-    return Double.isNaN(deltaT) ? DeltaT.estimate(dateTime.toLocalDate()) : deltaT;
+    return Double.isFinite(deltaT) ? deltaT : DeltaT.estimate(dateTime.toLocalDate());
   }
 
   void printAnyHeaders(Map<Main.Format, Map<Boolean, String>> headersMap) {
