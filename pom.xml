@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.basepom</groupId>
         <artifactId>basepom-minimal</artifactId>
-        <version>61</version>
+        <version>62</version>
     </parent>
 
     <name>solarpos</name>
