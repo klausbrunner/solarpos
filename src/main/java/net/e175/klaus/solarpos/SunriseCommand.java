@@ -3,14 +3,15 @@ package net.e175.klaus.solarpos;
 import static net.e175.klaus.solarpos.Main.Format.HUMAN;
 import static net.e175.klaus.solarpos.Main.Format.JSON;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.*;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
+import net.e175.klaus.formatter.*;
+import net.e175.klaus.solarpos.util.TimeFormatUtil;
 import net.e175.klaus.solarpositioning.SPA;
 import net.e175.klaus.solarpositioning.SunriseResult;
 import picocli.CommandLine;
@@ -31,7 +32,6 @@ final class SunriseCommand implements Callable<Integer> {
     parent.validate();
 
     final Stream<ZonedDateTime> dateTimes = getDatetimes(parent.dateTime, parent.timezone);
-    parent.printAnyHeaders(twilight ? TWILIGHT_HEADERS : HEADERS);
 
     final SPA.Horizon[] horizons =
         twilight
@@ -44,26 +44,234 @@ final class SunriseCommand implements Callable<Integer> {
             : new SPA.Horizon[] {SPA.Horizon.SUNRISE_SUNSET};
 
     final PrintWriter out = parent.spec.commandLine().getOut();
-    dateTimes.forEach(
-        dateTime -> {
-          final double deltaT = parent.getBestGuessDeltaT(dateTime);
-          Map<SPA.Horizon, SunriseResult> result =
-              SPA.calculateSunriseTransitSet(
-                  dateTime, parent.latitude, parent.longitude, deltaT, horizons);
-          out.print(
-              buildOutput(
-                  parent.format,
-                  parent.latitude,
-                  parent.longitude,
-                  dateTime,
-                  deltaT,
-                  result,
-                  parent.showInput,
-                  twilight));
-        });
-    out.flush();
 
+    try {
+      List<FieldDescriptor<SunriseData>> fields = createFields();
+      List<String> fieldNames = getFieldNames(parent.showInput, twilight);
+      StreamingFormatter<SunriseData> formatter = createFormatter(parent.format);
+      formatter.format(
+          fields,
+          fieldNames,
+          dateTimes.map(dateTime -> calculateSunriseData(dateTime, horizons)),
+          out);
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to format output", e);
+    }
+
+    out.flush();
     return 0;
+  }
+
+  private List<FieldDescriptor<SunriseData>> createFields() {
+    List<FieldDescriptor<SunriseData>> fields = new ArrayList<>();
+
+    // Input fields
+    fields.add(FieldDescriptor.numeric("latitude", SunriseData::latitude, 5));
+    fields.add(FieldDescriptor.numeric("longitude", SunriseData::longitude, 5));
+    fields.add(
+        FieldDescriptor.dateTime(
+            "dateTime",
+            SunriseData::dateTime,
+            parent.format == HUMAN ? "yyyy-MM-dd HH:mm:ssXXX" : "yyyy-MM-dd'T'HH:mm:ssXXX"));
+    fields.add(FieldDescriptor.numeric("deltaT", SunriseData::deltaT, 3));
+
+    // Result fields
+    fields.add(new FieldDescriptor<>("type", SunriseData::type));
+    fields.add(new FieldDescriptor<>("sunrise", SunriseData::sunrise));
+    fields.add(new FieldDescriptor<>("transit", SunriseData::transit));
+    fields.add(new FieldDescriptor<>("sunset", SunriseData::sunset));
+
+    // Twilight fields
+    fields.add(new FieldDescriptor<>("civil_start", SunriseData::civilStart));
+    fields.add(new FieldDescriptor<>("civil_end", SunriseData::civilEnd));
+    fields.add(new FieldDescriptor<>("nautical_start", SunriseData::nauticalStart));
+    fields.add(new FieldDescriptor<>("nautical_end", SunriseData::nauticalEnd));
+    fields.add(new FieldDescriptor<>("astronomical_start", SunriseData::astronomicalStart));
+    fields.add(new FieldDescriptor<>("astronomical_end", SunriseData::astronomicalEnd));
+
+    return fields;
+  }
+
+  private List<String> getFieldNames(boolean showInput, boolean twilight) {
+    List<String> names = new ArrayList<>();
+
+    // Input fields if showInput is true
+    if (showInput) {
+      names.addAll(List.of("latitude", "longitude", "dateTime", "deltaT"));
+    }
+
+    // Basic fields
+    names.addAll(List.of("type", "sunrise", "transit", "sunset"));
+
+    // Twilight fields if twilight is true
+    if (twilight) {
+      names.addAll(
+          List.of(
+              "civil_start", "civil_end",
+              "nautical_start", "nautical_end",
+              "astronomical_start", "astronomical_end"));
+    }
+
+    return names;
+  }
+
+  private StreamingFormatter<SunriseData> createFormatter(Main.Format format) {
+    SerializerRegistry registry = createRegistry(format);
+
+    return switch (format) {
+      case HUMAN -> new SimpleTextFormatter<>(registry);
+      case JSON -> new JsonFormatter<>(registry, "\n");
+      case CSV -> new CsvFormatter<>(registry, parent.headers);
+    };
+  }
+
+  private SerializerRegistry createRegistry(Main.Format format) {
+    SerializerRegistry registry =
+        switch (format) {
+          case HUMAN -> SerializerRegistry.forText();
+          case JSON -> SerializerRegistry.forJson();
+          case CSV -> SerializerRegistry.forCsv();
+        };
+
+    // Custom serializer for temporal accessors
+    registry.register(
+        ZonedDateTime.class,
+        (dt, hints) -> {
+          if (dt == null) {
+            return switch (format) {
+              case HUMAN -> "none";
+              case JSON -> "null";
+              case CSV -> "";
+            };
+          }
+
+          String formatted =
+              dt.format(
+                  format == HUMAN
+                      ? TimeFormatUtil.ISO_HUMAN_LOCAL_DATE_TIME_REDUCED
+                      : TimeFormatUtil.ISO_LOCAL_DATE_TIME_REDUCED);
+
+          return format == JSON ? '"' + formatted + '"' : formatted;
+        });
+
+    // Add degree symbols for human format
+    if (format == HUMAN) {
+      registry.register(
+          Double.class,
+          (d, hints) -> {
+            int precision = (int) hints.getOrDefault("precision", 4);
+            String result = String.format("%." + precision + "f", d);
+
+            String fieldName = (String) hints.getOrDefault("fieldName", "");
+            if (fieldName.equals("latitude") || fieldName.equals("longitude")) {
+              return String.format("%24s°", result);
+            } else if (fieldName.equals("deltaT")) {
+              return String.format("%22s s", result);
+            }
+            return result;
+          });
+    }
+
+    return registry;
+  }
+
+  private SunriseData calculateSunriseData(ZonedDateTime dateTime, SPA.Horizon[] horizons) {
+    final double deltaT = parent.getBestGuessDeltaT(dateTime);
+    Map<SPA.Horizon, SunriseResult> result =
+        SPA.calculateSunriseTransitSet(
+            dateTime, parent.latitude, parent.longitude, deltaT, horizons);
+
+    // Get the main sunrise/sunset result
+    SunriseResult sunriseSunset = result.get(SPA.Horizon.SUNRISE_SUNSET);
+
+    // Create the type string based on the result type and format
+    String type =
+        switch (sunriseSunset) {
+          case SunriseResult.AllDay(var transit) -> parent.format == HUMAN ? "all day" : "ALL_DAY";
+          case SunriseResult.AllNight(var transit) ->
+              parent.format == HUMAN ? "all night" : "ALL_NIGHT";
+          case SunriseResult.RegularDay(var sunrise, var transit, var sunset) ->
+              parent.format == HUMAN ? "normal" : "NORMAL";
+        };
+
+    // Extract sunrise, transit, sunset times
+    ZonedDateTime sunrise = null;
+    ZonedDateTime transit = null;
+    ZonedDateTime sunset = null;
+
+    switch (sunriseSunset) {
+      case SunriseResult.RegularDay(
+          ZonedDateTime sunrise1,
+          ZonedDateTime transit1,
+          ZonedDateTime sunset1) -> {
+        sunrise = convertToZonedDateTime(sunrise1);
+        transit = convertToZonedDateTime(transit1);
+        sunset = convertToZonedDateTime(sunset1);
+      }
+      case SunriseResult.AllDay(ZonedDateTime transit1) ->
+          transit = convertToZonedDateTime(transit1);
+      case SunriseResult.AllNight(ZonedDateTime transit1) ->
+          transit = convertToZonedDateTime(transit1);
+      default -> {}
+    }
+
+    // Extract twilight times if available
+    ZonedDateTime civilStart = null;
+    ZonedDateTime civilEnd = null;
+    ZonedDateTime nauticalStart = null;
+    ZonedDateTime nauticalEnd = null;
+    ZonedDateTime astronomicalStart = null;
+    ZonedDateTime astronomicalEnd = null;
+
+    if (horizons.length > 1) {
+      SunriseResult civil = result.get(SPA.Horizon.CIVIL_TWILIGHT);
+      SunriseResult nautical = result.get(SPA.Horizon.NAUTICAL_TWILIGHT);
+      SunriseResult astronomical = result.get(SPA.Horizon.ASTRONOMICAL_TWILIGHT);
+
+      if (civil instanceof SunriseResult.RegularDay regularDay) {
+        civilStart = convertToZonedDateTime(regularDay.sunrise());
+        civilEnd = convertToZonedDateTime(regularDay.sunset());
+      }
+
+      if (nautical instanceof SunriseResult.RegularDay regularDay) {
+        nauticalStart = convertToZonedDateTime(regularDay.sunrise());
+        nauticalEnd = convertToZonedDateTime(regularDay.sunset());
+      }
+
+      if (astronomical instanceof SunriseResult.RegularDay regularDay) {
+        astronomicalStart = convertToZonedDateTime(regularDay.sunrise());
+        astronomicalEnd = convertToZonedDateTime(regularDay.sunset());
+      }
+    }
+
+    return new SunriseData(
+        parent.latitude,
+        parent.longitude,
+        dateTime,
+        deltaT,
+        type,
+        sunrise,
+        transit,
+        sunset,
+        civilStart,
+        civilEnd,
+        nauticalStart,
+        nauticalEnd,
+        astronomicalStart,
+        astronomicalEnd);
+  }
+
+  private ZonedDateTime convertToZonedDateTime(TemporalAccessor temporal) {
+    if (temporal == null) {
+      return null;
+    }
+
+    if (temporal instanceof ZonedDateTime zdt) {
+      return zdt;
+    }
+
+    // Handle other temporal types if needed
+    return null;
   }
 
   static Stream<ZonedDateTime> getDatetimes(TemporalAccessor dateTime, Optional<ZoneId> zoneId) {
@@ -98,180 +306,5 @@ final class SunriseCommand implements Callable<Integer> {
                   : zdt);
       default -> throw new IllegalStateException("unexpected date/time type " + dateTime);
     };
-  }
-
-  private static final Map<Main.Format, Map<Boolean, String>> HEADERS =
-      Map.of(
-          Main.Format.CSV,
-          Map.of(
-              true, "latitude,longitude,dateTime,deltaT,type,sunrise,transit,sunset\r\n",
-              false, "type,sunrise,transit,sunset\r\n"));
-
-  private static final Map<Main.Format, Map<Boolean, String>> TWILIGHT_HEADERS =
-      Map.of(
-          Main.Format.CSV,
-          Map.of(
-              true,
-                  "latitude,longitude,dateTime,deltaT,type,sunrise,transit,sunset,civil_start,civil_end,nautical_start,nautical_end,astronomical_start,astronomical_end\r\n",
-              false,
-                  "type,sunrise,transit,sunset,civil_start,civil_end,nautical_start,nautical_end,astronomical_start,astronomical_end\r\n"));
-
-  private static final Map<Main.Format, String> NULL_DATE =
-      Map.of(Main.Format.CSV, "", JSON, "null", HUMAN, "none");
-
-  private static String buildOutput(
-      Main.Format format,
-      double latitude,
-      double longitude,
-      ZonedDateTime dateTime,
-      double deltaT,
-      Map<SPA.Horizon, SunriseResult> result,
-      boolean showInput,
-      boolean twilight) {
-
-    final var sb = new StringBuilder(100);
-    final var sunriseSunset = result.get(SPA.Horizon.SUNRISE_SUNSET);
-
-    switch (format) {
-      case HUMAN -> {
-        if (showInput) {
-          sb.append(
-              """
-                  latitude:            %24.4f°
-                  longitude:           %24.4f°
-                  date/time:          %s
-                  delta T:             %22.2f s
-                  """
-                  .formatted(latitude, longitude, formatDate(format, dateTime), deltaT));
-        }
-        sb.append(
-            sunriseSunsetFragment(
-                format,
-                sunriseSunset,
-                """
-                        type:               %s
-                        sunrise:            %s
-                        transit:            %s
-                        sunset:             %s
-                        """));
-        if (twilight) {
-          sb.append(
-              twilightFragment(
-                  format,
-                  result,
-                  """
-                          civil start:        %s
-                          civil end:          %s
-                          nautical start:     %s
-                          nautical end:       %s
-                          astronomical start: %s
-                          astronomical end:   %s
-                          """));
-        }
-      }
-      case JSON -> {
-        sb.append("{");
-        if (showInput) {
-          sb.append(
-              """
-                  "latitude":%.5f,"longitude":%5f,"dateTime":%s,"deltaT":%.3f,"""
-                  .formatted(latitude, longitude, formatDate(format, dateTime), deltaT));
-        }
-        sb.append(
-            sunriseSunsetFragment(
-                format,
-                sunriseSunset,
-                """
-                    "type":"%s","sunrise":%s,"transit":%s,"sunset":%s"""));
-        if (twilight) {
-          sb.append(
-              twilightFragment(
-                  format,
-                  result,
-                  """
-                    ,"civil_start":%s,"civil_end":%s,"nautical_start":%s,"nautical_end":%s,"astronomical_start":%s,"astronomical_end":%s"""));
-        }
-        sb.append("}\n");
-      }
-      case CSV -> {
-        if (showInput) {
-          sb.append(
-              "%.5f,%.5f,%s,%.3f,"
-                  .formatted(latitude, longitude, formatDate(format, dateTime), deltaT));
-        }
-        sb.append(sunriseSunsetFragment(format, sunriseSunset, "%s,%s,%s,%s"));
-        if (twilight) {
-          sb.append(twilightFragment(format, result, ",%s,%s,%s,%s,%s,%s"));
-        }
-        sb.append("\r\n"); // according to https://www.rfc-editor.org/rfc/rfc4180#section-2
-      }
-    }
-    return sb.toString();
-  }
-
-  private static String twilightFragment(
-      Main.Format format, Map<SPA.Horizon, SunriseResult> result, String pattern) {
-    final var civil = FormattedSunriseResult.of(format, result.get(SPA.Horizon.CIVIL_TWILIGHT));
-    final var nautical =
-        FormattedSunriseResult.of(format, result.get(SPA.Horizon.NAUTICAL_TWILIGHT));
-    final var astronomical =
-        FormattedSunriseResult.of(format, result.get(SPA.Horizon.ASTRONOMICAL_TWILIGHT));
-    return pattern.formatted(
-        civil.sunrise(),
-        civil.sunset(),
-        nautical.sunrise(),
-        nautical.sunset(),
-        astronomical.sunrise(),
-        astronomical.sunset());
-  }
-
-  private static String sunriseSunsetFragment(
-      Main.Format format, SunriseResult sunriseSunset, String pattern) {
-    var formatted = FormattedSunriseResult.of(format, sunriseSunset);
-
-    return pattern.formatted(
-        formatted.type(), formatted.sunrise(), formatted.transit(), formatted.sunset());
-  }
-
-  record FormattedSunriseResult(String sunrise, String transit, String sunset, String type) {
-    private FormattedSunriseResult(
-        Main.Format format,
-        TemporalAccessor sunrise,
-        TemporalAccessor transit,
-        TemporalAccessor sunset,
-        String type) {
-      this(
-          formatDate(format, sunrise),
-          formatDate(format, transit),
-          formatDate(format, sunset),
-          type);
-    }
-
-    public static FormattedSunriseResult of(Main.Format format, SunriseResult result) {
-      return switch (result) {
-        case SunriseResult.AllDay(var transit) ->
-            new FormattedSunriseResult(
-                format, null, transit, null, format == HUMAN ? "all day" : "ALL_DAY");
-        case SunriseResult.AllNight(var transit) ->
-            new FormattedSunriseResult(
-                format, null, transit, null, format == HUMAN ? "all night" : "ALL_NIGHT");
-        case SunriseResult.RegularDay(var sunrise, var transit, var sunset) ->
-            new FormattedSunriseResult(
-                format, sunrise, transit, sunset, format == HUMAN ? "normal" : "NORMAL");
-      };
-    }
-  }
-
-  private static String formatDate(Main.Format format, TemporalAccessor temporal) {
-    if (temporal == null) {
-      return NULL_DATE.get(format);
-    }
-
-    DateTimeFormatter dtf =
-        (format == HUMAN)
-            ? Main.ISO_HUMAN_LOCAL_DATE_TIME_REDUCED
-            : Main.ISO_LOCAL_DATE_TIME_REDUCED;
-
-    return format == JSON ? '"' + dtf.format(temporal) + '"' : dtf.format(temporal);
   }
 }
