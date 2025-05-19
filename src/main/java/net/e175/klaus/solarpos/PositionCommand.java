@@ -1,15 +1,24 @@
 package net.e175.klaus.solarpos;
 
 import static net.e175.klaus.solarpos.Main.Format.HUMAN;
+import static net.e175.klaus.solarpos.Main.Format.JSON;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.*;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
+import net.e175.klaus.formatter.CsvFormatter;
+import net.e175.klaus.formatter.FieldDescriptor;
+import net.e175.klaus.formatter.JsonFormatter;
+import net.e175.klaus.formatter.SerializerRegistry;
+import net.e175.klaus.formatter.SimpleTextFormatter;
+import net.e175.klaus.formatter.StreamingFormatter;
+import net.e175.klaus.solarpos.util.TimeFormatUtil;
 import net.e175.klaus.solarpositioning.Grena3;
 import net.e175.klaus.solarpositioning.SPA;
 import net.e175.klaus.solarpositioning.SolarPosition;
@@ -67,50 +76,184 @@ final class PositionCommand implements Callable<Integer> {
       description = "Apply refraction correction. Default: ${DEFAULT-VALUE}.")
   boolean refraction;
 
+  /** Record to hold position data for formatting. */
+  record PositionData(
+      double latitude,
+      double longitude,
+      double elevation,
+      double pressure,
+      double temperature,
+      ZonedDateTime dateTime,
+      double deltaT,
+      double azimuth,
+      double zenith) {}
+
   @Override
   public Integer call() {
     parent.validate();
     validate();
 
     final Stream<ZonedDateTime> dateTimes = getDatetimes(parent.dateTime, parent.timezone, step);
-    parent.printAnyHeaders(HEADERS);
 
     final PrintWriter out = parent.spec.commandLine().getOut();
-    dateTimes.forEach(
-        dateTime -> {
-          final double deltaT = parent.getBestGuessDeltaT(dateTime);
-          SolarPosition position =
-              switch (this.algorithm) {
-                case SPA ->
-                    this.refraction
-                        ? SPA.calculateSolarPosition(
-                            dateTime,
-                            parent.latitude,
-                            parent.longitude,
-                            elevation,
-                            deltaT,
-                            pressure,
-                            temperature)
-                        : SPA.calculateSolarPosition(
-                            dateTime, parent.latitude, parent.longitude, elevation, deltaT);
-                case GRENA3 ->
-                    this.refraction
-                        ? Grena3.calculateSolarPosition(
-                            dateTime,
-                            parent.latitude,
-                            parent.longitude,
-                            deltaT,
-                            pressure,
-                            temperature)
-                        : Grena3.calculateSolarPosition(
-                            dateTime, parent.latitude, parent.longitude, deltaT);
-              };
 
-          out.print(buildOutput(parent.format, dateTime, deltaT, position, parent.showInput));
-        });
+    try {
+      List<FieldDescriptor<PositionData>> fields = createFields();
+      List<String> fieldNames = getFieldNames(parent.showInput);
+      StreamingFormatter<PositionData> formatter = createFormatter(parent.format);
+      formatter.format(fields, fieldNames, dateTimes.map(this::calculatePositionData), out);
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to format output", e);
+    }
+
     out.flush();
-
     return 0;
+  }
+
+  private List<FieldDescriptor<PositionData>> createFields() {
+    List<FieldDescriptor<PositionData>> fields = new ArrayList<>();
+
+    // Input fields
+    fields.add(FieldDescriptor.numeric("latitude", PositionData::latitude, 5));
+    fields.add(FieldDescriptor.numeric("longitude", PositionData::longitude, 5));
+    fields.add(FieldDescriptor.numeric("elevation", PositionData::elevation, 3));
+    fields.add(FieldDescriptor.numeric("pressure", PositionData::pressure, 3));
+    fields.add(FieldDescriptor.numeric("temperature", PositionData::temperature, 3));
+    fields.add(
+        FieldDescriptor.dateTime(
+            "dateTime",
+            PositionData::dateTime,
+            parent.format == HUMAN ? "yyyy-MM-dd HH:mm:ssXXX" : "yyyy-MM-dd'T'HH:mm:ssXXX"));
+    fields.add(FieldDescriptor.numeric("deltaT", PositionData::deltaT, 3));
+
+    // Result fields
+    fields.add(FieldDescriptor.numeric("azimuth", PositionData::azimuth, 5));
+    fields.add(FieldDescriptor.numeric("zenith", PositionData::zenith, 5));
+
+    return fields;
+  }
+
+  private List<String> getFieldNames(boolean showInput) {
+    List<String> names = new ArrayList<>();
+
+    // Input fields if showInput is true
+    if (showInput) {
+      names.addAll(
+          List.of(
+              "latitude",
+              "longitude",
+              "elevation",
+              "pressure",
+              "temperature",
+              "dateTime",
+              "deltaT"));
+    } else {
+      // Include dateTime even when not showing all inputs
+      names.add("dateTime");
+    }
+
+    // Always include result fields
+    names.addAll(List.of("azimuth", "zenith"));
+
+    return names;
+  }
+
+  private StreamingFormatter<PositionData> createFormatter(Main.Format format) {
+    SerializerRegistry registry = createRegistry(format);
+
+    return switch (format) {
+      case HUMAN -> new SimpleTextFormatter<>(registry);
+      case JSON -> new JsonFormatter<>(registry, "\n");
+      case CSV -> new CsvFormatter<>(registry, parent.headers);
+    };
+  }
+
+  private SerializerRegistry createRegistry(Main.Format format) {
+    SerializerRegistry registry =
+        switch (format) {
+          case HUMAN -> SerializerRegistry.forText();
+          case JSON -> SerializerRegistry.forJson();
+          case CSV -> SerializerRegistry.forCsv();
+        };
+
+    // Custom serializer for temporal accessors
+    registry.register(
+        ZonedDateTime.class,
+        (dt, hints) -> {
+          if (dt == null) {
+            return switch (format) {
+              case HUMAN -> "none";
+              case JSON -> "null";
+              case CSV -> "";
+            };
+          }
+
+          String formatted =
+              dt.format(
+                  format == HUMAN
+                      ? TimeFormatUtil.ISO_HUMAN_LOCAL_DATE_TIME_REDUCED
+                      : TimeFormatUtil.ISO_LOCAL_DATE_TIME_REDUCED);
+
+          return format == JSON ? '"' + formatted + '"' : formatted;
+        });
+
+    // Add degree symbols and units for human format
+    if (format == HUMAN) {
+      registry.register(
+          Double.class,
+          (d, hints) -> {
+            int precision = (int) hints.getOrDefault("precision", 4);
+            String result = String.format("%." + precision + "f", d);
+
+            String fieldName = (String) hints.getOrDefault("fieldName", "");
+            return switch (fieldName) {
+              case "latitude", "longitude", "azimuth", "zenith" -> String.format("%24s°", result);
+              case "elevation" -> String.format("%22s m", result);
+              case "pressure" -> String.format("%22s hPa", result);
+              case "temperature" -> String.format("%22s °C", result);
+              case "deltaT" -> String.format("%22s s", result);
+              default -> result;
+            };
+          });
+    }
+
+    return registry;
+  }
+
+  private PositionData calculatePositionData(ZonedDateTime dateTime) {
+    final double deltaT = parent.getBestGuessDeltaT(dateTime);
+    SolarPosition position =
+        switch (this.algorithm) {
+          case SPA ->
+              this.refraction
+                  ? SPA.calculateSolarPosition(
+                      dateTime,
+                      parent.latitude,
+                      parent.longitude,
+                      elevation,
+                      deltaT,
+                      pressure,
+                      temperature)
+                  : SPA.calculateSolarPosition(
+                      dateTime, parent.latitude, parent.longitude, elevation, deltaT);
+          case GRENA3 ->
+              this.refraction
+                  ? Grena3.calculateSolarPosition(
+                      dateTime, parent.latitude, parent.longitude, deltaT, pressure, temperature)
+                  : Grena3.calculateSolarPosition(
+                      dateTime, parent.latitude, parent.longitude, deltaT);
+        };
+
+    return new PositionData(
+        parent.latitude,
+        parent.longitude,
+        elevation,
+        pressure,
+        temperature,
+        dateTime,
+        deltaT,
+        position.azimuth(),
+        position.zenithAngle());
   }
 
   private void validate() {
@@ -163,77 +306,5 @@ final class PositionCommand implements Callable<Integer> {
                   : zdt);
       default -> throw new IllegalStateException("unexpected date/time type " + dateTime);
     };
-  }
-
-  private static final Map<Boolean, String> JSON_FORMATS =
-      Map.of(
-          true,
-              """
-                    {"latitude":%.5f,"longitude":%.5f,"elevation":%.3f,"pressure":%.3f,"temperature":%.3f,"dateTime":"%s","deltaT":%.3f,"azimuth":%.5f,"zenith":%.5f}"""
-                  + "\n",
-          false,
-              """
-                    {"dateTime":"%6$s","azimuth":%8$.5f,"zenith":%9$.5f}"""
-                  + "\n");
-
-  private static final Map<Boolean, String> CSV_HEADERS =
-      Map.of(
-          true,
-              "latitude,longitude,elevation,pressure,temperature,dateTime,deltaT,azimuth,zenith\r\n",
-          false, "dateTime,azimuth,zenith\r\n");
-
-  private static final Map<Boolean, String> CSV_FORMATS =
-      Map.of(
-          true, "%.5f,%.5f,%.3f,%.3f,%.3f,%s,%.3f,%.5f,%.5f\r\n",
-          false, "%6$s,%8$.5f,%9$.5f\r\n");
-
-  private static final Map<Boolean, String> HUMAN_FORMATS =
-      Map.of(
-          true,
-              """
-                    latitude:    %24.4f°
-                    longitude:   %24.4f°
-                    elevation:   %22.2f m
-                    pressure:    %22.2f hPa
-                    temperature: %22.2f °C
-                    date/time:  %s
-                    delta T:     %22.2f s
-                    azimuth:     %24.4f°
-                    zenith:      %24.4f°
-                    """,
-          false,
-              """
-                    date/time:  %6$s
-                    azimuth:     %8$24.4f°
-                    zenith:      %9$24.4f°
-                    """);
-
-  private static final Map<Main.Format, Map<Boolean, String>> HEADERS =
-      Map.of(Main.Format.CSV, CSV_HEADERS);
-
-  private static final Map<Main.Format, Map<Boolean, String>> TEMPLATES =
-      Map.of(Main.Format.CSV, CSV_FORMATS, Main.Format.JSON, JSON_FORMATS, HUMAN, HUMAN_FORMATS);
-
-  private String buildOutput(
-      Main.Format format,
-      ZonedDateTime dateTime,
-      double deltaT,
-      SolarPosition result,
-      boolean showInput) {
-    String template = TEMPLATES.get(format).get(showInput);
-    DateTimeFormatter dtf =
-        (format == HUMAN)
-            ? Main.ISO_HUMAN_LOCAL_DATE_TIME_REDUCED
-            : Main.ISO_LOCAL_DATE_TIME_REDUCED;
-    return template.formatted(
-        parent.latitude,
-        parent.longitude,
-        elevation,
-        pressure,
-        temperature,
-        dtf.format(dateTime),
-        deltaT,
-        result.azimuth(),
-        result.zenithAngle());
   }
 }

@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.basepom</groupId>
         <artifactId>basepom-minimal</artifactId>
-        <version>61</version>
+        <version>63</version>
     </parent>
 
     <name>solarpos</name>
@@ -34,7 +34,7 @@
     <properties>
         <basepom.main-class>net.e175.klaus.solarpos.Main</basepom.main-class>
         <project.build.targetJdk>21</project.build.targetJdk>
-        <picocli.version>4.7.6</picocli.version>
+        <picocli.version>4.7.7</picocli.version>
 
         <scmCommentPrefix>build: [maven-release-plugin] [skip ci]</scmCommentPrefix>
         <basepom.release.tag-name-format>v@{project.version}</basepom.release.tag-name-format>
@@ -209,13 +209,13 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.12.1</version>
+            <version>2.13.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
-            <version>1.13.0</version>
+            <version>1.14.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

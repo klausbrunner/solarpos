@@ -1,16 +1,11 @@
 package net.e175.klaus.solarpos;
 
-import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
-import static java.time.temporal.ChronoField.*;
-
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.TemporalAccessor;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
+import net.e175.klaus.solarpos.util.TimeFormatUtil;
 import net.e175.klaus.solarpositioning.DeltaT;
 import picocli.CommandLine;
 import picocli.CommandLine.HelpCommand;
@@ -27,38 +22,6 @@ public final class Main {
     // force English-language locale for formatting
     Locale.setDefault(Locale.ENGLISH);
   }
-
-  static final String INPUT_DATE_TIME_PATTERN =
-      "yyyy[-MM[-dd[['T'][ ]HH:mm[:ss[.SSS]][XXX['['VV']']]]]]";
-  static final String INPUT_TIME_PATTERN = "HH:mm[:ss[.SSS]][XXX['['VV']']]";
-  static final DateTimeFormatter INPUT_DATE_TIME_FORMATTER =
-      DateTimeFormatter.ofPattern(INPUT_DATE_TIME_PATTERN);
-  static final DateTimeFormatter INPUT_TIME_FORMATTER =
-      DateTimeFormatter.ofPattern(INPUT_TIME_PATTERN);
-  static final DateTimeFormatter ISO_LOCAL_TIME_REDUCED =
-      new DateTimeFormatterBuilder()
-          .appendValue(HOUR_OF_DAY, 2)
-          .appendLiteral(':')
-          .appendValue(MINUTE_OF_HOUR, 2)
-          .optionalStart()
-          .appendLiteral(':')
-          .appendValue(SECOND_OF_MINUTE, 2)
-          .appendOffsetId()
-          .toFormatter();
-  static final DateTimeFormatter ISO_LOCAL_DATE_TIME_REDUCED =
-      new DateTimeFormatterBuilder()
-          .parseCaseInsensitive()
-          .append(ISO_LOCAL_DATE)
-          .appendLiteral('T')
-          .append(ISO_LOCAL_TIME_REDUCED)
-          .toFormatter();
-  static final DateTimeFormatter ISO_HUMAN_LOCAL_DATE_TIME_REDUCED =
-      new DateTimeFormatterBuilder()
-          .parseCaseInsensitive()
-          .append(ISO_LOCAL_DATE)
-          .appendLiteral(' ')
-          .append(ISO_LOCAL_TIME_REDUCED)
-          .toFormatter();
 
   enum Format {
     HUMAN,
@@ -82,7 +45,7 @@ public final class Main {
       index = "2",
       description =
           "Date/time in ISO format "
-              + INPUT_DATE_TIME_PATTERN
+              + TimeFormatUtil.INPUT_DATE_TIME_PATTERN
               + ". Use 'now' for current time and date.",
       converter = DateTimeConverter.class)
   TemporalAccessor dateTime;
@@ -129,13 +92,6 @@ public final class Main {
 
   double getBestGuessDeltaT(ZonedDateTime dateTime) {
     return Double.isFinite(deltaT) ? deltaT : DeltaT.estimate(dateTime.toLocalDate());
-  }
-
-  void printAnyHeaders(Map<Main.Format, Map<Boolean, String>> headersMap) {
-    if (this.headers && headersMap.containsKey(this.format)) {
-      var headers = headersMap.get(this.format).get(this.showInput);
-      spec.commandLine().getOut().print(headers);
-    }
   }
 
   static CommandLine createCommandLine() {
