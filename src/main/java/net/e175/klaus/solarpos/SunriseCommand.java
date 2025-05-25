@@ -100,16 +100,26 @@ final class SunriseCommand implements Callable<Integer> {
       names.addAll(List.of("latitude", "longitude", "dateTime", "deltaT"));
     }
 
-    // Basic fields
-    names.addAll(List.of("type", "sunrise", "transit", "sunset"));
+    // Add type field always
+    names.add("type");
 
-    // Twilight fields if twilight is true
+    // Decide whether to use basic fields or detailed twilight sequence
     if (twilight) {
+      // Complete twilight sequence including sunrise and sunset in proper order
       names.addAll(
           List.of(
-              "civil_start", "civil_end",
-              "nautical_start", "nautical_end",
-              "astronomical_start", "astronomical_end"));
+              "astronomical_start",
+              "nautical_start",
+              "civil_start",
+              "sunrise",
+              "transit",
+              "sunset",
+              "civil_end",
+              "nautical_end",
+              "astronomical_end"));
+    } else {
+      // Just the basic fields when twilight is not requested
+      names.addAll(List.of("sunrise", "transit", "sunset"));
     }
 
     return names;
@@ -184,35 +194,29 @@ final class SunriseCommand implements Callable<Integer> {
     // Get the main sunrise/sunset result
     SunriseResult sunriseSunset = result.get(SPA.Horizon.SUNRISE_SUNSET);
 
-    // Create the type string based on the result type and format
-    String type =
-        switch (sunriseSunset) {
-          case SunriseResult.AllDay(var transit) -> parent.format == HUMAN ? "all day" : "ALL_DAY";
-          case SunriseResult.AllNight(var transit) ->
-              parent.format == HUMAN ? "all night" : "ALL_NIGHT";
-          case SunriseResult.RegularDay(var sunrise, var transit, var sunset) ->
-              parent.format == HUMAN ? "normal" : "NORMAL";
-        };
-
-    // Extract sunrise, transit, sunset times
+    // Extract type and times based on the result type
+    String type;
     ZonedDateTime sunrise = null;
     ZonedDateTime transit = null;
     ZonedDateTime sunset = null;
 
+    // Use pattern matching to extract all at once
     switch (sunriseSunset) {
-      case SunriseResult.RegularDay(
-          ZonedDateTime sunrise1,
-          ZonedDateTime transit1,
-          ZonedDateTime sunset1) -> {
-        sunrise = convertToZonedDateTime(sunrise1);
-        transit = convertToZonedDateTime(transit1);
-        sunset = convertToZonedDateTime(sunset1);
+      case SunriseResult.RegularDay(var sr, var tr, var ss) -> {
+        type = parent.format == HUMAN ? "normal" : "NORMAL";
+        sunrise = convertToZonedDateTime(sr);
+        transit = convertToZonedDateTime(tr);
+        sunset = convertToZonedDateTime(ss);
       }
-      case SunriseResult.AllDay(ZonedDateTime transit1) ->
-          transit = convertToZonedDateTime(transit1);
-      case SunriseResult.AllNight(ZonedDateTime transit1) ->
-          transit = convertToZonedDateTime(transit1);
-      default -> {}
+      case SunriseResult.AllDay(var tr) -> {
+        type = parent.format == HUMAN ? "all day" : "ALL_DAY";
+        transit = convertToZonedDateTime(tr);
+      }
+      case SunriseResult.AllNight(var tr) -> {
+        type = parent.format == HUMAN ? "all night" : "ALL_NIGHT";
+        transit = convertToZonedDateTime(tr);
+      }
+      default -> throw new IllegalStateException("Unexpected result type: " + sunriseSunset);
     }
 
     // Extract twilight times if available

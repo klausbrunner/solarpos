@@ -273,4 +273,91 @@ class SunriseTest {
     assertNotNull(jsonObject);
     assertEquals("2023-02-28T07:38:45Z", jsonObject.get("sunrise").getAsString());
   }
+
+  @Test
+  void humanFormatOutput() {
+    var lat = "52.0";
+    var lon = "25.0";
+    var dateTime = "2022-10-17T12:00:00Z";
+
+    var result =
+        TestUtil.run(
+            lat, lon, dateTime, "--format=human", "--deltat=69", "--show-inputs", "sunrise");
+    assertEquals(0, result.returnCode());
+
+    var output = result.output();
+
+    // Check the general structure and formatting
+    assertTrue(output.contains("latitude"));
+    assertTrue(output.contains("longitude"));
+    assertTrue(output.contains("dateTime"));
+    assertTrue(output.contains("deltaT"));
+    assertTrue(output.contains("type"));
+    assertTrue(output.contains("sunrise"));
+    assertTrue(output.contains("transit"));
+    assertTrue(output.contains("sunset"));
+
+    // Check degree symbols and formatting for coordinates
+    assertTrue(output.contains("52.00000°"));
+    assertTrue(output.contains("25.00000°"));
+
+    // Check time formatting (human format uses spaces instead of 'T')
+    assertTrue(output.contains("2022-10-17 12:00:00Z"));
+    assertTrue(output.contains("2022-10-17 04:47:51Z"));
+    assertTrue(output.contains("2022-10-17 10:05:21Z"));
+    assertTrue(output.contains("2022-10-17 15:22:00Z"));
+
+    // Check proper value for type field in human format
+    assertTrue(output.contains("normal"));
+
+    // Check for delta T unit
+    assertTrue(output.contains("69.000 s"));
+  }
+
+  @Test
+  void humanFormatOutputWithTwilight() {
+    var lat = "52.49";
+    var lon = "-1.89";
+    var dateTime = "2023-05-01T12:00:00+01:00";
+
+    var result =
+        TestUtil.run(
+            lat,
+            lon,
+            dateTime,
+            "--format=human",
+            "--deltat=69",
+            "--show-inputs",
+            "sunrise",
+            "--twilight");
+    assertEquals(0, result.returnCode());
+
+    var output = result.output();
+
+    // Check for twilight fields
+    assertTrue(output.contains("astronomical_start"));
+    assertTrue(output.contains("nautical_start"));
+    assertTrue(output.contains("civil_start"));
+    assertTrue(output.contains("civil_end"));
+    assertTrue(output.contains("nautical_end"));
+    assertTrue(output.contains("astronomical_end"));
+
+    // Check formatting for a few key values
+    assertTrue(output.contains("52.49000°"));
+    assertTrue(output.contains("-1.89000°"));
+
+    // Verify each sunrise/sunset time appears only once (no duplicates)
+    assertEquals(1, countOccurrences(output, "2023-05-01 05:36:58+01:00"));
+    assertEquals(1, countOccurrences(output, "2023-05-01 20:33:32+01:00"));
+  }
+
+  private int countOccurrences(String str, String substr) {
+    int count = 0;
+    int index = 0;
+    while ((index = str.indexOf(substr, index)) != -1) {
+      count++;
+      index += substr.length();
+    }
+    return count;
+  }
 }
