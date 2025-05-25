@@ -117,8 +117,13 @@ final class PositionCommand implements Callable<Integer> {
     fields.add(FieldDescriptor.numeric("latitude", PositionData::latitude, 5));
     fields.add(FieldDescriptor.numeric("longitude", PositionData::longitude, 5));
     fields.add(FieldDescriptor.numeric("elevation", PositionData::elevation, 3));
-    fields.add(FieldDescriptor.numeric("pressure", PositionData::pressure, 3));
-    fields.add(FieldDescriptor.numeric("temperature", PositionData::temperature, 3));
+
+    // Only add refraction-related fields if refraction correction is enabled
+    if (refraction) {
+      fields.add(FieldDescriptor.numeric("pressure", PositionData::pressure, 3));
+      fields.add(FieldDescriptor.numeric("temperature", PositionData::temperature, 3));
+    }
+
     fields.add(
         FieldDescriptor.dateTime(
             "dateTime",
@@ -138,15 +143,16 @@ final class PositionCommand implements Callable<Integer> {
 
     // Input fields if showInput is true
     if (showInput) {
-      names.addAll(
-          List.of(
-              "latitude",
-              "longitude",
-              "elevation",
-              "pressure",
-              "temperature",
-              "dateTime",
-              "deltaT"));
+      // Always include these base inputs
+      names.addAll(List.of("latitude", "longitude", "elevation"));
+
+      // Only include refraction parameters if refraction correction is enabled
+      if (refraction) {
+        names.addAll(List.of("pressure", "temperature"));
+      }
+
+      // Always include these remaining inputs
+      names.addAll(List.of("dateTime", "deltaT"));
     } else {
       // Include dateTime even when not showing all inputs
       names.add("dateTime");
