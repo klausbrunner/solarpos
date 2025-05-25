@@ -229,4 +229,57 @@ class PositionTest {
     assertEquals("2024-02-01T00:00:00Z", outputRecords.getFirst().get("dateTime"));
     assertEquals("2024-02-29T22:00:00Z", outputRecords.getLast().get("dateTime"));
   }
+
+  @Test
+  void refractionParametersNotIncludedWhenDisabled() throws IOException {
+    var lat = "52.0";
+    var lon = "25.0";
+    var dateTime = "2022-10-17T12:00:00Z";
+
+    // Test with refraction enabled (default)
+    var resultWithRefraction =
+        TestUtil.run(lat, lon, dateTime, "--format=csv", "--headers", "--show-inputs", "position");
+    assertEquals(0, resultWithRefraction.returnCode());
+
+    var recordsWithRefraction =
+        TestUtil.CSV_WITH_HEADER
+            .parse(new StringReader(resultWithRefraction.output()))
+            .getRecords();
+
+    // Verify pressure and temperature are included when refraction is enabled
+    assertNotNull(recordsWithRefraction.getFirst().get("pressure"));
+    assertNotNull(recordsWithRefraction.getFirst().get("temperature"));
+
+    // Test with refraction explicitly disabled
+    var resultWithoutRefraction =
+        TestUtil.run(
+            lat,
+            lon,
+            dateTime,
+            "--format=csv",
+            "--headers",
+            "--show-inputs",
+            "position",
+            "--no-refraction");
+    assertEquals(0, resultWithoutRefraction.returnCode());
+
+    var recordsWithoutRefraction =
+        TestUtil.CSV_WITH_HEADER
+            .parse(new StringReader(resultWithoutRefraction.output()))
+            .getRecords();
+
+    // Verify pressure and temperature are NOT included when refraction is disabled
+    var headerLine = resultWithoutRefraction.output().lines().findFirst().orElseThrow();
+    assertFalse(headerLine.contains("pressure"));
+    assertFalse(headerLine.contains("temperature"));
+
+    // Verify other fields are still present
+    assertNotNull(recordsWithoutRefraction.getFirst().get("latitude"));
+    assertNotNull(recordsWithoutRefraction.getFirst().get("longitude"));
+    assertNotNull(recordsWithoutRefraction.getFirst().get("elevation"));
+    assertNotNull(recordsWithoutRefraction.getFirst().get("dateTime"));
+    assertNotNull(recordsWithoutRefraction.getFirst().get("deltaT"));
+    assertNotNull(recordsWithoutRefraction.getFirst().get("azimuth"));
+    assertNotNull(recordsWithoutRefraction.getFirst().get("zenith"));
+  }
 }
