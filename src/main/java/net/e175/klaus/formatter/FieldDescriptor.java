@@ -1,40 +1,83 @@
 package net.e175.klaus.formatter;
 
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
 /**
- * Describes a field: its name, how to extract it from a model object, and formatting hints.
+ * Descriptor for a field in a data record, including name, extractor function, and format hints.
  *
- * @param <T> The type of the model object from which to extract field values
+ * @param <T> The type of data record
  */
-public record FieldDescriptor<T>(
-    String name, Function<T, ?> extractor, Map<String, Object> formatHints) {
+public class FieldDescriptor<T> {
+  private final String name;
+  private final Function<T, ?> extractor;
+  private final Map<String, Object> hints;
 
-  /** Creates a field descriptor with defensive validation and immutable formatHints. */
-  public FieldDescriptor {
-    Objects.requireNonNull(name, "Field name must not be null");
-    Objects.requireNonNull(extractor, "Field extractor must not be null");
-    Objects.requireNonNull(formatHints, "Format hints must not be null");
-
-    // Ensure formatHints is immutable to prevent exposing internal representation
-    formatHints = Map.copyOf(formatHints);
-  }
-
-  /** Creates a field descriptor with name and extractor function, but no format hints. */
+  /**
+   * Creates a new field descriptor with the given name and extractor function.
+   *
+   * @param name The field name
+   * @param extractor The function to extract the field value from a data record
+   */
   public FieldDescriptor(String name, Function<T, ?> extractor) {
     this(name, extractor, Map.of());
   }
 
-  /** Creates a new field descriptor with an additional format hint. */
-  public FieldDescriptor<T> withHint(String key, Object value) {
-    Objects.requireNonNull(key, "Hint key must not be null");
+  /**
+   * Creates a new field descriptor with the given name, extractor function, and format hints.
+   *
+   * @param name The field name
+   * @param extractor The function to extract the field value from a data record
+   * @param hints Format hints for serialization
+   */
+  public FieldDescriptor(String name, Function<T, ?> extractor, Map<String, Object> hints) {
+    this.name = Objects.requireNonNull(name, "Field name must not be null");
+    this.extractor = Objects.requireNonNull(extractor, "Field extractor must not be null");
+    this.hints = new HashMap<>(hints);
+  }
 
-    var newHints = new HashMap<>(formatHints);
+  /**
+   * Factory method for numeric fields with a specified precision.
+   *
+   * @param name The field name
+   * @param extractor The function to extract the field value from a data record
+   * @param precision The number of decimal places to display
+   * @param <T> The type of data record
+   * @return A new field descriptor for the numeric field
+   */
+  public static <T> FieldDescriptor<T> numeric(
+      String name, Function<T, ? extends Number> extractor, int precision) {
+    return new FieldDescriptor<>(name, extractor, Map.of("precision", precision));
+  }
+
+  /**
+   * Factory method for date/time fields with a specified format pattern.
+   *
+   * @param name The field name
+   * @param extractor The function to extract the field value from a data record
+   * @param pattern The date/time format pattern
+   * @param <T> The type of data record
+   * @return A new field descriptor for the date/time field
+   */
+  public static <T> FieldDescriptor<T> dateTime(
+      String name, Function<T, ZonedDateTime> extractor, String pattern) {
+    return new FieldDescriptor<>(name, extractor, Map.of("pattern", pattern));
+  }
+
+  /**
+   * Adds a format hint to this field descriptor.
+   *
+   * @param key The hint key
+   * @param value The hint value
+   * @return A new field descriptor with the added hint
+   */
+  public FieldDescriptor<T> withHint(String key, Object value) {
+    var newHints = new HashMap<>(this.hints);
     newHints.put(key, value);
-    return new FieldDescriptor<>(name, extractor, newHints);
+    return new FieldDescriptor<>(this.name, this.extractor, newHints);
   }
 
   /**
@@ -58,31 +101,18 @@ public record FieldDescriptor<T>(
     return withHint("pattern", pattern);
   }
 
-  /**
-   * Factory method to create a numeric field descriptor with precision.
-   *
-   * @param name The field name
-   * @param extractor Function to extract the field value
-   * @param precision The precision value for formatting
-   * @return A new field descriptor with precision hint
-   * @param <T> The type of the model object
-   */
-  public static <T> FieldDescriptor<T> numeric(
-      String name, Function<T, ? extends Number> extractor, int precision) {
-    return new FieldDescriptor<>(name, extractor, Map.of("precision", precision));
+  /** Returns the field name. */
+  public String name() {
+    return name;
   }
 
-  /**
-   * Factory method to create a date/time field descriptor with pattern.
-   *
-   * @param name The field name
-   * @param extractor Function to extract the field value
-   * @param pattern The date/time pattern for formatting
-   * @return A new field descriptor with pattern hint
-   * @param <T> The type of the model object
-   */
-  public static <T> FieldDescriptor<T> dateTime(
-      String name, Function<T, ?> extractor, String pattern) {
-    return new FieldDescriptor<>(name, extractor, Map.of("pattern", pattern));
+  /** Returns the field extractor function. */
+  public Function<T, ?> extractor() {
+    return extractor;
+  }
+
+  /** Returns the format hints map. */
+  public Map<String, Object> formatHints() {
+    return Map.copyOf(hints);
   }
 }

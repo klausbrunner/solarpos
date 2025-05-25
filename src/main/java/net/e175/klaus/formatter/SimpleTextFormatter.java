@@ -1,8 +1,10 @@
 package net.e175.klaus.formatter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -10,6 +12,7 @@ import java.util.stream.Stream;
 public class SimpleTextFormatter<T> implements StreamingFormatter<T> {
   private final SerializerRegistry registry;
   private final String lineSeparator;
+  private final Map<String, String> displayNames;
   private static final String FORMAT_SEPARATOR = ": ";
 
   /**
@@ -28,8 +31,31 @@ public class SimpleTextFormatter<T> implements StreamingFormatter<T> {
    * @param lineSeparator The line separator to use between items
    */
   public SimpleTextFormatter(SerializerRegistry registry, String lineSeparator) {
+    this(registry, lineSeparator, Map.of());
+  }
+
+  /**
+   * Creates a text formatter with the given registry, line separator, and display name mapping.
+   *
+   * @param registry The serializer registry to use (must not be null)
+   * @param displayNames Map of field names to display names
+   */
+  public SimpleTextFormatter(SerializerRegistry registry, Map<String, String> displayNames) {
+    this(registry, System.lineSeparator(), displayNames);
+  }
+
+  /**
+   * Creates a text formatter with the given registry, line separator, and display name mapping.
+   *
+   * @param registry The serializer registry to use (must not be null)
+   * @param lineSeparator The line separator to use between items
+   * @param displayNames Map of field names to display names
+   */
+  public SimpleTextFormatter(
+      SerializerRegistry registry, String lineSeparator, Map<String, String> displayNames) {
     this.registry = Objects.requireNonNull(registry, "Registry must not be null");
     this.lineSeparator = Objects.requireNonNull(lineSeparator, "Line separator must not be null");
+    this.displayNames = displayNames != null ? displayNames : Map.of();
   }
 
   @Override
@@ -38,7 +64,8 @@ public class SimpleTextFormatter<T> implements StreamingFormatter<T> {
       throws IOException {
     validateInputs(allFields, subset, items, out);
 
-    var fields = filterFields(allFields, subset);
+    // For human text output, we need to respect the order of fields in the subset list
+    var fields = filterAndOrderFields(allFields, subset);
     if (fields.isEmpty()) return;
 
     // Find the maximum field name length for alignment - only using field names, not streaming data
@@ -50,14 +77,47 @@ public class SimpleTextFormatter<T> implements StreamingFormatter<T> {
   }
 
   /**
-   * Calculates the maximum length of field names for alignment.
+   * Filters and orders field descriptors based on the subset of field names. This ensures the
+   * fields appear in the order specified in the subset list.
+   *
+   * @param allFields All available field descriptors
+   * @param subset Names of fields to include, in the desired order
+   * @return Ordered list of field descriptors matching the subset
+   */
+  private List<FieldDescriptor<T>> filterAndOrderFields(
+      List<FieldDescriptor<T>> allFields, List<String> subset) {
+    // Create a map of field names to field descriptors for efficient lookup
+    var fieldMap = new java.util.HashMap<String, FieldDescriptor<T>>();
+    for (var field : allFields) {
+      fieldMap.put(field.name(), field);
+    }
+
+    // Create a new list with fields in the order specified by subset
+    List<FieldDescriptor<T>> orderedFields = new ArrayList<>();
+    for (var name : subset) {
+      var field = fieldMap.get(name);
+      if (field != null) {
+        orderedFields.add(field);
+      }
+    }
+
+    return orderedFields;
+  }
+
+  /**
+   * Calculates the maximum length of field names for alignment. This method considers display names
+   * if available.
    *
    * @param fields The field descriptors to check
    * @return The maximum length of field names
    */
   private int calculateMaxFieldNameLength(List<FieldDescriptor<T>> fields) {
     return fields.stream()
-        .mapToInt(fd -> fd.name().length())
+        .mapToInt(
+            fd -> {
+              String displayName = displayNames.getOrDefault(fd.name(), fd.name());
+              return displayName.length();
+            })
         .max()
         .orElse(0); // Shouldn't happen as we checked isEmpty() above
   }
@@ -69,20 +129,23 @@ public class SimpleTextFormatter<T> implements StreamingFormatter<T> {
    * @param fields The field descriptors for formatting
    * @param formatPattern The format pattern to use
    * @param out The output destination
-   * @throws IOException If an I/O error occurs
    */
   private void formatItems(
-      Stream<T> items, List<FieldDescriptor<T>> fields, String formatPattern, Appendable out)
-      throws IOException {
-    var iterator = items.iterator();
-    while (iterator.hasNext()) {
-      var item = iterator.next();
-      formatSingleItem(item, fields, formatPattern, out);
+      Stream<T> items, List<FieldDescriptor<T>> fields, String formatPattern, Appendable out) {
+    var first = new java.util.concurrent.atomic.AtomicBoolean(true);
 
-      if (iterator.hasNext()) {
-        out.append(lineSeparator);
-      }
-    }
+    items.forEach(
+        item -> {
+          try {
+            // Add separator before each item except the first
+            if (!first.getAndSet(false)) {
+              out.append(lineSeparator);
+            }
+            formatSingleItem(item, fields, formatPattern, out);
+          } catch (IOException e) {
+            throw new java.io.UncheckedIOException(e);
+          }
+        });
   }
 
   /**
@@ -99,8 +162,13 @@ public class SimpleTextFormatter<T> implements StreamingFormatter<T> {
       throws IOException {
     for (var field : fields) {
       var value = field.extractor().apply(item);
-      out.append(
-          String.format(Locale.US, formatPattern, field.name(), registry.serialize(value, field)));
+      // Use display name if available, otherwise use the field name
+      String displayName = displayNames.getOrDefault(field.name(), field.name());
+
+      // Serialize using the original field descriptor - the registry will add the field name
+      String serialized = registry.serialize(value, field);
+
+      out.append(String.format(Locale.US, formatPattern, displayName, serialized));
     }
   }
 }

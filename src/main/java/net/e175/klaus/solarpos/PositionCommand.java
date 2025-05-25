@@ -9,6 +9,7 @@ import java.time.*;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
@@ -168,7 +169,14 @@ final class PositionCommand implements Callable<Integer> {
     SerializerRegistry registry = createRegistry(format);
 
     return switch (format) {
-      case HUMAN -> new SimpleTextFormatter<>(registry);
+      case HUMAN -> {
+        // Create display name mapping for human-readable output
+        var displayNames =
+            Map.of(
+                "dateTime", "date/time",
+                "deltaT", "delta T");
+        yield new SimpleTextFormatter<>(registry, displayNames);
+      }
       case JSON -> new JsonFormatter<>(registry, "\n");
       case CSV -> new CsvFormatter<>(registry, parent.headers);
     };
@@ -213,11 +221,11 @@ final class PositionCommand implements Callable<Integer> {
 
             String fieldName = (String) hints.getOrDefault("fieldName", "");
             return switch (fieldName) {
-              case "latitude", "longitude", "azimuth", "zenith" -> String.format("%24s°", result);
-              case "elevation" -> String.format("%22s m", result);
-              case "pressure" -> String.format("%22s hPa", result);
-              case "temperature" -> String.format("%22s °C", result);
-              case "deltaT" -> String.format("%22s s", result);
+              case "latitude", "longitude", "azimuth", "zenith" -> String.format("%28s°", result);
+              case "elevation" -> String.format("%28s m", result);
+              case "pressure" -> String.format("%28s hPa", result);
+              case "temperature" -> String.format("%28s °C", result);
+              case "deltaT" -> String.format("%28s s", result);
               default -> result;
             };
           });

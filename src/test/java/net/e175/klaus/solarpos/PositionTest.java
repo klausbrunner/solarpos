@@ -282,4 +282,84 @@ class PositionTest {
     assertNotNull(recordsWithoutRefraction.getFirst().get("azimuth"));
     assertNotNull(recordsWithoutRefraction.getFirst().get("zenith"));
   }
+
+  @Test
+  void humanFormatOutput() {
+    var lat = "52.0";
+    var lon = "25.0";
+    var dateTime = "2022-10-17T12:00:00Z";
+
+    var result =
+        TestUtil.run(
+            lat, lon, dateTime, "--format=human", "--deltat=69", "--show-inputs", "position");
+    assertEquals(0, result.returnCode());
+
+    var output = result.output();
+
+    // Check the general structure and formatting
+    assertTrue(output.contains("latitude"));
+    assertTrue(output.contains("longitude"));
+    assertTrue(output.contains("elevation"));
+    assertTrue(output.contains("pressure"));
+    assertTrue(output.contains("temperature"));
+    assertTrue(output.contains("date/time")); // Human format uses "date/time" instead of "dateTime"
+    assertTrue(output.contains("delta T")); // Human format uses "delta T" instead of "deltaT"
+    assertTrue(output.contains("azimuth"));
+    assertTrue(output.contains("zenith"));
+
+    // Check for unit symbols and proper formatting
+    assertTrue(output.contains("52.00000°"));
+    assertTrue(output.contains("25.00000°"));
+    assertTrue(output.contains("0.000 m"));
+    assertTrue(output.contains("1013.000 hPa"));
+    assertTrue(output.contains("15.000 °C"));
+    assertTrue(output.contains("69.000 s"));
+
+    // Check time formatting (human format uses spaces instead of 'T')
+    assertTrue(output.contains("2022-10-17 12:00:00Z"));
+
+    // Check angle measurements have degree symbols
+    assertTrue(output.contains("211.17614°"));
+    assertTrue(output.contains("66.06832°"));
+  }
+
+  @Test
+  void humanFormatOutputWithoutRefraction() {
+    var lat = "52.0";
+    var lon = "25.0";
+    var dateTime = "2022-10-17T12:00:00Z";
+
+    var result =
+        TestUtil.run(
+            lat,
+            lon,
+            dateTime,
+            "--format=human",
+            "--deltat=69",
+            "--show-inputs",
+            "position",
+            "--no-refraction");
+    assertEquals(0, result.returnCode());
+
+    var output = result.output();
+
+    // Verify required fields are present
+    assertTrue(output.contains("latitude"));
+    assertTrue(output.contains("longitude"));
+    assertTrue(output.contains("elevation"));
+    assertTrue(output.contains("date/time"));
+    assertTrue(output.contains("delta T"));
+    assertTrue(output.contains("azimuth"));
+    assertTrue(output.contains("zenith"));
+
+    // Verify refraction parameters are NOT included
+    assertFalse(output.contains("pressure"));
+    assertFalse(output.contains("temperature"));
+
+    // Verify units are still properly displayed
+    assertTrue(output.contains("52.00000°"));
+    assertTrue(output.contains("25.00000°"));
+    assertTrue(output.contains("0.000 m"));
+    assertTrue(output.contains("69.000 s"));
+  }
 }

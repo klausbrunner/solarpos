@@ -122,21 +122,22 @@ public final class SerializerRegistry {
 
     if (obj == null) return nullValue;
 
-    // Look for exact type match first
+    // Create a copy of the hints map and add the field name as a hint
+    var hintsWithFieldName = new HashMap<>(field.formatHints());
+    hintsWithFieldName.put("fieldName", field.name());
+
+    // First try exact type match (most common case)
     var serializer = serializers.get(obj.getClass());
     if (serializer != null) {
-      return serializer.apply(obj, field.formatHints());
+      return serializer.apply(obj, hintsWithFieldName);
     }
 
-    // Try to find assignable type match (using a more efficient approach)
-    for (var entry : serializers.entrySet()) {
-      if (entry.getKey().isAssignableFrom(obj.getClass())) {
-        return entry.getValue().apply(obj, field.formatHints());
-      }
-    }
-
-    // No matching serializer found, use toString
-    return obj.toString();
+    // Then try assignable types (for handling subclasses)
+    return serializers.entrySet().stream()
+        .filter(entry -> entry.getKey().isAssignableFrom(obj.getClass()))
+        .findFirst()
+        .map(entry -> entry.getValue().apply(obj, hintsWithFieldName))
+        .orElseGet(obj::toString);
   }
 
   /**
