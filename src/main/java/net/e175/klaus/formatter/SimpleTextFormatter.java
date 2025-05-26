@@ -1,7 +1,6 @@
 package net.e175.klaus.formatter;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -60,8 +59,7 @@ public class SimpleTextFormatter<T> implements StreamingFormatter<T> {
 
   @Override
   public void format(
-      List<FieldDescriptor<T>> allFields, List<String> subset, Stream<T> items, Appendable out)
-      throws IOException {
+      List<FieldDescriptor<T>> allFields, List<String> subset, Stream<T> items, Appendable out) {
     validateInputs(allFields, subset, items, out);
 
     // For human text output, we need to respect the order of fields in the subset list
@@ -84,24 +82,14 @@ public class SimpleTextFormatter<T> implements StreamingFormatter<T> {
    * @param subset Names of fields to include, in the desired order
    * @return Ordered list of field descriptors matching the subset
    */
-  private List<FieldDescriptor<T>> filterAndOrderFields(
+  private static <T> List<FieldDescriptor<T>> filterAndOrderFields(
       List<FieldDescriptor<T>> allFields, List<String> subset) {
-    // Create a map of field names to field descriptors for efficient lookup
-    var fieldMap = new java.util.HashMap<String, FieldDescriptor<T>>();
-    for (var field : allFields) {
-      fieldMap.put(field.name(), field);
-    }
 
-    // Create a new list with fields in the order specified by subset
-    List<FieldDescriptor<T>> orderedFields = new ArrayList<>();
-    for (var name : subset) {
-      var field = fieldMap.get(name);
-      if (field != null) {
-        orderedFields.add(field);
-      }
-    }
+    var fieldMap =
+        allFields.stream()
+            .collect(java.util.stream.Collectors.toMap(FieldDescriptor::name, f -> f));
 
-    return orderedFields;
+    return subset.stream().map(fieldMap::get).filter(Objects::nonNull).toList();
   }
 
   /**
@@ -134,7 +122,7 @@ public class SimpleTextFormatter<T> implements StreamingFormatter<T> {
       Stream<T> items, List<FieldDescriptor<T>> fields, String formatPattern, Appendable out) {
     var first = new java.util.concurrent.atomic.AtomicBoolean(true);
 
-    items.forEach(
+    items.forEachOrdered(
         item -> {
           try {
             // Add separator before each item except the first

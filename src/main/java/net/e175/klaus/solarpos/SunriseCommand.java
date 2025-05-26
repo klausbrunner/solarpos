@@ -95,12 +95,10 @@ final class SunriseCommand implements Callable<Integer> {
   private List<String> getFieldNames(boolean showInput, boolean twilight) {
     List<String> names = new ArrayList<>();
 
-    // Input fields if showInput is true
     if (showInput) {
       names.addAll(List.of("latitude", "longitude", "dateTime", "deltaT"));
     }
 
-    // Add type field always
     names.add("type");
 
     // Decide whether to use basic fields or detailed twilight sequence
@@ -197,24 +195,24 @@ final class SunriseCommand implements Callable<Integer> {
     // Extract type and times based on the result type
     String type;
     ZonedDateTime sunrise = null;
-    ZonedDateTime transit = null;
+    ZonedDateTime transit;
     ZonedDateTime sunset = null;
 
     // Use pattern matching to extract all at once
     switch (sunriseSunset) {
       case SunriseResult.RegularDay(var sr, var tr, var ss) -> {
         type = parent.format == HUMAN ? "normal" : "NORMAL";
-        sunrise = convertToZonedDateTime(sr);
-        transit = convertToZonedDateTime(tr);
-        sunset = convertToZonedDateTime(ss);
+        sunrise = sr;
+        transit = tr;
+        sunset = ss;
       }
       case SunriseResult.AllDay(var tr) -> {
         type = parent.format == HUMAN ? "all day" : "ALL_DAY";
-        transit = convertToZonedDateTime(tr);
+        transit = tr;
       }
       case SunriseResult.AllNight(var tr) -> {
         type = parent.format == HUMAN ? "all night" : "ALL_NIGHT";
-        transit = convertToZonedDateTime(tr);
+        transit = tr;
       }
       default -> throw new IllegalStateException("Unexpected result type: " + sunriseSunset);
     }
@@ -233,18 +231,18 @@ final class SunriseCommand implements Callable<Integer> {
       SunriseResult astronomical = result.get(SPA.Horizon.ASTRONOMICAL_TWILIGHT);
 
       if (civil instanceof SunriseResult.RegularDay regularDay) {
-        civilStart = convertToZonedDateTime(regularDay.sunrise());
-        civilEnd = convertToZonedDateTime(regularDay.sunset());
+        civilStart = regularDay.sunrise();
+        civilEnd = regularDay.sunset();
       }
 
       if (nautical instanceof SunriseResult.RegularDay regularDay) {
-        nauticalStart = convertToZonedDateTime(regularDay.sunrise());
-        nauticalEnd = convertToZonedDateTime(regularDay.sunset());
+        nauticalStart = regularDay.sunrise();
+        nauticalEnd = regularDay.sunset();
       }
 
       if (astronomical instanceof SunriseResult.RegularDay regularDay) {
-        astronomicalStart = convertToZonedDateTime(regularDay.sunrise());
-        astronomicalEnd = convertToZonedDateTime(regularDay.sunset());
+        astronomicalStart = regularDay.sunrise();
+        astronomicalEnd = regularDay.sunset();
       }
     }
 
@@ -263,19 +261,6 @@ final class SunriseCommand implements Callable<Integer> {
         nauticalEnd,
         astronomicalStart,
         astronomicalEnd);
-  }
-
-  private ZonedDateTime convertToZonedDateTime(TemporalAccessor temporal) {
-    if (temporal == null) {
-      return null;
-    }
-
-    if (temporal instanceof ZonedDateTime zdt) {
-      return zdt;
-    }
-
-    // Handle other temporal types if needed
-    return null;
   }
 
   static Stream<ZonedDateTime> getDatetimes(TemporalAccessor dateTime, Optional<ZoneId> zoneId) {
