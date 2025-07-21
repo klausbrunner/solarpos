@@ -143,7 +143,7 @@ class FormatterTest {
   }
 
   @Test
-  void testTextFormatter() throws IOException {
+  void testTextFormatter() {
     var data = createSampleData();
     var fields = createFieldDescriptors();
 
@@ -225,5 +225,26 @@ class FormatterTest {
     assertEquals(2, records.size());
     assertEquals("Test Item", records.get(0).get("name"));
     assertEquals("Another Item", records.get(1).get("name"));
+  }
+
+  @Test
+  void testCsvEscaping() throws IOException {
+    record QuoteData(String text) {}
+
+    var data = new QuoteData("value, with \"quotes\"");
+    var field = new FieldDescriptor<QuoteData>("text", QuoteData::text);
+
+    var sb = new StringBuilder();
+    var formatter = new CsvFormatter<QuoteData>(SerializerRegistry.forCsv(), true);
+    formatter.format(List.of(field), List.of("text"), Stream.of(data), sb);
+
+    var expected = "text\r\n\"value, with \"\"quotes\"\"\"\r\n";
+    assertEquals(expected, sb.toString());
+
+    var csvParser =
+        CSVParser.parse(
+            sb.toString(), CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).get());
+    var record = csvParser.getRecords().getFirst();
+    assertEquals("value, with \"quotes\"", record.get("text"));
   }
 }
