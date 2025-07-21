@@ -32,7 +32,7 @@ public final class TimeFormatUtil {
   public static final DateTimeFormatter INPUT_TIME_FORMATTER =
       DateTimeFormatter.ofPattern(INPUT_TIME_PATTERN);
 
-  /** ISO-like time formatter with optional seconds and required offset. */
+  /** ISO-like time formatter with optional seconds and offset. */
   public static final DateTimeFormatter ISO_LOCAL_TIME_REDUCED =
       new DateTimeFormatterBuilder()
           .appendValue(HOUR_OF_DAY, 2)
@@ -42,6 +42,7 @@ public final class TimeFormatUtil {
           .appendLiteral(':')
           .appendValue(SECOND_OF_MINUTE, 2)
           .appendOffsetId()
+          .optionalEnd()
           .toFormatter();
 
   /** ISO-like date-time formatter with T separator. */

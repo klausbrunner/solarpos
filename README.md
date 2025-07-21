@@ -107,10 +107,10 @@ Get today's sunrise and sunset for Madrid, Spain, in UTC:
 solarpos 40.417 -3.704 now --timezone UTC sunrise
 ```
 
-Get the sun's position in Stockholm, Sweden, on 15 January 2023 at 12:30 Central European Time:
+Get the sun's position in Stockholm, Sweden, on 15 January 2026 at 12:30 Central European Time:
 
 ```shell
-solarpos 59.334 18.063 2023-01-15T12:30:00+01:00 position 
+solarpos 59.334 18.063 2026-01-15T12:30:00+01:00 position 
 ```
 
 Get a time series of sun positions for Berlin, Germany, on 26 March 2023, one position every 10 minutes, with CSV
@@ -120,10 +120,10 @@ output, in local timezone and using a delta T estimate. As the transition to DST
 solarpos 52.522 13.413 2023-03-26 --timezone Europe/Berlin --deltat --format=csv position --step=600
 ```
 
-Get a full calendar of sunrise/sunset and twilight times for Mumbai, India for the year 2025 assuming a delta T of 69 seconds, in JSON lines format. Use the local timezone, which is Asia/Kolkata as per the tz database.
+Get a full calendar of sunrise/sunset and twilight times for Mumbai, India for the year 2027 assuming a delta T of 69 seconds, in JSON lines format. Use the local timezone, which is Asia/Kolkata as per the tz database.
 
 ```shell
-solarpos 18.97 72.83 2025 --timezone Asia/Kolkata --deltat=69 --format=json sunrise --twilight
+solarpos 18.97 72.83 2027 --timezone Asia/Kolkata --deltat=69 --format=json sunrise --twilight
 ```
 
-Sample R notebooks demonstrating how to use timeseries output to create diagrams can be found at [klausbrunner/sunpath-r](https://github.com/klausbrunner/sunpath-r/blob/main/sunpath.md).
+Sample R notebooks demonstrating how to use time series output to create diagrams can be found at [klausbrunner/sunpath-r](https://github.com/klausbrunner/sunpath-r/blob/main/sunpath.md).

@@ -55,7 +55,7 @@ public class CsvFormatter<T> implements StreamingFormatter<T> {
     }
 
     // Process each item
-    formatItems(items, fields, out);
+    formatItems(items, fields, out, withHeaders);
   }
 
   /**
@@ -88,15 +88,20 @@ public class CsvFormatter<T> implements StreamingFormatter<T> {
    * @param items The stream of items to format
    * @param fields The field descriptors for formatting
    * @param out The output destination
+   * @param hasHeaders Whether headers were written (affects final line separator)
    * @throws IOException If an I/O error occurs
    */
-  private void formatItems(Stream<T> items, List<FieldDescriptor<T>> fields, Appendable out)
+  private void formatItems(
+      Stream<T> items, List<FieldDescriptor<T>> fields, Appendable out, boolean hasHeaders)
       throws IOException {
-    var iterator = items.iterator();
-    while (iterator.hasNext()) {
-      formatRow(iterator.next(), fields, out);
+    var itemList = items.toList();
 
-      if (iterator.hasNext()) {
+    for (int i = 0; i < itemList.size(); i++) {
+      formatRow(itemList.get(i), fields, out);
+
+      // Add line separator after each row except the last one, unless we have headers
+      // (in which case we want a final line separator for proper CSV format)
+      if (i < itemList.size() - 1 || hasHeaders) {
         out.append(lineSeparator);
       }
     }
