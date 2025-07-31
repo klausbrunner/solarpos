@@ -114,12 +114,10 @@ final class PositionCommand implements Callable<Integer> {
   private List<FieldDescriptor<PositionData>> createFields() {
     List<FieldDescriptor<PositionData>> fields = new ArrayList<>();
 
-    // Input fields
     fields.add(FieldDescriptor.numeric("latitude", PositionData::latitude, 5));
     fields.add(FieldDescriptor.numeric("longitude", PositionData::longitude, 5));
     fields.add(FieldDescriptor.numeric("elevation", PositionData::elevation, 3));
 
-    // Only add refraction-related fields if refraction correction is enabled
     if (refraction) {
       fields.add(FieldDescriptor.numeric("pressure", PositionData::pressure, 3));
       fields.add(FieldDescriptor.numeric("temperature", PositionData::temperature, 3));
@@ -132,7 +130,6 @@ final class PositionCommand implements Callable<Integer> {
             parent.format == HUMAN ? "yyyy-MM-dd HH:mm:ssXXX" : "yyyy-MM-dd'T'HH:mm:ssXXX"));
     fields.add(FieldDescriptor.numeric("deltaT", PositionData::deltaT, 3));
 
-    // Result fields
     fields.add(FieldDescriptor.numeric("azimuth", PositionData::azimuth, 5));
     fields.add(FieldDescriptor.numeric("zenith", PositionData::zenith, 5));
 
@@ -142,24 +139,18 @@ final class PositionCommand implements Callable<Integer> {
   private List<String> getFieldNames(boolean showInput) {
     List<String> names = new ArrayList<>();
 
-    // Input fields if showInput is true
     if (showInput) {
-      // Always include these base inputs
       names.addAll(List.of("latitude", "longitude", "elevation"));
 
-      // Only include refraction parameters if refraction correction is enabled
       if (refraction) {
         names.addAll(List.of("pressure", "temperature"));
       }
 
-      // Always include these remaining inputs
       names.addAll(List.of("dateTime", "deltaT"));
     } else {
-      // Include dateTime even when not showing all inputs
       names.add("dateTime");
     }
 
-    // Always include result fields
     names.addAll(List.of("azimuth", "zenith"));
 
     return names;
@@ -170,7 +161,6 @@ final class PositionCommand implements Callable<Integer> {
 
     return switch (format) {
       case HUMAN -> {
-        // Create display name mapping for human-readable output
         var displayNames =
             Map.of(
                 "dateTime", "date/time",
@@ -190,7 +180,6 @@ final class PositionCommand implements Callable<Integer> {
           case CSV -> SerializerRegistry.forCsv();
         };
 
-    // Custom serializer for temporal accessors
     registry.register(
         ZonedDateTime.class,
         (dt, hints) -> {
@@ -211,7 +200,6 @@ final class PositionCommand implements Callable<Integer> {
           return format == JSON ? '"' + formatted + '"' : formatted;
         });
 
-    // Add degree symbols and units for human format
     if (format == HUMAN) {
       registry.register(
           Double.class,
