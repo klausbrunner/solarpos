@@ -19,7 +19,6 @@ import picocli.CommandLine.HelpCommand;
     showAtFileInUsageHelp = true)
 public final class Main {
   static {
-    // force English-language locale for formatting
     Locale.setDefault(Locale.ENGLISH);
   }
 
@@ -108,7 +107,6 @@ public final class Main {
   static final class ManifestBasedVersionProviderWithVariables
       implements CommandLine.IVersionProvider {
     public String[] getVersion() {
-      // this requires Implementation-Version in the MANIFEST file to work
       String version = getClass().getPackage().getImplementationVersion();
       return new String[] {
         "${COMMAND-FULL-NAME} " + (version == null ? "" : version),

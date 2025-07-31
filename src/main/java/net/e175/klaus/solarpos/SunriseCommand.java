@@ -90,7 +90,6 @@ final class SunriseCommand implements Callable<Integer> {
   private List<FieldDescriptor<SunriseData>> createFields() {
     List<FieldDescriptor<SunriseData>> fields = new ArrayList<>();
 
-    // Input fields
     fields.add(FieldDescriptor.numeric("latitude", SunriseData::latitude, 5));
     fields.add(FieldDescriptor.numeric("longitude", SunriseData::longitude, 5));
     fields.add(
@@ -100,13 +99,11 @@ final class SunriseCommand implements Callable<Integer> {
             parent.format == HUMAN ? "yyyy-MM-dd HH:mm:ssXXX" : "yyyy-MM-dd'T'HH:mm:ssXXX"));
     fields.add(FieldDescriptor.numeric("deltaT", SunriseData::deltaT, 3));
 
-    // Result fields
     fields.add(new FieldDescriptor<>("type", SunriseData::type));
     fields.add(new FieldDescriptor<>("sunrise", SunriseData::sunrise));
     fields.add(new FieldDescriptor<>("transit", SunriseData::transit));
     fields.add(new FieldDescriptor<>("sunset", SunriseData::sunset));
 
-    // Twilight fields
     fields.add(new FieldDescriptor<>("civil_start", SunriseData::civilStart));
     fields.add(new FieldDescriptor<>("civil_end", SunriseData::civilEnd));
     fields.add(new FieldDescriptor<>("nautical_start", SunriseData::nauticalStart));
@@ -126,9 +123,7 @@ final class SunriseCommand implements Callable<Integer> {
 
     names.add("type");
 
-    // Decide whether to use basic fields or detailed twilight sequence
     if (twilight) {
-      // Complete twilight sequence including sunrise and sunset in proper order
       names.addAll(
           List.of(
               "astronomical_start",
@@ -141,7 +136,6 @@ final class SunriseCommand implements Callable<Integer> {
               "nautical_end",
               "astronomical_end"));
     } else {
-      // Just the basic fields when twilight is not requested
       names.addAll(List.of("sunrise", "transit", "sunset"));
     }
 
@@ -169,7 +163,6 @@ final class SunriseCommand implements Callable<Integer> {
           case CSV -> SerializerRegistry.forCsv();
         };
 
-    // Custom serializer for temporal accessors
     registry.register(
         ZonedDateTime.class,
         (dt, hints) -> {
@@ -190,7 +183,6 @@ final class SunriseCommand implements Callable<Integer> {
           return format == JSON ? '"' + formatted + '"' : formatted;
         });
 
-    // Add degree symbols for human format
     if (format == HUMAN) {
       registry.register(
           Double.class,
@@ -216,16 +208,13 @@ final class SunriseCommand implements Callable<Integer> {
         SPA.calculateSunriseTransitSet(
             dateTime, parent.latitude, parent.longitude, deltaT, horizons);
 
-    // Get the main sunrise/sunset result
     SunriseResult sunriseSunset = result.get(SPA.Horizon.SUNRISE_SUNSET);
 
-    // Extract type and times based on the result type
     String type;
     ZonedDateTime sunrise = null;
     ZonedDateTime transit;
     ZonedDateTime sunset = null;
 
-    // Use pattern matching to extract all at once
     switch (sunriseSunset) {
       case SunriseResult.RegularDay(var sr, var tr, var ss) -> {
         type = parent.format == HUMAN ? "normal" : "NORMAL";
@@ -244,7 +233,6 @@ final class SunriseCommand implements Callable<Integer> {
       default -> throw new IllegalStateException("Unexpected result type: " + sunriseSunset);
     }
 
-    // Extract twilight times if available
     var twilightTimes = extractTwilightTimes(result, horizons.length > 1);
 
     return new SunriseData(

@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-/** CSV output formatter. */
 public class CsvFormatter<T> implements StreamingFormatter<T> {
   private final SerializerRegistry registry;
   private final boolean withHeaders;
@@ -14,24 +13,10 @@ public class CsvFormatter<T> implements StreamingFormatter<T> {
   private static final char QUOTE = '"';
   private static final String ESCAPED_QUOTE = "\"\"";
 
-  /**
-   * Creates a CSV formatter with default comma delimiter and CRLF line separator.
-   *
-   * @param registry The serializer registry to use (must not be null)
-   * @param withHeaders Whether to include headers in the output
-   */
   public CsvFormatter(SerializerRegistry registry, boolean withHeaders) {
     this(registry, withHeaders, ",", "\r\n");
   }
 
-  /**
-   * Creates a CSV formatter with custom delimiter and line separator.
-   *
-   * @param registry The serializer registry to use (must not be null)
-   * @param withHeaders Whether to include headers in the output
-   * @param delimiter The field delimiter character/string
-   * @param lineSeparator The line separator to use between rows
-   */
   public CsvFormatter(
       SerializerRegistry registry, boolean withHeaders, String delimiter, String lineSeparator) {
     this.registry = Objects.requireNonNull(registry, "Registry must not be null");
@@ -49,29 +34,19 @@ public class CsvFormatter<T> implements StreamingFormatter<T> {
     var fields = filterFields(allFields, subset);
     if (fields.isEmpty()) return;
 
-    // Write headers if requested
     if (withHeaders) {
       writeHeaders(fields, out);
     }
 
-    // Process each item
     formatItems(items, fields, out, withHeaders);
   }
 
-  /**
-   * Writes the CSV header row with field names.
-   *
-   * @param fields The field descriptors containing field names
-   * @param out The output destination
-   * @throws IOException If an I/O error occurs
-   */
   private void writeHeaders(List<FieldDescriptor<T>> fields, Appendable out) throws IOException {
     var firstField = true;
     for (var field : fields) {
       if (!firstField) out.append(delimiter);
       firstField = false;
 
-      // Escape field names if needed
       String fieldName = field.name();
       if (needsEscaping(fieldName)) {
         out.append(QUOTE).append(fieldName.replace("\"", ESCAPED_QUOTE)).append(QUOTE);
@@ -82,15 +57,6 @@ public class CsvFormatter<T> implements StreamingFormatter<T> {
     out.append(lineSeparator);
   }
 
-  /**
-   * Formats multiple items from a stream.
-   *
-   * @param items The stream of items to format
-   * @param fields The field descriptors for formatting
-   * @param out The output destination
-   * @param hasHeaders Whether headers were written (affects final line separator)
-   * @throws IOException If an I/O error occurs
-   */
   private void formatItems(
       Stream<T> items, List<FieldDescriptor<T>> fields, Appendable out, boolean hasHeaders)
       throws IOException {
@@ -99,22 +65,12 @@ public class CsvFormatter<T> implements StreamingFormatter<T> {
     for (int i = 0; i < itemList.size(); i++) {
       formatRow(itemList.get(i), fields, out);
 
-      // Add line separator after each row except the last one, unless we have headers
-      // (in which case we want a final line separator for proper CSV format)
       if (i < itemList.size() - 1 || hasHeaders) {
         out.append(lineSeparator);
       }
     }
   }
 
-  /**
-   * Formats a single item as a CSV row.
-   *
-   * @param item The item to format
-   * @param fields The field descriptors for formatting
-   * @param out The output destination
-   * @throws IOException If an I/O error occurs
-   */
   private void formatRow(T item, List<FieldDescriptor<T>> fields, Appendable out)
       throws IOException {
     var firstField = true;
@@ -125,18 +81,10 @@ public class CsvFormatter<T> implements StreamingFormatter<T> {
       var value = field.extractor().apply(item);
       var serialized = registry.serialize(value, field);
 
-      // Escape CSV values if needed
       appendEscapedIfNecessary(serialized, out);
     }
   }
 
-  /**
-   * Appends a value to the output, escaping it if necessary according to CSV rules.
-   *
-   * @param value The value to append
-   * @param out The output destination
-   * @throws IOException If an I/O error occurs
-   */
   private void appendEscapedIfNecessary(String value, Appendable out) throws IOException {
     if (needsEscaping(value)) {
       out.append(QUOTE).append(value.replace("\"", ESCAPED_QUOTE)).append(QUOTE);
@@ -145,12 +93,6 @@ public class CsvFormatter<T> implements StreamingFormatter<T> {
     }
   }
 
-  /**
-   * Checks if a value needs to be escaped according to CSV rules.
-   *
-   * @param value The value to check
-   * @return True if the value needs escaping, false otherwise
-   */
   private boolean needsEscaping(String value) {
     return value.contains(delimiter)
         || value.indexOf(QUOTE) >= 0
