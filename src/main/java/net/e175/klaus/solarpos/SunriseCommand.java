@@ -20,6 +20,39 @@ import picocli.CommandLine;
     name = "sunrise",
     description = "Calculates sunrise, transit, sunset and (optionally) twilight times.")
 final class SunriseCommand implements Callable<Integer> {
+
+  private static final SPA.Horizon[] BASIC_HORIZONS = {SPA.Horizon.SUNRISE_SUNSET};
+  private static final SPA.Horizon[] TWILIGHT_HORIZONS = {
+    SPA.Horizon.SUNRISE_SUNSET,
+    SPA.Horizon.CIVIL_TWILIGHT,
+    SPA.Horizon.NAUTICAL_TWILIGHT,
+    SPA.Horizon.ASTRONOMICAL_TWILIGHT
+  };
+
+  record SunriseData(
+      double latitude,
+      double longitude,
+      ZonedDateTime dateTime,
+      double deltaT,
+      String type,
+      ZonedDateTime sunrise,
+      ZonedDateTime transit,
+      ZonedDateTime sunset,
+      ZonedDateTime civilStart,
+      ZonedDateTime civilEnd,
+      ZonedDateTime nauticalStart,
+      ZonedDateTime nauticalEnd,
+      ZonedDateTime astronomicalStart,
+      ZonedDateTime astronomicalEnd) {}
+
+  private record TwilightTimes(
+      ZonedDateTime civilStart,
+      ZonedDateTime civilEnd,
+      ZonedDateTime nauticalStart,
+      ZonedDateTime nauticalEnd,
+      ZonedDateTime astronomicalStart,
+      ZonedDateTime astronomicalEnd) {}
+
   @CommandLine.ParentCommand Main parent;
 
   @CommandLine.Option(
@@ -33,15 +66,7 @@ final class SunriseCommand implements Callable<Integer> {
 
     final Stream<ZonedDateTime> dateTimes = getDatetimes(parent.dateTime, parent.timezone);
 
-    final SPA.Horizon[] horizons =
-        twilight
-            ? new SPA.Horizon[] {
-              SPA.Horizon.SUNRISE_SUNSET,
-              SPA.Horizon.CIVIL_TWILIGHT,
-              SPA.Horizon.NAUTICAL_TWILIGHT,
-              SPA.Horizon.ASTRONOMICAL_TWILIGHT
-            }
-            : new SPA.Horizon[] {SPA.Horizon.SUNRISE_SUNSET};
+    final SPA.Horizon[] horizons = twilight ? TWILIGHT_HORIZONS : BASIC_HORIZONS;
 
     final PrintWriter out = parent.spec.commandLine().getOut();
 
@@ -127,7 +152,10 @@ final class SunriseCommand implements Callable<Integer> {
     SerializerRegistry registry = createRegistry(format);
 
     return switch (format) {
-      case HUMAN -> new SimpleTextFormatter<>(registry);
+      case HUMAN -> {
+        var displayNames = Map.of("dateTime", "date/time", "deltaT", "delta T");
+        yield new SimpleTextFormatter<>(registry, displayNames);
+      }
       case JSON -> new JsonFormatter<>(registry, "\n");
       case CSV -> new CsvFormatter<>(registry, parent.headers);
     };
@@ -171,12 +199,11 @@ final class SunriseCommand implements Callable<Integer> {
             String result = String.format("%." + precision + "f", d);
 
             String fieldName = (String) hints.getOrDefault("fieldName", "");
-            if (fieldName.equals("latitude") || fieldName.equals("longitude")) {
-              return String.format("%24s°", result);
-            } else if (fieldName.equals("deltaT")) {
-              return String.format("%22s s", result);
-            }
-            return result;
+            return switch (fieldName) {
+              case "latitude", "longitude" -> String.format("%28s°", result);
+              case "deltaT" -> String.format("%28s s", result);
+              default -> result;
+            };
           });
     }
 
@@ -218,33 +245,7 @@ final class SunriseCommand implements Callable<Integer> {
     }
 
     // Extract twilight times if available
-    ZonedDateTime civilStart = null;
-    ZonedDateTime civilEnd = null;
-    ZonedDateTime nauticalStart = null;
-    ZonedDateTime nauticalEnd = null;
-    ZonedDateTime astronomicalStart = null;
-    ZonedDateTime astronomicalEnd = null;
-
-    if (horizons.length > 1) {
-      SunriseResult civil = result.get(SPA.Horizon.CIVIL_TWILIGHT);
-      SunriseResult nautical = result.get(SPA.Horizon.NAUTICAL_TWILIGHT);
-      SunriseResult astronomical = result.get(SPA.Horizon.ASTRONOMICAL_TWILIGHT);
-
-      if (civil instanceof SunriseResult.RegularDay regularDay) {
-        civilStart = regularDay.sunrise();
-        civilEnd = regularDay.sunset();
-      }
-
-      if (nautical instanceof SunriseResult.RegularDay regularDay) {
-        nauticalStart = regularDay.sunrise();
-        nauticalEnd = regularDay.sunset();
-      }
-
-      if (astronomical instanceof SunriseResult.RegularDay regularDay) {
-        astronomicalStart = regularDay.sunrise();
-        astronomicalEnd = regularDay.sunset();
-      }
-    }
+    var twilightTimes = extractTwilightTimes(result, horizons.length > 1);
 
     return new SunriseData(
         parent.latitude,
@@ -255,12 +256,36 @@ final class SunriseCommand implements Callable<Integer> {
         sunrise,
         transit,
         sunset,
-        civilStart,
-        civilEnd,
-        nauticalStart,
-        nauticalEnd,
-        astronomicalStart,
-        astronomicalEnd);
+        twilightTimes.civilStart(),
+        twilightTimes.civilEnd(),
+        twilightTimes.nauticalStart(),
+        twilightTimes.nauticalEnd(),
+        twilightTimes.astronomicalStart(),
+        twilightTimes.astronomicalEnd());
+  }
+
+  private static TwilightTimes extractTwilightTimes(
+      Map<SPA.Horizon, SunriseResult> result, boolean includeTwilight) {
+    if (!includeTwilight) {
+      return new TwilightTimes(null, null, null, null, null, null);
+    }
+
+    var civil = extractTimes(result.get(SPA.Horizon.CIVIL_TWILIGHT));
+    var nautical = extractTimes(result.get(SPA.Horizon.NAUTICAL_TWILIGHT));
+    var astronomical = extractTimes(result.get(SPA.Horizon.ASTRONOMICAL_TWILIGHT));
+
+    return new TwilightTimes(
+        civil.start(), civil.end(),
+        nautical.start(), nautical.end(),
+        astronomical.start(), astronomical.end());
+  }
+
+  private static record Times(ZonedDateTime start, ZonedDateTime end) {}
+
+  private static Times extractTimes(SunriseResult result) {
+    return result instanceof SunriseResult.RegularDay regularDay
+        ? new Times(regularDay.sunrise(), regularDay.sunset())
+        : new Times(null, null);
   }
 
   static Stream<ZonedDateTime> getDatetimes(TemporalAccessor dateTime, Optional<ZoneId> zoneId) {
