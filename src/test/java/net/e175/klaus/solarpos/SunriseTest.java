@@ -290,8 +290,8 @@ class SunriseTest {
     // Check the general structure and formatting
     assertTrue(output.contains("latitude"));
     assertTrue(output.contains("longitude"));
-    assertTrue(output.contains("dateTime"));
-    assertTrue(output.contains("deltaT"));
+    assertTrue(output.contains("date/time"));
+    assertTrue(output.contains("delta T"));
     assertTrue(output.contains("type"));
     assertTrue(output.contains("sunrise"));
     assertTrue(output.contains("transit"));
