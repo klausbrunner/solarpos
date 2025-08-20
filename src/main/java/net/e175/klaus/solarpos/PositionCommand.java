@@ -107,7 +107,8 @@ final class PositionCommand implements Callable<Integer> {
       List<FieldDescriptor<PositionData>> fields = createFields();
       List<String> fieldNames = getFieldNames(parent.showInput);
       StreamingFormatter<PositionData> formatter = createFormatter(parent.format);
-      formatter.format(fields, fieldNames, dateTimes.map(this::calculatePositionData), out);
+      formatter.format(
+          fields, fieldNames, dateTimes.parallel().map(this::calculatePositionData), out);
     } catch (IOException e) {
       throw new RuntimeException("Failed to format output", e);
     }
