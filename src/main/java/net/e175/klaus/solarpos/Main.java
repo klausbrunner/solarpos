@@ -5,7 +5,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAccessor;
 import java.util.Locale;
 import java.util.Optional;
-import net.e175.klaus.solarpos.util.TimeFormatUtil;
+import net.e175.klaus.solarpos.util.TimeFormats;
 import net.e175.klaus.solarpositioning.DeltaT;
 import picocli.CommandLine;
 import picocli.CommandLine.HelpCommand;
@@ -44,7 +44,7 @@ public final class Main {
       index = "2",
       description =
           "Date/time in ISO format "
-              + TimeFormatUtil.INPUT_DATE_TIME_PATTERN
+              + TimeFormats.INPUT_DATE_TIME_PATTERN
               + ". Use 'now' for current time and date.",
       converter = DateTimeConverter.class)
   TemporalAccessor dateTime;

@@ -7,6 +7,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import net.e175.klaus.solarpos.util.TimeFormats;
 
 public final class SerializerRegistry {
   private final Map<Class<?>, BiFunction<Object, Map<String, Object>, String>> serializers =
@@ -37,10 +38,40 @@ public final class SerializerRegistry {
     };
   }
 
+  private static <T extends Number>
+      BiFunction<T, Map<String, Object>, String> createFloatFormatterWithUnits(
+          int defaultPrecision) {
+    return (num, hints) -> {
+      var precision = (int) hints.getOrDefault("precision", defaultPrecision);
+      String result = String.format(Locale.US, "%." + precision + "f", num);
+
+      var unit = (String) hints.get("unit");
+      return unit != null ? String.format("%28s%s", result, unit) : result;
+    };
+  }
+
+  private static BiFunction<ZonedDateTime, Map<String, Object>, String> createDateTimeFormatter(
+      String nullValue, DateTimeFormatter defaultFormat, boolean quoted) {
+    return (dt, hints) -> {
+      if (dt == null) return nullValue;
+
+      var pattern = (String) hints.get("pattern");
+      String formatted =
+          pattern != null
+              ? dt.format(DateTimeFormatter.ofPattern(pattern))
+              : dt.format(defaultFormat);
+
+      return quoted ? '"' + formatted + '"' : formatted;
+    };
+  }
+
   public static SerializerRegistry forText() {
     return defaults()
-        .register(Double.class, createFloatFormatter(2))
-        .register(Float.class, createFloatFormatter(2));
+        .register(Double.class, createFloatFormatterWithUnits(2))
+        .register(Float.class, createFloatFormatterWithUnits(2))
+        .register(
+            ZonedDateTime.class,
+            createDateTimeFormatter("none", TimeFormats.ISO_HUMAN_LOCAL_DATE_TIME_REDUCED, false));
   }
 
   public static SerializerRegistry forJson() {
@@ -48,13 +79,17 @@ public final class SerializerRegistry {
         .register(Double.class, createFloatFormatter(6))
         .register(Float.class, createFloatFormatter(6))
         .register(
-            ZonedDateTime.class, (dt, hints) -> dt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+            ZonedDateTime.class,
+            createDateTimeFormatter("null", TimeFormats.ISO_LOCAL_DATE_TIME_REDUCED, true));
   }
 
   public static SerializerRegistry forCsv() {
     return defaults()
         .register(Double.class, createFloatFormatter(5))
-        .register(Float.class, createFloatFormatter(5));
+        .register(Float.class, createFloatFormatter(5))
+        .register(
+            ZonedDateTime.class,
+            createDateTimeFormatter("", TimeFormats.ISO_LOCAL_DATE_TIME_REDUCED, false));
   }
 
   private static String formatNumber(Object n, Map<String, Object> hints) {

@@ -7,14 +7,17 @@ import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 
-public final class TimeFormatUtil {
+public final class TimeFormats {
 
-  private TimeFormatUtil() {}
+  private TimeFormats() {}
 
   public static final String INPUT_DATE_TIME_PATTERN =
       "yyyy[-MM[-dd[['T'][ ]HH:mm[:ss[.SSS]][XXX['['VV']']]]]]";
 
   public static final String INPUT_TIME_PATTERN = "HH:mm[:ss[.SSS]][XXX['['VV']']]";
+
+  public static final String OUTPUT_DATE_TIME_HUMAN_PATTERN = "yyyy-MM-dd HH:mm:ssXXX";
+  public static final String OUTPUT_DATE_TIME_ISO_PATTERN = "yyyy-MM-dd'T'HH:mm:ssXXX";
 
   public static final DateTimeFormatter INPUT_DATE_TIME_FORMATTER =
       DateTimeFormatter.ofPattern(INPUT_DATE_TIME_PATTERN);

@@ -3,7 +3,7 @@ package net.e175.klaus.solarpos;
 import java.time.*;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAccessor;
-import net.e175.klaus.solarpos.util.TimeFormatUtil;
+import net.e175.klaus.solarpos.util.TimeFormats;
 import picocli.CommandLine;
 
 /** A somewhat tolerant parser of ZonedDateTimes. */
@@ -32,7 +32,7 @@ final class DateTimeConverter implements CommandLine.ITypeConverter<TemporalAcce
       return ZonedDateTime.now(clock);
     }
     try {
-      return TimeFormatUtil.INPUT_DATE_TIME_FORMATTER.parseBest(
+      return TimeFormats.INPUT_DATE_TIME_FORMATTER.parseBest(
           arg,
           ZonedDateTime::from,
           LocalDateTime::from,
@@ -40,7 +40,7 @@ final class DateTimeConverter implements CommandLine.ITypeConverter<TemporalAcce
           YearMonth::from,
           Year::from);
     } catch (DateTimeParseException dtpe) {
-      return TimeFormatUtil.INPUT_TIME_FORMATTER.parseBest(arg, OffsetTime::from, LocalTime::from);
+      return TimeFormats.INPUT_TIME_FORMATTER.parseBest(arg, OffsetTime::from, LocalTime::from);
     }
   }
 
