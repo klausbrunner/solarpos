@@ -11,7 +11,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 import net.e175.klaus.formatter.*;
-import net.e175.klaus.solarpos.util.TimeFormatUtil;
+import net.e175.klaus.solarpos.util.TimeFormats;
 import net.e175.klaus.solarpositioning.SPA;
 import net.e175.klaus.solarpositioning.SunriseResult;
 import picocli.CommandLine;
@@ -90,14 +90,16 @@ final class SunriseCommand implements Callable<Integer> {
   private List<FieldDescriptor<SunriseData>> createFields() {
     List<FieldDescriptor<SunriseData>> fields = new ArrayList<>();
 
-    fields.add(FieldDescriptor.numeric("latitude", SunriseData::latitude, 5));
-    fields.add(FieldDescriptor.numeric("longitude", SunriseData::longitude, 5));
+    fields.add(FieldDescriptor.numeric("latitude", SunriseData::latitude, 5).withUnit("°"));
+    fields.add(FieldDescriptor.numeric("longitude", SunriseData::longitude, 5).withUnit("°"));
     fields.add(
         FieldDescriptor.dateTime(
             "dateTime",
             SunriseData::dateTime,
-            parent.format == HUMAN ? "yyyy-MM-dd HH:mm:ssXXX" : "yyyy-MM-dd'T'HH:mm:ssXXX"));
-    fields.add(FieldDescriptor.numeric("deltaT", SunriseData::deltaT, 3));
+            parent.format == HUMAN
+                ? TimeFormats.OUTPUT_DATE_TIME_HUMAN_PATTERN
+                : TimeFormats.OUTPUT_DATE_TIME_ISO_PATTERN));
+    fields.add(FieldDescriptor.numeric("deltaT", SunriseData::deltaT, 3).withUnit(" s"));
 
     fields.add(new FieldDescriptor<>("type", SunriseData::type));
     fields.add(new FieldDescriptor<>("sunrise", SunriseData::sunrise));
@@ -143,7 +145,12 @@ final class SunriseCommand implements Callable<Integer> {
   }
 
   private StreamingFormatter<SunriseData> createFormatter(Main.Format format) {
-    SerializerRegistry registry = createRegistry(format);
+    SerializerRegistry registry =
+        switch (format) {
+          case HUMAN -> SerializerRegistry.forText();
+          case JSON -> SerializerRegistry.forJson();
+          case CSV -> SerializerRegistry.forCsv();
+        };
 
     return switch (format) {
       case HUMAN -> {
@@ -153,53 +160,6 @@ final class SunriseCommand implements Callable<Integer> {
       case JSON -> new JsonFormatter<>(registry, "\n");
       case CSV -> new CsvFormatter<>(registry, parent.headers);
     };
-  }
-
-  private SerializerRegistry createRegistry(Main.Format format) {
-    SerializerRegistry registry =
-        switch (format) {
-          case HUMAN -> SerializerRegistry.forText();
-          case JSON -> SerializerRegistry.forJson();
-          case CSV -> SerializerRegistry.forCsv();
-        };
-
-    registry.register(
-        ZonedDateTime.class,
-        (dt, hints) -> {
-          if (dt == null) {
-            return switch (format) {
-              case HUMAN -> "none";
-              case JSON -> "null";
-              case CSV -> "";
-            };
-          }
-
-          String formatted =
-              dt.format(
-                  format == HUMAN
-                      ? TimeFormatUtil.ISO_HUMAN_LOCAL_DATE_TIME_REDUCED
-                      : TimeFormatUtil.ISO_LOCAL_DATE_TIME_REDUCED);
-
-          return format == JSON ? '"' + formatted + '"' : formatted;
-        });
-
-    if (format == HUMAN) {
-      registry.register(
-          Double.class,
-          (d, hints) -> {
-            int precision = (int) hints.getOrDefault("precision", 4);
-            String result = String.format("%." + precision + "f", d);
-
-            String fieldName = (String) hints.getOrDefault("fieldName", "");
-            return switch (fieldName) {
-              case "latitude", "longitude" -> String.format("%28s°", result);
-              case "deltaT" -> String.format("%28s s", result);
-              default -> result;
-            };
-          });
-    }
-
-    return registry;
   }
 
   private SunriseData calculateSunriseData(ZonedDateTime dateTime, SPA.Horizon[] horizons) {

@@ -46,6 +46,11 @@ public class FieldDescriptor<T> {
     return withHint("pattern", pattern);
   }
 
+  public FieldDescriptor<T> withUnit(String unit) {
+    Objects.requireNonNull(unit, "Unit must not be null");
+    return withHint("unit", unit);
+  }
+
   public String name() {
     return name;
   }

@@ -19,7 +19,7 @@ import net.e175.klaus.formatter.JsonFormatter;
 import net.e175.klaus.formatter.SerializerRegistry;
 import net.e175.klaus.formatter.SimpleTextFormatter;
 import net.e175.klaus.formatter.StreamingFormatter;
-import net.e175.klaus.solarpos.util.TimeFormatUtil;
+import net.e175.klaus.solarpos.util.TimeFormats;
 import net.e175.klaus.solarpositioning.Grena3;
 import net.e175.klaus.solarpositioning.SPA;
 import net.e175.klaus.solarpositioning.SolarPosition;
@@ -27,6 +27,11 @@ import picocli.CommandLine;
 
 @CommandLine.Command(name = "position", description = "Calculates topocentric solar coordinates.")
 final class PositionCommand implements Callable<Integer> {
+
+  static final int MAX_STEP = 24 * 60 * 60; // seconds in a day
+  static final double MAX_PRESSURE = 2000.0; // hPa
+  static final double MIN_TEMPERATURE = -100.0; // °C
+  static final double MAX_TEMPERATURE = 100.0; // °C
 
   enum Algorithm {
     SPA,
@@ -114,24 +119,27 @@ final class PositionCommand implements Callable<Integer> {
   private List<FieldDescriptor<PositionData>> createFields() {
     List<FieldDescriptor<PositionData>> fields = new ArrayList<>();
 
-    fields.add(FieldDescriptor.numeric("latitude", PositionData::latitude, 5));
-    fields.add(FieldDescriptor.numeric("longitude", PositionData::longitude, 5));
-    fields.add(FieldDescriptor.numeric("elevation", PositionData::elevation, 3));
+    fields.add(FieldDescriptor.numeric("latitude", PositionData::latitude, 5).withUnit("°"));
+    fields.add(FieldDescriptor.numeric("longitude", PositionData::longitude, 5).withUnit("°"));
+    fields.add(FieldDescriptor.numeric("elevation", PositionData::elevation, 3).withUnit(" m"));
 
     if (refraction) {
-      fields.add(FieldDescriptor.numeric("pressure", PositionData::pressure, 3));
-      fields.add(FieldDescriptor.numeric("temperature", PositionData::temperature, 3));
+      fields.add(FieldDescriptor.numeric("pressure", PositionData::pressure, 3).withUnit(" hPa"));
+      fields.add(
+          FieldDescriptor.numeric("temperature", PositionData::temperature, 3).withUnit(" °C"));
     }
 
     fields.add(
         FieldDescriptor.dateTime(
             "dateTime",
             PositionData::dateTime,
-            parent.format == HUMAN ? "yyyy-MM-dd HH:mm:ssXXX" : "yyyy-MM-dd'T'HH:mm:ssXXX"));
-    fields.add(FieldDescriptor.numeric("deltaT", PositionData::deltaT, 3));
+            parent.format == HUMAN
+                ? TimeFormats.OUTPUT_DATE_TIME_HUMAN_PATTERN
+                : TimeFormats.OUTPUT_DATE_TIME_ISO_PATTERN));
+    fields.add(FieldDescriptor.numeric("deltaT", PositionData::deltaT, 3).withUnit(" s"));
 
-    fields.add(FieldDescriptor.numeric("azimuth", PositionData::azimuth, 5));
-    fields.add(FieldDescriptor.numeric("zenith", PositionData::zenith, 5));
+    fields.add(FieldDescriptor.numeric("azimuth", PositionData::azimuth, 5).withUnit("°"));
+    fields.add(FieldDescriptor.numeric("zenith", PositionData::zenith, 5).withUnit("°"));
 
     return fields;
   }
@@ -157,22 +165,6 @@ final class PositionCommand implements Callable<Integer> {
   }
 
   private StreamingFormatter<PositionData> createFormatter(Main.Format format) {
-    SerializerRegistry registry = createRegistry(format);
-
-    return switch (format) {
-      case HUMAN -> {
-        var displayNames =
-            Map.of(
-                "dateTime", "date/time",
-                "deltaT", "delta T");
-        yield new SimpleTextFormatter<>(registry, displayNames);
-      }
-      case JSON -> new JsonFormatter<>(registry, "\n");
-      case CSV -> new CsvFormatter<>(registry, parent.headers);
-    };
-  }
-
-  private SerializerRegistry createRegistry(Main.Format format) {
     SerializerRegistry registry =
         switch (format) {
           case HUMAN -> SerializerRegistry.forText();
@@ -180,46 +172,14 @@ final class PositionCommand implements Callable<Integer> {
           case CSV -> SerializerRegistry.forCsv();
         };
 
-    registry.register(
-        ZonedDateTime.class,
-        (dt, hints) -> {
-          if (dt == null) {
-            return switch (format) {
-              case HUMAN -> "none";
-              case JSON -> "null";
-              case CSV -> "";
-            };
-          }
-
-          String formatted =
-              dt.format(
-                  format == HUMAN
-                      ? TimeFormatUtil.ISO_HUMAN_LOCAL_DATE_TIME_REDUCED
-                      : TimeFormatUtil.ISO_LOCAL_DATE_TIME_REDUCED);
-
-          return format == JSON ? '"' + formatted + '"' : formatted;
-        });
-
-    if (format == HUMAN) {
-      registry.register(
-          Double.class,
-          (d, hints) -> {
-            int precision = (int) hints.getOrDefault("precision", 4);
-            String result = String.format("%." + precision + "f", d);
-
-            String fieldName = (String) hints.getOrDefault("fieldName", "");
-            return switch (fieldName) {
-              case "latitude", "longitude", "azimuth", "zenith" -> String.format("%28s°", result);
-              case "elevation" -> String.format("%28s m", result);
-              case "pressure" -> String.format("%28s hPa", result);
-              case "temperature" -> String.format("%28s °C", result);
-              case "deltaT" -> String.format("%28s s", result);
-              default -> result;
-            };
-          });
-    }
-
-    return registry;
+    return switch (format) {
+      case HUMAN -> {
+        var displayNames = Map.of("dateTime", "date/time", "deltaT", "delta T");
+        yield new SimpleTextFormatter<>(registry, displayNames);
+      }
+      case JSON -> new JsonFormatter<>(registry, "\n");
+      case CSV -> new CsvFormatter<>(registry, parent.headers);
+    };
   }
 
   private PositionData calculatePositionData(ZonedDateTime dateTime) {
@@ -259,15 +219,15 @@ final class PositionCommand implements Callable<Integer> {
   }
 
   private void validate() {
-    if (step < 1 || step > 24 * 60 * 60) {
+    if (step < 1 || step > MAX_STEP) {
       throw new CommandLine.ParameterException(spec.commandLine(), "invalid step value");
     }
 
-    if (pressure <= 0 || pressure > 2000) {
+    if (pressure <= 0 || pressure > MAX_PRESSURE) {
       throw new CommandLine.ParameterException(spec.commandLine(), "invalid pressure value");
     }
 
-    if (temperature < -100 || temperature > 100) {
+    if (temperature < MIN_TEMPERATURE || temperature > MAX_TEMPERATURE) {
       throw new CommandLine.ParameterException(spec.commandLine(), "invalid temperature value");
     }
   }
