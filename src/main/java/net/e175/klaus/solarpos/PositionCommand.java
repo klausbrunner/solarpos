@@ -82,6 +82,11 @@ final class PositionCommand implements Callable<Integer> {
       description = "Apply refraction correction. Default: ${DEFAULT-VALUE}.")
   boolean refraction;
 
+  @CommandLine.Option(
+      names = "--elevation-angle",
+      description = "Output elevation angle instead of zenith angle.")
+  boolean elevationOutput;
+
   /** Record to hold position data for formatting. */
   record PositionData(
       double latitude,
@@ -92,7 +97,8 @@ final class PositionCommand implements Callable<Integer> {
       ZonedDateTime dateTime,
       double deltaT,
       double azimuth,
-      double zenith) {}
+      double zenith,
+      double elevationAngle) {}
 
   @Override
   public Integer call() {
@@ -140,7 +146,14 @@ final class PositionCommand implements Callable<Integer> {
     fields.add(FieldDescriptor.numeric("deltaT", PositionData::deltaT, 3).withUnit(" s"));
 
     fields.add(FieldDescriptor.numeric("azimuth", PositionData::azimuth, 5).withUnit("°"));
-    fields.add(FieldDescriptor.numeric("zenith", PositionData::zenith, 5).withUnit("°"));
+
+    if (elevationOutput) {
+      fields.add(
+          FieldDescriptor.numeric("elevation-angle", PositionData::elevationAngle, 5)
+              .withUnit("°"));
+    } else {
+      fields.add(FieldDescriptor.numeric("zenith", PositionData::zenith, 5).withUnit("°"));
+    }
 
     return fields;
   }
@@ -160,7 +173,8 @@ final class PositionCommand implements Callable<Integer> {
       names.add("dateTime");
     }
 
-    names.addAll(List.of("azimuth", "zenith"));
+    names.add("azimuth");
+    names.add(elevationOutput ? "elevation-angle" : "zenith");
 
     return names;
   }
@@ -216,7 +230,8 @@ final class PositionCommand implements Callable<Integer> {
         dateTime,
         deltaT,
         position.azimuth(),
-        position.zenithAngle());
+        position.zenithAngle(),
+        90.0 - position.zenithAngle());
   }
 
   private void validate() {

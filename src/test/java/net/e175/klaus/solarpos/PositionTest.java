@@ -362,4 +362,98 @@ class PositionTest {
     assertTrue(output.contains("0.000 m"));
     assertTrue(output.contains("69.000 s"));
   }
+
+  @Test
+  void elevationAngleOutputWithJson() {
+    var lat = "52.0";
+    var lon = "25.0";
+    var dateTime = "2022-10-17T12:00:00Z";
+
+    var result =
+        TestUtil.run(
+            lat, lon, dateTime, "--format=json", "--deltat=69", "position", "--elevation-angle");
+    assertEquals(0, result.returnCode());
+
+    var jsonObject = JsonParser.parseString(result.output()).getAsJsonObject();
+    assertEquals(dateTime, jsonObject.get("dateTime").getAsString());
+    assertEquals(211.17614, jsonObject.get("azimuth").getAsDouble());
+    assertEquals(23.93168, jsonObject.get("elevation-angle").getAsDouble(), 0.00001);
+    assertFalse(jsonObject.has("zenith"));
+  }
+
+  @Test
+  void elevationAngleOutputWithCsv() {
+    var lat = "52.0";
+    var lon = "25.0";
+    var dateTime = "2003-10-17T12:00:00Z";
+
+    var result =
+        TestUtil.run(
+            lat, lon, dateTime, "--format=csv", "--deltat=69", "position", "--elevation-angle");
+    assertEquals(0, result.returnCode());
+    assertEquals("2003-10-17T12:00:00Z,211.20726,24.07501", result.output().strip());
+  }
+
+  @Test
+  void elevationAngleOutputWithCsvHeaders() {
+    var lat = "52.0";
+    var lon = "25.0";
+    var dateTime = "2003-10-17T12:00:00Z";
+
+    var result =
+        TestUtil.run(
+            lat,
+            lon,
+            dateTime,
+            "--format=csv",
+            "--headers",
+            "--deltat=69",
+            "position",
+            "--elevation-angle");
+    assertEquals(0, result.returnCode());
+
+    var output = result.output();
+    assertTrue(output.contains("elevation-angle"));
+    assertFalse(output.contains("zenith"));
+  }
+
+  @Test
+  void elevationAngleOutputWithHuman() {
+    var lat = "52.0";
+    var lon = "25.0";
+    var dateTime = "2022-10-17T12:00:00Z";
+
+    var result =
+        TestUtil.run(
+            lat, lon, dateTime, "--format=human", "--deltat=69", "position", "--elevation-angle");
+    assertEquals(0, result.returnCode());
+
+    var output = result.output();
+    assertTrue(output.contains("elevation-angle"));
+    assertTrue(output.contains("23.93168°"));
+    assertFalse(output.contains("zenith"));
+    assertTrue(output.contains("azimuth"));
+    assertTrue(output.contains("211.17614°"));
+  }
+
+  @Test
+  void elevationAngleMathematicalCorrectness() {
+    var lat = "52.0";
+    var lon = "25.0";
+    var dateTime = "2022-10-17T12:00:00Z";
+
+    var zenithResult = TestUtil.run(lat, lon, dateTime, "--format=json", "--deltat=69", "position");
+    assertEquals(0, zenithResult.returnCode());
+    var zenithJson = JsonParser.parseString(zenithResult.output()).getAsJsonObject();
+    var zenithAngle = zenithJson.get("zenith").getAsDouble();
+
+    var elevationResult =
+        TestUtil.run(
+            lat, lon, dateTime, "--format=json", "--deltat=69", "position", "--elevation-angle");
+    assertEquals(0, elevationResult.returnCode());
+    var elevationJson = JsonParser.parseString(elevationResult.output()).getAsJsonObject();
+    var elevationAngle = elevationJson.get("elevation-angle").getAsDouble();
+
+    assertEquals(90.0, zenithAngle + elevationAngle, 0.00001);
+  }
 }
