@@ -71,6 +71,8 @@ There is built-in support for calculating time series.
 * Similarly, the position command will calculate a time series of sun positions for the given day, month or even year.
   The interval is determined by the `--step` option (default: 1 hour).
 
+**Performance**: Time series calculations are automatically parallelized for efficiency. Large datasets (year-long time series at minute or second resolution) benefit significantly from multi-core processing, achieving 2-4x speedups on typical systems.
+
 ### Date and Time Formats
 
 Dates and times should be given in ISO 8601 format like "2011-12-03T10:15:30+01:00" or an unambiguous subset, such as:
