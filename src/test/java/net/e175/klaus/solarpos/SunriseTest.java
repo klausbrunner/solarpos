@@ -351,6 +351,34 @@ class SunriseTest {
     assertEquals(1, countOccurrences(output, "2023-05-01 20:33:32+01:00"));
   }
 
+  @Test
+  void negativeCoordinates() {
+    // Test with negative latitude (southern hemisphere) and negative longitude (western hemisphere)
+    // Using coordinates for Rio de Janeiro, Brazil
+    var lat = "-22.9068";
+    var lon = "-43.1729";
+    var date = "2023-05-01"; // Autumn in southern hemisphere
+
+    var result =
+        TestUtil.run(lat, lon, date, "--format=json", "--deltat=69", "--show-inputs", "sunrise");
+    assertEquals(0, result.returnCode());
+
+    var jsonObject = JsonParser.parseString(result.output()).getAsJsonObject();
+    assertEquals(Double.parseDouble(lat), jsonObject.get("latitude").getAsDouble());
+    assertEquals(Double.parseDouble(lon), jsonObject.get("longitude").getAsDouble());
+
+    // Verify we get valid sunrise/sunset times for southern hemisphere
+    assertNotNull(jsonObject.get("sunrise"));
+    assertNotNull(jsonObject.get("sunset"));
+    assertNotNull(jsonObject.get("transit"));
+
+    // In autumn in southern hemisphere, days are getting shorter
+    var sunrise = jsonObject.get("sunrise").getAsString();
+    var sunset = jsonObject.get("sunset").getAsString();
+    assertTrue(sunrise.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*"));
+    assertTrue(sunset.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*"));
+  }
+
   private int countOccurrences(String str, String substr) {
     int count = 0;
     int index = 0;

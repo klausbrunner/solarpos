@@ -32,13 +32,17 @@ public final class Main {
 
   @CommandLine.Parameters(
       index = "0",
-      description = "Latitude in decimal degrees (positive North of equator).")
-  double latitude;
+      description =
+          "Latitude in decimal degrees or range (start:end:step). Positive North of equator.",
+      converter = CoordinateRangeConverter.class)
+  CoordinateRange latitude;
 
   @CommandLine.Parameters(
       index = "1",
-      description = "Longitude in decimal degrees (positive East of Greenwich).")
-  double longitude;
+      description =
+          "Longitude in decimal degrees or range (start:end:step). Positive East of Greenwich.",
+      converter = CoordinateRangeConverter.class)
+  CoordinateRange longitude;
 
   @CommandLine.Parameters(
       index = "2",
@@ -57,7 +61,9 @@ public final class Main {
 
   @CommandLine.Option(
       names = {"--show-inputs"},
-      description = "Show all inputs in output.")
+      negatable = true,
+      description =
+          "Show all inputs in output. Automatically enabled for coordinate ranges unless --no-show-inputs is used.")
   boolean showInput;
 
   @CommandLine.Option(
@@ -81,12 +87,17 @@ public final class Main {
   double deltaT;
 
   void validate() {
-    if (latitude > 90.0 || latitude < -90.0) {
-      throw new CommandLine.ParameterException(spec.commandLine(), "invalid latitude");
+    latitude.validateLatitude();
+    longitude.validateLongitude();
+  }
+
+  boolean shouldShowInputs() {
+    // If explicitly set by user (either --show-inputs or --no-show-inputs), respect it
+    if (spec.commandLine().getParseResult().hasMatchedOption("--show-inputs")) {
+      return showInput;
     }
-    if (longitude > 180.0 || longitude < -180.0) {
-      throw new CommandLine.ParameterException(spec.commandLine(), "invalid longitude");
-    }
+    // Auto-enable for coordinate ranges when not explicitly set
+    return !latitude.isSinglePoint() || !longitude.isSinglePoint();
   }
 
   double getBestGuessDeltaT(ZonedDateTime dateTime) {
@@ -102,6 +113,14 @@ public final class Main {
   public static void main(String[] args) {
     int exitCode = createCommandLine().execute(args);
     System.exit(exitCode);
+  }
+
+  static final class CoordinateRangeConverter
+      implements CommandLine.ITypeConverter<CoordinateRange> {
+    @Override
+    public CoordinateRange convert(String value) {
+      return CoordinateRange.parse(value);
+    }
   }
 
   static final class ManifestBasedVersionProviderWithVariables

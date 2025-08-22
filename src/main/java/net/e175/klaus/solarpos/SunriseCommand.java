@@ -1,7 +1,6 @@
 package net.e175.klaus.solarpos;
 
 import static net.e175.klaus.solarpos.Main.Format.HUMAN;
-import static net.e175.klaus.solarpos.Main.Format.JSON;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -64,21 +63,23 @@ final class SunriseCommand implements Callable<Integer> {
   public Integer call() {
     parent.validate();
 
-    final Stream<ZonedDateTime> dateTimes = getDatetimes(parent.dateTime, parent.timezone);
-
     final SPA.Horizon[] horizons = twilight ? TWILIGHT_HORIZONS : BASIC_HORIZONS;
-
     final PrintWriter out = parent.spec.commandLine().getOut();
 
     try {
       List<FieldDescriptor<SunriseData>> fields = createFields();
-      List<String> fieldNames = getFieldNames(parent.showInput, twilight);
+      List<String> fieldNames = getFieldNames(parent.shouldShowInputs(), twilight);
       StreamingFormatter<SunriseData> formatter = createFormatter(parent.format);
-      formatter.format(
-          fields,
-          fieldNames,
-          dateTimes.map(dateTime -> calculateSunriseData(dateTime, horizons)),
-          out);
+
+      Stream<SunriseData> resultStream =
+          getDatetimes(parent.dateTime, parent.timezone)
+              .parallel()
+              .flatMap(
+                  dt ->
+                      getCoordinates(parent.latitude, parent.longitude)
+                          .map(coord -> calculateSunriseData(dt, coord, horizons)));
+
+      formatter.format(fields, fieldNames, resultStream, out);
     } catch (IOException e) {
       throw new RuntimeException("Failed to format output", e);
     }
@@ -162,11 +163,12 @@ final class SunriseCommand implements Callable<Integer> {
     };
   }
 
-  private SunriseData calculateSunriseData(ZonedDateTime dateTime, SPA.Horizon[] horizons) {
+  private SunriseData calculateSunriseData(
+      ZonedDateTime dateTime, CoordinatePair coord, SPA.Horizon[] horizons) {
     final double deltaT = parent.getBestGuessDeltaT(dateTime);
     Map<SPA.Horizon, SunriseResult> result =
         SPA.calculateSunriseTransitSet(
-            dateTime, parent.latitude, parent.longitude, deltaT, horizons);
+            dateTime, coord.latitude(), coord.longitude(), deltaT, horizons);
 
     SunriseResult sunriseSunset = result.get(SPA.Horizon.SUNRISE_SUNSET);
 
@@ -196,8 +198,8 @@ final class SunriseCommand implements Callable<Integer> {
     var twilightTimes = extractTwilightTimes(result, horizons.length > 1);
 
     return new SunriseData(
-        parent.latitude,
-        parent.longitude,
+        coord.latitude(),
+        coord.longitude(),
         dateTime,
         deltaT,
         type,
@@ -228,12 +230,16 @@ final class SunriseCommand implements Callable<Integer> {
         astronomical.start(), astronomical.end());
   }
 
-  private static record Times(ZonedDateTime start, ZonedDateTime end) {}
+  private record Times(ZonedDateTime start, ZonedDateTime end) {}
 
   private static Times extractTimes(SunriseResult result) {
     return result instanceof SunriseResult.RegularDay regularDay
         ? new Times(regularDay.sunrise(), regularDay.sunset())
         : new Times(null, null);
+  }
+
+  static Stream<CoordinatePair> getCoordinates(CoordinateRange latRange, CoordinateRange lngRange) {
+    return PositionCommand.getCoordinates(latRange, lngRange);
   }
 
   static Stream<ZonedDateTime> getDatetimes(TemporalAccessor dateTime, Optional<ZoneId> zoneId) {
