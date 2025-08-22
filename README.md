@@ -1,10 +1,8 @@
 # solarpos
 
-A simple command-line application to calculate topocentric solar coordinates and sunrise/sunset times, based
+A command-line application to calculate topocentric solar coordinates and sunrise/sunset times, based
 on [solarpositioning](https://github.com/klausbrunner/solarpositioning), a library of high-quality solar
-positioning algorithms. Supports time series and output formats like JSON and CSV for easy scripting and processing by other tools.
-
-Status: _beta_. Current functionality works, but needs more user testing and polish.
+positioning algorithms. Supports time series, coordinate ranges, and output formats like JSON and CSV for easy scripting and processing by other tools.
 
 ## Requirements and installation
 
@@ -38,10 +36,10 @@ Usage: solarpos [-hV] [--headers] [--show-inputs] [--deltat[=<deltaT>]]
                 <latitude> <longitude> <dateTime> [COMMAND]
 Calculates topocentric solar coordinates or sunrise/sunset times.
       [@<filename>...]      One or more argument files containing options.
-      <latitude>            Latitude in decimal degrees (positive North of
-                              equator).
-      <longitude>           Longitude in decimal degrees (positive East of
-                              Greenwich).
+      <latitude>            Latitude in decimal degrees or range (start:end:step).
+                              Positive North of equator.
+      <longitude>           Longitude in decimal degrees or range (start:end:step).
+                              Positive East of Greenwich.
       <dateTime>            Date/time in ISO format yyyy[-MM[-dd[['T'][ ]HH:mm[:
                               ss[.SSS]][XXX['['VV']']]]]]. Use 'now' for
                               current time and date.
@@ -71,7 +69,16 @@ There is built-in support for calculating time series.
 * Similarly, the position command will calculate a time series of sun positions for the given day, month or even year.
   The interval is determined by the `--step` option (default: 1 hour).
 
-**Performance**: Time series calculations are automatically parallelized for efficiency. Large datasets (year-long time series at minute or second resolution) benefit significantly from multi-core processing, achieving 2-4x speedups on typical systems.
+### Geographic sweeps
+
+In addition to time series, solarpos supports geographic coordinate ranges for calculating solar positions across multiple locations simultaneously.
+
+* Use the range syntax `start:end:step` for latitude and/or longitude parameters to define a geographic grid
+* For example, `40.0:45.0:0.5` generates coordinates from 40.0° to 45.0° in 0.5° increments
+* This works with both positive and negative coordinates (e.g., `-10.0:-5.0:1.0` for southern latitudes or western longitudes)
+* Geographic sweeps can be combined with time series for comprehensive spatial-temporal analysis
+
+**Performance**: Time series and geographic sweeps are processed using parallel streams, enabling efficient calculation of large coordinate grids. 
 
 ### Date and Time Formats
 
@@ -126,6 +133,18 @@ Get a full calendar of sunrise/sunset and twilight times for Mumbai, India for t
 
 ```shell
 solarpos 18.97 72.83 2027 --timezone Asia/Kolkata --deltat=69 --format=json sunrise --twilight
+```
+
+Calculate solar positions across a geographic grid covering Central Europe (45°N to 50°N, 5°E to 15°E) with 1° resolution at noon on the summer solstice:
+
+```shell
+solarpos 45.0:50.0:1.0 5.0:15.0:1.0 2026-06-21T12:00:00Z --format=csv position
+```
+
+Get sunrise times for a transect across South America (10°S to 30°S latitude at 60°W longitude) for the entire month of March 2028:
+
+```shell
+solarpos -30.0:-10.0:2.0 -60.0 2028-03 --timezone America/Sao_Paulo --format=csv sunrise
 ```
 
 Sample R notebooks demonstrating how to use time series output to create diagrams can be found at [klausbrunner/sunpath-r](https://github.com/klausbrunner/sunpath-r/blob/main/sunpath.md).
