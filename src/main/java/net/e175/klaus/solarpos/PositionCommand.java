@@ -1,7 +1,6 @@
 package net.e175.klaus.solarpos;
 
 import static net.e175.klaus.solarpos.Main.Format.HUMAN;
-import static net.e175.klaus.solarpos.Main.Format.JSON;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -27,11 +26,6 @@ import picocli.CommandLine;
 
 @CommandLine.Command(name = "position", description = "Calculates topocentric solar coordinates.")
 final class PositionCommand implements Callable<Integer> {
-
-  static final int MAX_STEP = 24 * 60 * 60; // seconds in a day
-  static final double MAX_PRESSURE = 2000.0; // hPa
-  static final double MIN_TEMPERATURE = -100.0; // °C
-  static final double MAX_TEMPERATURE = 100.0; // °C
 
   enum Algorithm {
     SPA,
@@ -105,16 +99,22 @@ final class PositionCommand implements Callable<Integer> {
     parent.validate();
     validate();
 
-    final Stream<ZonedDateTime> dateTimes = getDatetimes(parent.dateTime, parent.timezone, step);
-
     final PrintWriter out = parent.spec.commandLine().getOut();
 
     try {
       List<FieldDescriptor<PositionData>> fields = createFields();
-      List<String> fieldNames = getFieldNames(parent.showInput);
+      List<String> fieldNames = getFieldNames(parent.shouldShowInputs());
       StreamingFormatter<PositionData> formatter = createFormatter(parent.format);
-      formatter.format(
-          fields, fieldNames, dateTimes.parallel().map(this::calculatePositionData), out);
+
+      Stream<PositionData> resultStream =
+          getDatetimes(parent.dateTime, parent.timezone, step)
+              .parallel()
+              .flatMap(
+                  dt ->
+                      getCoordinates(parent.latitude, parent.longitude)
+                          .map(coord -> calculatePositionData(dt, coord)));
+
+      formatter.format(fields, fieldNames, resultStream, out);
     } catch (IOException e) {
       throw new RuntimeException("Failed to format output", e);
     }
@@ -197,7 +197,7 @@ final class PositionCommand implements Callable<Integer> {
     };
   }
 
-  private PositionData calculatePositionData(ZonedDateTime dateTime) {
+  private PositionData calculatePositionData(ZonedDateTime dateTime, CoordinatePair coord) {
     final double deltaT = parent.getBestGuessDeltaT(dateTime);
     SolarPosition position =
         switch (this.algorithm) {
@@ -205,25 +205,25 @@ final class PositionCommand implements Callable<Integer> {
               this.refraction
                   ? SPA.calculateSolarPosition(
                       dateTime,
-                      parent.latitude,
-                      parent.longitude,
+                      coord.latitude(),
+                      coord.longitude(),
                       elevation,
                       deltaT,
                       pressure,
                       temperature)
                   : SPA.calculateSolarPosition(
-                      dateTime, parent.latitude, parent.longitude, elevation, deltaT);
+                      dateTime, coord.latitude(), coord.longitude(), elevation, deltaT);
           case GRENA3 ->
               this.refraction
                   ? Grena3.calculateSolarPosition(
-                      dateTime, parent.latitude, parent.longitude, deltaT, pressure, temperature)
+                      dateTime, coord.latitude(), coord.longitude(), deltaT, pressure, temperature)
                   : Grena3.calculateSolarPosition(
-                      dateTime, parent.latitude, parent.longitude, deltaT);
+                      dateTime, coord.latitude(), coord.longitude(), deltaT);
         };
 
     return new PositionData(
-        parent.latitude,
-        parent.longitude,
+        coord.latitude(),
+        coord.longitude(),
         elevation,
         pressure,
         temperature,
@@ -235,17 +235,23 @@ final class PositionCommand implements Callable<Integer> {
   }
 
   private void validate() {
-    if (step < 1 || step > MAX_STEP) {
+    if (step < 1 || step > 86400) {
       throw new CommandLine.ParameterException(spec.commandLine(), "invalid step value");
     }
 
-    if (pressure <= 0 || pressure > MAX_PRESSURE) {
+    if (pressure <= 0 || pressure > 2000) {
       throw new CommandLine.ParameterException(spec.commandLine(), "invalid pressure value");
     }
 
-    if (temperature < MIN_TEMPERATURE || temperature > MAX_TEMPERATURE) {
+    if (temperature < -100 || temperature > 100) {
       throw new CommandLine.ParameterException(spec.commandLine(), "invalid temperature value");
     }
+  }
+
+  static Stream<CoordinatePair> getCoordinates(CoordinateRange latRange, CoordinateRange lngRange) {
+    return latRange.stream()
+        .boxed()
+        .flatMap(lat -> lngRange.stream().mapToObj(lng -> new CoordinatePair(lat, lng)));
   }
 
   static Stream<ZonedDateTime> getDatetimes(

@@ -456,4 +456,29 @@ class PositionTest {
 
     assertEquals(90.0, zenithAngle + elevationAngle, 0.00001);
   }
+
+  @Test
+  void negativeCoordinates() {
+    // Test with negative latitude (southern hemisphere) and negative longitude (western hemisphere)
+    // Using coordinates for Buenos Aires, Argentina
+    var lat = "-34.6118";
+    var lon = "-58.3960";
+    var dateTime = "2022-10-17T12:00:00-03:00";
+
+    var result =
+        TestUtil.run(
+            lat, lon, dateTime, "--format=json", "--deltat=69", "--show-inputs", "position");
+    assertEquals(0, result.returnCode());
+
+    var jsonObject = JsonParser.parseString(result.output()).getAsJsonObject();
+    assertEquals(Double.parseDouble(lat), jsonObject.get("latitude").getAsDouble());
+    assertEquals(Double.parseDouble(lon), jsonObject.get("longitude").getAsDouble());
+    assertEquals(dateTime, jsonObject.get("dateTime").getAsString());
+
+    // Verify we get reasonable solar position values for southern hemisphere in spring
+    var azimuth = jsonObject.get("azimuth").getAsDouble();
+    var zenith = jsonObject.get("zenith").getAsDouble();
+    assertTrue(azimuth >= 0 && azimuth <= 360, "Azimuth should be valid");
+    assertTrue(zenith >= 0 && zenith <= 180, "Zenith should be valid");
+  }
 }
