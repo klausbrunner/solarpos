@@ -6,7 +6,7 @@ positioning algorithms. Supports time series, coordinate ranges, and output form
 
 ![Global Solar Elevation Animation](docs/solar_elevation_animation.webp)
 
-*Animation showing global solar elevation throughout summer solstice 2026, demonstrating solarpos's geographic sweep and time series capabilities. All 96,768 data points were generated from a single solarpos command.*
+*Animation showing global solar elevation throughout summer solstice 2026, demonstrating solarpos's geographic sweep and time series capabilities. All ~100k data points were generated from a single solarpos command.*
 
 ## Requirements and installation
 
