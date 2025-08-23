@@ -481,4 +481,21 @@ class PositionTest {
     assertTrue(azimuth >= 0 && azimuth <= 360, "Azimuth should be valid");
     assertTrue(zenith >= 0 && zenith <= 180, "Zenith should be valid");
   }
+
+  @Test
+  void negativeCoordinateRange() {
+    // Test that negative coordinate ranges work with PicoCLI's
+    // setUnmatchedOptionsArePositionalParams(true)
+    // In shell: solarpos --format=csv 45.0 -10.0:-5.0:1.0 2024-06-21T12:00 position
+    var result =
+        TestUtil.run("--format=csv", "45.0", "-10.0:-5.0:1.0", "2024-06-21T12:00", "position");
+
+    assertEquals(0, result.returnCode(), "Negative range should work");
+    assertTrue(result.output().contains("-10.00000"));
+    assertTrue(result.output().contains("-9.00000"));
+    assertTrue(result.output().contains("-8.00000"));
+    assertTrue(result.output().contains("-7.00000"));
+    assertTrue(result.output().contains("-6.00000"));
+    assertTrue(result.output().contains("-5.00000"));
+  }
 }

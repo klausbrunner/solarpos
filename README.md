@@ -78,8 +78,6 @@ In addition to time series, solarpos supports geographic coordinate ranges for c
 * This works with both positive and negative coordinates (e.g., `-10.0:-5.0:1.0` for southern latitudes or western longitudes)
 * Geographic sweeps can be combined with time series for comprehensive spatial-temporal analysis
 
-**Performance**: Time series and geographic sweeps are processed using parallel streams, enabling efficient calculation of large coordinate grids. 
-
 ### Date and Time Formats
 
 Dates and times should be given in ISO 8601 format like "2011-12-03T10:15:30+01:00" or an unambiguous subset, such as:
@@ -147,4 +145,4 @@ Get sunrise times for a transect across South America (10°S to 30°S latitude a
 solarpos -30.0:-10.0:2.0 -60.0 2028-03 --timezone America/Sao_Paulo --format=csv sunrise
 ```
 
-Sample R notebooks demonstrating how to use time series output to create diagrams can be found at [klausbrunner/sunpath-r](https://github.com/klausbrunner/sunpath-r/blob/main/sunpath.md).
+Sample R notebooks demonstrating how to use `solarpos` output to create diagrams can be found at [klausbrunner/sunpath-r](https://github.com/klausbrunner/sunpath-r/blob/main/sunpath.md).

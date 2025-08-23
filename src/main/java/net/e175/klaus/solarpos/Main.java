@@ -107,7 +107,8 @@ public final class Main {
   static CommandLine createCommandLine() {
     return new CommandLine(new Main())
         .setCaseInsensitiveEnumValuesAllowed(true)
-        .setAbbreviatedOptionsAllowed(true);
+        .setAbbreviatedOptionsAllowed(true)
+        .setUnmatchedOptionsArePositionalParams(true);
   }
 
   public static void main(String[] args) {
