@@ -4,7 +4,7 @@
 
     <groupId>net.e175.klaus</groupId>
     <artifactId>solarpos</artifactId>
-    <version>0.5.3-SNAPSHOT</version>
+    <version>0.6.1-SNAPSHOT</version>
     <parent>
         <groupId>org.basepom</groupId>
         <artifactId>basepom-minimal</artifactId>
@@ -208,7 +208,7 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
                             <groups>stress</groups>
-                            <excludedGroups combine.self="override"></excludedGroups>
+                            <excludedGroups combine.self="override" />
                         </configuration>
                     </plugin>
                 </plugins>
