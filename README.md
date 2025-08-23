@@ -145,4 +145,4 @@ Get sunrise times for a transect across South America (10°S to 30°S latitude a
 solarpos -30.0:-10.0:2.0 -60.0 2028-03 --timezone America/Sao_Paulo --format=csv sunrise
 ```
 
-Sample R notebooks demonstrating how to use `solarpos` output to create diagrams can be found at [klausbrunner/sunpath-r](https://github.com/klausbrunner/sunpath-r/blob/main/sunpath.md).
+Sample R notebooks demonstrating how to use `solarpos` output to create diagrams can be found at [klausbrunner/sunpath-r](https://github.com/klausbrunner/sunpath-r).
