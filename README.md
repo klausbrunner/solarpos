@@ -4,6 +4,10 @@ A command-line application to calculate topocentric solar coordinates and sunris
 on [solarpositioning](https://github.com/klausbrunner/solarpositioning), a library of high-quality solar
 positioning algorithms. Supports time series, coordinate ranges, and output formats like JSON and CSV for easy scripting and processing by other tools.
 
+![Global Solar Elevation Animation](docs/solar_elevation_animation.webp)
+
+*Animation showing global solar elevation throughout summer solstice 2026, demonstrating solarpos's geographic sweep and time series capabilities. All 96,768 data points were generated from a single solarpos command.*
+
 ## Requirements and installation
 
 Solarpos is a Java application, requiring a Java 21 or newer runtime. See the [latest release](https://github.com/klausbrunner/solarpos/releases/latest) or build from source using `mvn package`. 
@@ -31,15 +35,15 @@ Use ``klausbrunner/tap/solarpos`` if there's no native build for your hardware a
 For detailed usage, see built-in help.
 
 ```text
-Usage: solarpos [-hV] [--headers] [--show-inputs] [--deltat[=<deltaT>]]
+Usage: solarpos [-hV] [--headers] [--[no-]show-inputs] [--deltat[=<deltaT>]]
                 [--format=<format>] [--timezone=<timezone>] [@<filename>...]
                 <latitude> <longitude> <dateTime> [COMMAND]
 Calculates topocentric solar coordinates or sunrise/sunset times.
       [@<filename>...]      One or more argument files containing options.
-      <latitude>            Latitude in decimal degrees or range (start:end:step).
-                              Positive North of equator.
-      <longitude>           Longitude in decimal degrees or range (start:end:step).
-                              Positive East of Greenwich.
+      <latitude>            Latitude in decimal degrees or range (start:end:
+                              step). Positive North of equator.
+      <longitude>           Longitude in decimal degrees or range (start:end:
+                              step). Positive East of Greenwich.
       <dateTime>            Date/time in ISO format yyyy[-MM[-dd[['T'][ ]HH:mm[:
                               ss[.SSS]][XXX['['VV']']]]]]. Use 'now' for
                               current time and date.
@@ -47,9 +51,10 @@ Calculates topocentric solar coordinates or sunrise/sunset times.
                               option is given without a value.
       --format=<format>     Output format, one of HUMAN, CSV, JSON.
   -h, --help                Show this help message and exit.
-      --headers             Show headers in output (currently applies only to
-                              CSV).
-      --show-inputs         Show all inputs in output.
+      --headers             Show headers in output (CSV only).
+      --[no-]show-inputs    Show all inputs in output. Automatically enabled
+                              for coordinate ranges unless --no-show-inputs is
+                              used.
       --timezone=<timezone> Timezone as offset (e.g. +01:00) and/or zone id (e.
                               g. America/Los_Angeles). Overrides any timezone
                               info found in dateTime.
