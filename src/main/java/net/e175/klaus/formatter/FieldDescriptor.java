@@ -14,7 +14,7 @@ public record FieldDescriptor<T>(String name, Function<T, ?> extractor, Map<Stri
   public FieldDescriptor(String name, Function<T, ?> extractor, Map<String, Object> hints) {
     this.name = Objects.requireNonNull(name, "Field name must not be null");
     this.extractor = Objects.requireNonNull(extractor, "Field extractor must not be null");
-    this.hints = new HashMap<>(hints);
+    this.hints = Map.copyOf(hints);
   }
 
   public static <T> FieldDescriptor<T> numeric(
@@ -45,9 +45,5 @@ public record FieldDescriptor<T>(String name, Function<T, ?> extractor, Map<Stri
   public FieldDescriptor<T> withUnit(String unit) {
     Objects.requireNonNull(unit, "Unit must not be null");
     return withHint("unit", unit);
-  }
-
-  public Map<String, Object> formatHints() {
-    return Map.copyOf(hints);
   }
 }

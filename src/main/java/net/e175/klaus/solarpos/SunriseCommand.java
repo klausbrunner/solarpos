@@ -9,7 +9,6 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 import net.e175.klaus.formatter.*;
-import net.e175.klaus.solarpos.util.DateTimeIterator;
 import net.e175.klaus.solarpos.util.TimeFormats;
 import net.e175.klaus.solarpositioning.SPA;
 import net.e175.klaus.solarpositioning.SunriseResult;
@@ -72,11 +71,13 @@ final class SunriseCommand implements Callable<Integer> {
       StreamingFormatter<SunriseData> formatter = createFormatter(parent.format);
 
       Stream<SunriseData> resultStream =
-          DateTimeIterator.iterate(parent.dateTime, parent.timezone, Duration.ofDays(1))
+          parent
+              .getDateTimesStream(Duration.ofDays(1))
               .parallel()
               .flatMap(
                   dt ->
-                      getCoordinates(parent.latitude, parent.longitude)
+                      parent
+                          .getCoordinatesStream()
                           .map(coord -> calculateSunriseData(dt, coord, horizons)));
 
       formatter.format(fields, fieldNames, resultStream, out);
