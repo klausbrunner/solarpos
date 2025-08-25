@@ -5,11 +5,11 @@ import static net.e175.klaus.solarpos.Main.Format.HUMAN;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.*;
-import java.time.temporal.TemporalAccessor;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 import net.e175.klaus.formatter.*;
+import net.e175.klaus.solarpos.util.DateTimeIterator;
 import net.e175.klaus.solarpos.util.TimeFormats;
 import net.e175.klaus.solarpositioning.SPA;
 import net.e175.klaus.solarpositioning.SunriseResult;
@@ -72,7 +72,7 @@ final class SunriseCommand implements Callable<Integer> {
       StreamingFormatter<SunriseData> formatter = createFormatter(parent.format);
 
       Stream<SunriseData> resultStream =
-          getDatetimes(parent.dateTime, parent.timezone)
+          DateTimeIterator.iterate(parent.dateTime, parent.timezone, Duration.ofDays(1))
               .parallel()
               .flatMap(
                   dt ->
@@ -240,39 +240,5 @@ final class SunriseCommand implements Callable<Integer> {
 
   static Stream<CoordinatePair> getCoordinates(CoordinateRange latRange, CoordinateRange lngRange) {
     return PositionCommand.getCoordinates(latRange, lngRange);
-  }
-
-  static Stream<ZonedDateTime> getDatetimes(TemporalAccessor dateTime, Optional<ZoneId> zoneId) {
-    final ZoneId overrideTz = zoneId.orElse(ZoneId.systemDefault());
-
-    return switch (dateTime) {
-      case Year y ->
-          Stream.iterate(
-              ZonedDateTime.of(
-                  LocalDate.of(y.getValue(), Month.JANUARY, 1), LocalTime.of(0, 0), overrideTz),
-              i -> i.getYear() == y.getValue(),
-              i -> i.plusDays(1));
-      case YearMonth ym ->
-          Stream.iterate(
-              ZonedDateTime.of(
-                  LocalDate.of(ym.getYear(), ym.getMonth(), 1), LocalTime.of(0, 0), overrideTz),
-              i -> i.getMonth() == ym.getMonth(),
-              i -> i.plusDays(1));
-      case LocalDate ld -> Stream.of(ZonedDateTime.of(ld, LocalTime.of(0, 0), overrideTz));
-      case LocalDateTime ldt -> Stream.of(ZonedDateTime.of(ldt, overrideTz));
-      case LocalTime lt -> Stream.of(ZonedDateTime.of(LocalDate.now(), lt, overrideTz));
-      case OffsetTime ot ->
-          Stream.of(
-              ZonedDateTime.of(
-                  LocalDate.now(),
-                  ot.toLocalTime(),
-                  zoneId.isPresent() ? overrideTz : ot.getOffset()));
-      case ZonedDateTime zdt ->
-          Stream.of(
-              zoneId.isPresent()
-                  ? ZonedDateTime.of(zdt.toLocalDate(), zdt.toLocalTime(), overrideTz)
-                  : zdt);
-      default -> throw new IllegalStateException("unexpected date/time type " + dateTime);
-    };
   }
 }

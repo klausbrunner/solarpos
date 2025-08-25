@@ -6,11 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
-public class FieldDescriptor<T> {
-  private final String name;
-  private final Function<T, ?> extractor;
-  private final Map<String, Object> hints;
-
+public record FieldDescriptor<T>(String name, Function<T, ?> extractor, Map<String, Object> hints) {
   public FieldDescriptor(String name, Function<T, ?> extractor) {
     this(name, extractor, Map.of());
   }
@@ -49,14 +45,6 @@ public class FieldDescriptor<T> {
   public FieldDescriptor<T> withUnit(String unit) {
     Objects.requireNonNull(unit, "Unit must not be null");
     return withHint("unit", unit);
-  }
-
-  public String name() {
-    return name;
-  }
-
-  public Function<T, ?> extractor() {
-    return extractor;
   }
 
   public Map<String, Object> formatHints() {
