@@ -5,11 +5,9 @@ import static net.e175.klaus.solarpos.Main.Format.HUMAN;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.*;
-import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 import net.e175.klaus.formatter.CsvFormatter;
@@ -18,6 +16,7 @@ import net.e175.klaus.formatter.JsonFormatter;
 import net.e175.klaus.formatter.SerializerRegistry;
 import net.e175.klaus.formatter.SimpleTextFormatter;
 import net.e175.klaus.formatter.StreamingFormatter;
+import net.e175.klaus.solarpos.util.DateTimeIterator;
 import net.e175.klaus.solarpos.util.TimeFormats;
 import net.e175.klaus.solarpositioning.Grena3;
 import net.e175.klaus.solarpositioning.SPA;
@@ -64,9 +63,11 @@ final class PositionCommand implements Callable<Integer> {
 
   @CommandLine.Option(
       names = {"--step"},
-      description = "Step interval for time series, in seconds. Default: ${DEFAULT-VALUE}.",
-      defaultValue = "3600")
-  int step;
+      description =
+          "Step interval for time series. Examples: 30s, 15m, 2h. Default: ${DEFAULT-VALUE}.",
+      defaultValue = "1h",
+      converter = DurationConverter.class)
+  Duration step;
 
   @CommandLine.Option(
       names = "--refraction",
@@ -107,7 +108,7 @@ final class PositionCommand implements Callable<Integer> {
       StreamingFormatter<PositionData> formatter = createFormatter(parent.format);
 
       Stream<PositionData> resultStream =
-          getDatetimes(parent.dateTime, parent.timezone, step)
+          DateTimeIterator.iterate(parent.dateTime, parent.timezone, step)
               .parallel()
               .flatMap(
                   dt ->
@@ -235,10 +236,6 @@ final class PositionCommand implements Callable<Integer> {
   }
 
   private void validate() {
-    if (step < 1 || step > 86400) {
-      throw new CommandLine.ParameterException(spec.commandLine(), "invalid step value");
-    }
-
     if (pressure <= 0 || pressure > 2000) {
       throw new CommandLine.ParameterException(spec.commandLine(), "invalid pressure value");
     }
@@ -252,43 +249,5 @@ final class PositionCommand implements Callable<Integer> {
     return latRange.stream()
         .boxed()
         .flatMap(lat -> lngRange.stream().mapToObj(lng -> new CoordinatePair(lat, lng)));
-  }
-
-  static Stream<ZonedDateTime> getDatetimes(
-      TemporalAccessor dateTime, Optional<ZoneId> zoneId, int step) {
-    final ZoneId overrideTz = zoneId.orElse(ZoneId.systemDefault());
-
-    return switch (dateTime) {
-      case Year y ->
-          Stream.iterate(
-              ZonedDateTime.of(LocalDate.of(y.getValue(), 1, 1), LocalTime.of(0, 0), overrideTz),
-              i -> i.getYear() == y.getValue(),
-              i -> i.plusSeconds(step));
-      case YearMonth ym ->
-          Stream.iterate(
-              ZonedDateTime.of(
-                  LocalDate.of(ym.getYear(), ym.getMonth(), 1), LocalTime.of(0, 0), overrideTz),
-              i -> i.getMonth() == ym.getMonth(),
-              i -> i.plusSeconds(step));
-      case LocalDate ld ->
-          Stream.iterate(
-              ZonedDateTime.of(ld, LocalTime.of(0, 0), overrideTz),
-              i -> i.getDayOfMonth() == ld.getDayOfMonth(),
-              i -> i.plusSeconds(step));
-      case LocalDateTime ldt -> Stream.of(ZonedDateTime.of(ldt, overrideTz));
-      case LocalTime lt -> Stream.of(ZonedDateTime.of(LocalDate.now(), lt, overrideTz));
-      case OffsetTime ot ->
-          Stream.of(
-              ZonedDateTime.of(
-                  LocalDate.now(),
-                  ot.toLocalTime(),
-                  zoneId.isPresent() ? overrideTz : ot.getOffset()));
-      case ZonedDateTime zdt ->
-          Stream.of(
-              zoneId.isPresent()
-                  ? ZonedDateTime.of(zdt.toLocalDate(), zdt.toLocalTime(), overrideTz)
-                  : zdt);
-      default -> throw new IllegalStateException("unexpected date/time type " + dateTime);
-    };
   }
 }

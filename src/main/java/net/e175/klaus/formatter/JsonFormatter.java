@@ -54,14 +54,13 @@ public class JsonFormatter<T> implements StreamingFormatter<T> {
       out.append('"').append(field.name()).append('"').append(':');
 
       var value = field.extractor().apply(item);
-      if (value == null) {
-        out.append("null");
-      } else if (value instanceof Number || value instanceof Boolean) {
-        out.append(registry.serialize(value, field));
-      } else if (value instanceof ZonedDateTime zonedDateTime) {
-        out.append('"').append(escapeJson(zonedDateTime.format(ISO_FORMAT))).append('"');
-      } else {
-        out.append('"').append(escapeJson(registry.serialize(value, field))).append('"');
+      switch (value) {
+        case null -> out.append("null");
+        case Number n -> out.append(registry.serialize(value, field));
+        case Boolean b -> out.append(registry.serialize(value, field));
+        case ZonedDateTime zdt ->
+            out.append('"').append(escapeJson(zdt.format(ISO_FORMAT))).append('"');
+        default -> out.append('"').append(escapeJson(registry.serialize(value, field))).append('"');
       }
     }
 
