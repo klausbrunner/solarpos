@@ -46,6 +46,10 @@ final class DateTimeConverter implements CommandLine.ITypeConverter<TemporalAcce
 
   @Override
   public TemporalAccessor convert(String arg) {
+    if (arg.startsWith("@")) {
+      // For file input, return a dummy temporal - actual times will be read in getDateTimesStream()
+      return ZonedDateTime.now(clock);
+    }
     try {
       return lenientlyParseDateTime(arg, clock);
     } catch (DateTimeParseException e) {

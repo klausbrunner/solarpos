@@ -36,17 +36,16 @@ For detailed usage, see built-in help.
 
 ```text
 Usage: solarpos [-hV] [--headers] [--[no-]show-inputs] [--deltat[=<deltaT>]]
-                [--format=<format>] [--timezone=<timezone>] [@<filename>...]
-                <latitude> <longitude> <dateTime> [COMMAND]
+                [--format=<format>] [--timezone=<timezone>] <latitude>
+                <longitude> <dateTime> [COMMAND]
 Calculates topocentric solar coordinates or sunrise/sunset times.
-      [@<filename>...]      One or more argument files containing options.
-      <latitude>            Latitude in decimal degrees or range (start:end:
-                              step). Positive North of equator.
-      <longitude>           Longitude in decimal degrees or range (start:end:
-                              step). Positive East of Greenwich.
+      <latitude>            Latitude in decimal degrees, range (start:end:
+                              step), or @file with coordinates.
+      <longitude>           Longitude in decimal degrees, range (start:end:
+                              step), or @file with coordinates.
       <dateTime>            Date/time in ISO format yyyy[-MM[-dd[['T'][ ]HH:mm[:
-                              ss[.SSS]][XXX['['VV']']]]]]. Use 'now' for
-                              current time and date.
+                              ss[.SSS]][XXX['['VV']']]]]], or @file with times.
+                              Use 'now' for current time and date.
       --deltat[=<deltaT>]   Delta T in seconds; an estimate is used if this
                               option is given without a value.
       --format=<format>     Output format, one of HUMAN, CSV, JSON.
@@ -82,6 +81,50 @@ In addition to time series, solarpos supports geographic coordinate ranges for c
 * For example, `40.0:45.0:0.5` generates coordinates from 40.0° to 45.0° in 0.5° increments
 * This works with both positive and negative coordinates (e.g., `-10.0:-5.0:1.0` for southern latitudes or western longitudes)
 * Geographic sweeps can be combined with time series for comprehensive spatial-temporal analysis
+
+### File input
+
+For advanced use cases, solarpos supports reading coordinates and times from files using the `@filename` syntax:
+
+* **Coordinate files**: Use `@coords.txt` as the latitude parameter to read coordinates from a file, one coordinate pair per line in "latitude longitude" format
+* **Time files**: Use `@times.txt` as the dateTime parameter to read times from a file, one timestamp per line
+* **Paired data files**: Use `@data.txt now` to read coordinate-time pairs from a file, with "latitude longitude datetime" on each line
+
+Coordinate files and time files create a cartesian product - every coordinate is calculated for every time. Paired data files contain explicit coordinate-time pairs with no cartesian expansion.
+
+File formats support comments (lines starting with `#`) and blank lines, which are ignored. Both space-separated and CSV formats are accepted. Examples:
+
+```text
+# Coordinate file (coords.txt)
+40.417 -3.704  # Madrid
+48.856  2.349  # Paris
+52.520 13.405  # Berlin
+
+# Time file (times.txt)
+2026-06-21T06:00:00
+2026-06-21T12:00:00
+2026-06-21T18:00:00
+
+# Paired data file (data.txt) - space-separated
+40.417 -3.704 2026-06-21T12:00:00  # Madrid at noon
+48.856  2.349 2026-06-21T13:00:00  # Paris at 1pm
+
+# Paired data file (data.csv) - CSV format  
+40.417,-3.704,2026-06-21T12:00:00
+48.856,2.349,2026-06-21T13:00:00
+```
+
+Usage examples:
+```shell
+# Calculate positions for multiple coordinates at the same time
+solarpos @coords.txt 2026-06-21T12:00:00 position
+
+# Calculate positions for one location at multiple times
+solarpos 40.417 -3.704 @times.txt position
+
+# Calculate positions for coordinate-time pairs
+solarpos @data.txt position
+```
 
 ### Date and Time Formats
 
