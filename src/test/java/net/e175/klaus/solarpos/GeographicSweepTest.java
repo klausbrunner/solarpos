@@ -85,8 +85,8 @@ final class GeographicSweepTest {
 
     // Single coordinates don't auto-enable show-inputs, so only 3 columns: dateTime, azimuth,
     // zenith
-    assertEquals(3, records.get(0).size());
-    assertTrue(records.get(0).get(0).contains("2024-06-21T12:00:00")); // dateTime column
+    assertEquals(3, records.getFirst().size());
+    assertTrue(records.getFirst().get(0).contains("2024-06-21T12:00:00")); // dateTime column
   }
 
   @Test
@@ -161,7 +161,7 @@ final class GeographicSweepTest {
     assertEquals(2, records.size());
 
     // --no-show-inputs disables auto show-inputs, so only 3 columns: dateTime, azimuth, zenith
-    assertEquals(3, records.get(0).size());
-    assertTrue(records.get(0).get(0).contains("2024-06-21T12:00:00")); // dateTime column
+    assertEquals(3, records.getFirst().size());
+    assertTrue(records.getFirst().get(0).contains("2024-06-21T12:00:00")); // dateTime column
   }
 }

@@ -119,7 +119,7 @@ public final class SerializerRegistry {
 
     if (obj == null) return nullValue;
 
-    var hintsWithFieldName = new HashMap<>(field.formatHints());
+    var hintsWithFieldName = new HashMap<>(field.hints());
     hintsWithFieldName.put("fieldName", field.name());
 
     var serializer = serializers.get(obj.getClass());

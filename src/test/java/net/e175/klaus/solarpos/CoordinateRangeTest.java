@@ -88,7 +88,7 @@ final class CoordinateRangeTest {
     var range = CoordinateRange.parse("40.5");
     var values = range.stream().boxed().toList();
     assertEquals(1, values.size());
-    assertEquals(40.5, values.get(0));
+    assertEquals(40.5, values.getFirst());
   }
 
   @Test

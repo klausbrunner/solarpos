@@ -16,7 +16,6 @@ import net.e175.klaus.formatter.JsonFormatter;
 import net.e175.klaus.formatter.SerializerRegistry;
 import net.e175.klaus.formatter.SimpleTextFormatter;
 import net.e175.klaus.formatter.StreamingFormatter;
-import net.e175.klaus.solarpos.util.DateTimeIterator;
 import net.e175.klaus.solarpos.util.TimeFormats;
 import net.e175.klaus.solarpositioning.Grena3;
 import net.e175.klaus.solarpositioning.SPA;
@@ -108,12 +107,12 @@ final class PositionCommand implements Callable<Integer> {
       StreamingFormatter<PositionData> formatter = createFormatter(parent.format);
 
       Stream<PositionData> resultStream =
-          DateTimeIterator.iterate(parent.dateTime, parent.timezone, step)
+          parent
+              .getDateTimesStream(step)
               .parallel()
               .flatMap(
                   dt ->
-                      getCoordinates(parent.latitude, parent.longitude)
-                          .map(coord -> calculatePositionData(dt, coord)));
+                      parent.getCoordinatesStream().map(coord -> calculatePositionData(dt, coord)));
 
       formatter.format(fields, fieldNames, resultStream, out);
     } catch (IOException e) {
