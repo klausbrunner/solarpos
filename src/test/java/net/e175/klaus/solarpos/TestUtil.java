@@ -15,6 +15,8 @@ final class TestUtil {
   record Result(int returnCode, String output) {}
 
   static Result run(String... args) {
+    // Preprocess arguments like main() does
+    args = Main.preprocessCoordinateFileArgs(args);
     CommandLine cmd = Main.createCommandLine();
     StringWriter outputWriter = new StringWriter();
     cmd.setOut(new PrintWriter(outputWriter));
