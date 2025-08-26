@@ -87,8 +87,9 @@ In addition to time series, solarpos supports geographic coordinate ranges for c
 For advanced use cases, solarpos supports reading coordinates and times from files using the `@filename` syntax:
 
 * **Coordinate files**: Use `@coords.txt` as the latitude parameter to read coordinates from a file, one coordinate pair per line in "latitude longitude" format
-* **Time files**: Use `@times.txt` as the dateTime parameter to read times from a file, one timestamp per line
+* **Time files**: Use `@times.txt` as the dateTime parameter to read times from a file, one timestamp per line  
 * **Paired data files**: Use `@data.txt now` to read coordinate-time pairs from a file, with "latitude longitude datetime" on each line
+* **Stdin input**: Use `@-` to read data from stdin instead of a file. Only one parameter can use stdin at a time.
 
 Coordinate files and time files create a cartesian product - every coordinate is calculated for every time. Paired data files contain explicit coordinate-time pairs with no cartesian expansion.
 
@@ -124,6 +125,11 @@ solarpos 40.417 -3.704 @times.txt position
 
 # Calculate positions for coordinate-time pairs
 solarpos @data.txt position
+
+# Pipe data from stdin using @- syntax
+echo "52.0,25.0,2023-06-21T12:00:00" | solarpos @- position
+cat coords.txt | solarpos @- 2023-06-21T12:00:00 position
+generate-times | solarpos 52.0 25.0 @- position
 ```
 
 ### Date and Time Formats

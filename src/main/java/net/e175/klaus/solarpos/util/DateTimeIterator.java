@@ -1,7 +1,10 @@
 package net.e175.klaus.solarpos.util;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.*;
@@ -76,15 +79,7 @@ public final class DateTimeIterator {
   }
 
   public static Stream<ZonedDateTime> fromFile(Path timesFile, Optional<ZoneId> zoneId) {
-    try (var lines = Files.lines(timesFile)) {
-      return lines
-          .filter(line -> !line.trim().isEmpty() && !line.trim().startsWith("#"))
-          .map(line -> parseDateTime(line.trim(), zoneId))
-          .toList()
-          .stream();
-    } catch (IOException e) {
-      throw new UncheckedIOException("Failed to read times from: " + timesFile, e);
-    }
+    return readLinesFromPath(timesFile, line -> parseDateTime(line, zoneId));
   }
 
   private static ZonedDateTime parseDateTime(String dateTimeStr, Optional<ZoneId> zoneId) {
@@ -111,29 +106,13 @@ public final class DateTimeIterator {
   }
 
   public static Stream<CoordinatePair> coordinatesFromFile(Path coordFile) {
-    try (var lines = Files.lines(coordFile)) {
-      return lines
-          .filter(line -> !line.trim().isEmpty() && !line.trim().startsWith("#"))
-          .map(DateTimeIterator::parseCoordinateLine)
-          .toList()
-          .stream();
-    } catch (IOException e) {
-      throw new UncheckedIOException("Failed to read coordinates from: " + coordFile, e);
-    }
+    return readLinesFromPath(coordFile, DateTimeIterator::parseCoordinateLine);
   }
 
   /** Parses paired coordinate-time data from file (latitude longitude datetime per line). */
   public static Stream<CoordinateTimePair> pairedDataFromFile(
       Path dataFile, Optional<ZoneId> zoneId) {
-    try (var lines = Files.lines(dataFile)) {
-      return lines
-          .filter(line -> !line.trim().isEmpty() && !line.trim().startsWith("#"))
-          .map(line -> parsePairedDataLine(line, zoneId))
-          .toList()
-          .stream();
-    } catch (IOException e) {
-      throw new UncheckedIOException("Failed to read paired data from: " + dataFile, e);
-    }
+    return readLinesFromPath(dataFile, line -> parsePairedDataLine(line, zoneId));
   }
 
   private static ZonedDateTime convertToZonedDateTime(
@@ -178,5 +157,33 @@ public final class DateTimeIterator {
       throw new IllegalArgumentException("Invalid coordinate format: " + line);
     }
     return new CoordinatePair(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
+  }
+
+  /** Unified method to read lines from either file or stdin. */
+  private static <T> Stream<T> readLinesFromPath(
+      Path path, java.util.function.Function<String, T> mapper) {
+    if ("-".equals(path.toString())) {
+      try (var reader =
+          new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8))) {
+        return reader
+            .lines()
+            .filter(line -> !line.trim().isEmpty() && !line.trim().startsWith("#"))
+            .map(line -> mapper.apply(line.trim()))
+            .toList()
+            .stream();
+      } catch (IOException e) {
+        throw new UncheckedIOException("Failed to read from stdin", e);
+      }
+    } else {
+      try (var lines = Files.lines(path)) {
+        return lines
+            .filter(line -> !line.trim().isEmpty() && !line.trim().startsWith("#"))
+            .map(line -> mapper.apply(line.trim()))
+            .toList()
+            .stream();
+      } catch (IOException e) {
+        throw new UncheckedIOException("Failed to read from: " + path, e);
+      }
+    }
   }
 }
