@@ -26,6 +26,16 @@ sealed interface InputMode
 
   void validate();
 
+  /** Checks if this input mode uses stdin. */
+  default boolean usesStdin() {
+    return false;
+  }
+
+  /** Helper to check if a path represents stdin. */
+  static boolean isStdinPath(java.nio.file.Path path) {
+    return "-".equals(path.toString());
+  }
+
   boolean shouldShowInputs();
 
   /** Returns true if the temporal accessor will generate multiple time points. */
@@ -88,6 +98,11 @@ sealed interface InputMode
     }
 
     @Override
+    public boolean usesStdin() {
+      return isStdinPath(coordFile);
+    }
+
+    @Override
     public boolean shouldShowInputs() {
       return true;
     }
@@ -117,6 +132,11 @@ sealed interface InputMode
     public void validate() {
       latitude.validateLatitude();
       longitude.validateLongitude();
+    }
+
+    @Override
+    public boolean usesStdin() {
+      return isStdinPath(timeFile);
     }
 
     @Override
@@ -154,6 +174,11 @@ sealed interface InputMode
     @Override
     public void validate() {
       // Validation happens during paired data loading
+    }
+
+    @Override
+    public boolean usesStdin() {
+      return isStdinPath(dataFile);
     }
 
     @Override

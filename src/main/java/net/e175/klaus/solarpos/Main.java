@@ -114,6 +114,8 @@ public final class Main {
     var latParam = getPositionalParam(0);
     var dateTimeParam = getPositionalParam(2);
 
+    validateStdinUsage(latParam, dateTimeParam);
+
     if (latParam.startsWith("@")) {
       var coordFile = pathFromFileParam(latParam);
       if ("now".equals(dateTimeParam)) {
@@ -126,6 +128,17 @@ public final class Main {
       return new InputMode.TimeFile(latitude, longitude, timeFile, timezone);
     } else {
       return new InputMode.CoordinateRanges(latitude, longitude, dateTime, timezone);
+    }
+  }
+
+  /** Validates that stdin is not used multiple times. */
+  private void validateStdinUsage(String latParam, String dateTimeParam) {
+    boolean latUsesStdin = "@-".equals(latParam);
+    boolean dateTimeUsesStdin = "@-".equals(dateTimeParam);
+
+    if (latUsesStdin && dateTimeUsesStdin) {
+      throw new IllegalArgumentException(
+          "Cannot use stdin (@-) for multiple inputs simultaneously");
     }
   }
 
