@@ -68,32 +68,30 @@ public record CoordinateRange(double start, double end, double step) {
   }
 
   public void validateLatitude() {
-    validateRange(
-        LATITUDE_MIN, LATITUDE_MAX, "latitude", LATITUDE_MIN + " and " + LATITUDE_MAX + " degrees");
-    validateStep();
+    validateCoordinateRange(LATITUDE_MIN, LATITUDE_MAX, "latitude");
   }
 
   public void validateLongitude() {
-    validateRange(
-        LONGITUDE_MIN,
-        LONGITUDE_MAX,
-        "longitude",
-        LONGITUDE_MIN + " and " + LONGITUDE_MAX + " degrees");
+    validateCoordinateRange(LONGITUDE_MIN, LONGITUDE_MAX, "longitude");
+  }
+
+  private void validateCoordinateRange(double min, double max, String type) {
+    validateBounds(min, max, type);
     validateStep();
   }
 
-  private void validateStep() {
-    if (step < MIN_STEP && start != end) {
+  private void validateBounds(double min, double max, String type) {
+    if (start < min || start > max || end < min || end > max) {
       throw new IllegalArgumentException(
-          String.format(
-              "step must be at least %.3f degrees (~100m) for coordinate ranges, got %.6f",
-              MIN_STEP, step));
+          "%s must be between %.0f° and %.0f°, got start=%.6f°, end=%.6f°"
+              .formatted(type, min, max, start, end));
     }
   }
 
-  private void validateRange(double min, double max, String type, String bounds) {
-    if (start < min || start > max || end < min || end > max) {
-      throw new IllegalArgumentException(type + " must be between " + bounds);
+  private void validateStep() {
+    if (step < MIN_STEP && !isSinglePoint()) {
+      throw new IllegalArgumentException(
+          "Step must be at least %.3f° (~100m) for ranges, got %.6f°".formatted(MIN_STEP, step));
     }
   }
 }

@@ -11,8 +11,8 @@ import net.e175.klaus.solarpos.util.DateTimeIterator;
 import net.e175.klaus.solarpos.util.DateTimeIterator.CoordinateTimePair;
 
 /**
- * Represents the different input modes for coordinates and time data. Eliminates the need for
- * manual parameter parsing and centralizes input handling logic.
+ * Represents the different input modes for coordinates and time data using a sealed interface
+ * hierarchy.
  */
 sealed interface InputMode
     permits InputMode.CoordinateRanges,

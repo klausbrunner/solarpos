@@ -109,10 +109,12 @@ final class PositionCommand implements Callable<Integer> {
       Stream<PositionData> resultStream =
           parent
               .getDateTimesStream(step)
-              .parallel()
               .flatMap(
                   dt ->
-                      parent.getCoordinatesStream().map(coord -> calculatePositionData(dt, coord)));
+                      parent
+                          .getCoordinatesStream()
+                          .parallel() // Parallelize the inner coordinate stream instead
+                          .map(coord -> calculatePositionData(dt, coord)));
 
       formatter.format(fields, fieldNames, resultStream, out);
     } catch (IOException e) {
@@ -159,24 +161,14 @@ final class PositionCommand implements Callable<Integer> {
   }
 
   private List<String> getFieldNames(boolean showInput) {
-    List<String> names = new ArrayList<>();
-
-    if (showInput) {
-      names.addAll(List.of("latitude", "longitude", "elevation"));
-
-      if (refraction) {
-        names.addAll(List.of("pressure", "temperature"));
-      }
-
-      names.addAll(List.of("dateTime", "deltaT"));
-    } else {
-      names.add("dateTime");
-    }
-
-    names.add("azimuth");
-    names.add(elevationOutput ? "elevation-angle" : "zenith");
-
-    return names;
+    return Stream.of(
+            showInput ? Stream.of("latitude", "longitude", "elevation") : Stream.<String>empty(),
+            showInput && refraction ? Stream.of("pressure", "temperature") : Stream.<String>empty(),
+            showInput ? Stream.of("dateTime", "deltaT") : Stream.of("dateTime"),
+            Stream.of("azimuth"),
+            Stream.of(elevationOutput ? "elevation-angle" : "zenith"))
+        .flatMap(java.util.function.Function.identity())
+        .toList();
   }
 
   private StreamingFormatter<PositionData> createFormatter(Main.Format format) {
@@ -199,27 +191,11 @@ final class PositionCommand implements Callable<Integer> {
 
   private PositionData calculatePositionData(ZonedDateTime dateTime, CoordinatePair coord) {
     final double deltaT = parent.getBestGuessDeltaT(dateTime);
+
     SolarPosition position =
-        switch (this.algorithm) {
-          case SPA ->
-              this.refraction
-                  ? SPA.calculateSolarPosition(
-                      dateTime,
-                      coord.latitude(),
-                      coord.longitude(),
-                      elevation,
-                      deltaT,
-                      pressure,
-                      temperature)
-                  : SPA.calculateSolarPosition(
-                      dateTime, coord.latitude(), coord.longitude(), elevation, deltaT);
-          case GRENA3 ->
-              this.refraction
-                  ? Grena3.calculateSolarPosition(
-                      dateTime, coord.latitude(), coord.longitude(), deltaT, pressure, temperature)
-                  : Grena3.calculateSolarPosition(
-                      dateTime, coord.latitude(), coord.longitude(), deltaT);
-        };
+        refraction
+            ? calculateSolarPositionWithRefraction(dateTime, coord, deltaT)
+            : calculateSolarPositionWithoutRefraction(dateTime, coord, deltaT);
 
     return new PositionData(
         coord.latitude(),
@@ -234,16 +210,50 @@ final class PositionCommand implements Callable<Integer> {
         90.0 - position.zenithAngle());
   }
 
-  private void validate() {
-    if (pressure <= 0 || pressure > 2000) {
-      throw new CommandLine.ParameterException(spec.commandLine(), "invalid pressure value");
-    }
+  private SolarPosition calculateSolarPositionWithRefraction(
+      ZonedDateTime dateTime, CoordinatePair coord, double deltaT) {
+    return switch (algorithm) {
+      case SPA ->
+          SPA.calculateSolarPosition(
+              dateTime,
+              coord.latitude(),
+              coord.longitude(),
+              elevation,
+              deltaT,
+              pressure,
+              temperature);
+      case GRENA3 ->
+          Grena3.calculateSolarPosition(
+              dateTime, coord.latitude(), coord.longitude(), deltaT, pressure, temperature);
+    };
+  }
 
-    if (temperature < -100 || temperature > 100) {
-      throw new CommandLine.ParameterException(spec.commandLine(), "invalid temperature value");
+  private SolarPosition calculateSolarPositionWithoutRefraction(
+      ZonedDateTime dateTime, CoordinatePair coord, double deltaT) {
+    return switch (algorithm) {
+      case SPA ->
+          SPA.calculateSolarPosition(
+              dateTime, coord.latitude(), coord.longitude(), elevation, deltaT);
+      case GRENA3 ->
+          Grena3.calculateSolarPosition(dateTime, coord.latitude(), coord.longitude(), deltaT);
+    };
+  }
+
+  private void validate() {
+    validateRange("pressure", pressure, 0.1, 2000.0, "hPa");
+    validateRange("temperature", temperature, -100.0, 100.0, "°C");
+  }
+
+  private void validateRange(String paramName, double value, double min, double max, String unit) {
+    if (value < min || value > max) {
+      throw new CommandLine.ParameterException(
+          spec.commandLine(),
+          "%s must be between %.1f and %.1f %s, got %.1f"
+              .formatted(paramName, min, max, unit, value));
     }
   }
 
+  // Utility method for creating coordinate Cartesian products - moved to CoordinateRange if needed
   static Stream<CoordinatePair> getCoordinates(CoordinateRange latRange, CoordinateRange lngRange) {
     return latRange.stream()
         .boxed()
