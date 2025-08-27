@@ -59,6 +59,7 @@ jobs:
           target\jreleaser\assemble\solarpos-native\native-image\solarpos.exe -V
           target\jreleaser\assemble\solarpos-native\native-image\solarpos.exe 51.5 0 now position
 
+
       - name: 'Upload build artifacts'
         uses: actions/upload-artifact@v4
         with:
@@ -66,8 +67,56 @@ jobs:
           path: |
             target/**/*
 
-  release:
+  validate-winget:
     needs: [ build ]
+    runs-on: windows-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.git-ref }}
+
+      - uses: cardinalby/export-env-action@v2
+        with:
+          envFile: '.github/workflows/env.txt'
+
+      - name: Set up GraalVM JDK
+        uses: graalvm/setup-graalvm@v1
+        with:
+          distribution: ${{ env.GRAAL_DISTRO }}
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'maven'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 'Download all build artifacts'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: artifacts-*
+          path: target
+          merge-multiple: true
+
+      - name: 'Generate WinGet manifest (dry-run)'
+        env:
+          JRELEASER_DRY_RUN: true
+        run: ./mvnw -ntp -B jreleaser:release
+
+      - name: 'Validate WinGet manifest'
+        run: |
+          winget settings --enable LocalManifestFiles
+          $manifestPath = Get-ChildItem -Path "target\jreleaser" -Filter "*.yaml" -Recurse | Where-Object { $_.FullName -like "*winget*" } | Select-Object -First 1 -ExpandProperty FullName
+          if ($manifestPath) {
+            Write-Host "Found manifest: $manifestPath"
+            winget validate --manifest "$manifestPath" --verbose-logs --disable-interactivity
+          } else {
+            Write-Host "No winget manifest found"
+            exit 1
+          }
+        shell: powershell
+
+  release:
+    needs: [ build, validate-winget ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
