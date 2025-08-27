@@ -4,7 +4,7 @@
 
     <groupId>net.e175.klaus</groupId>
     <artifactId>solarpos</artifactId>
-    <version>0.7.3-SNAPSHOT</version>
+    <version>0.7.5-SNAPSHOT</version>
     <parent>
         <groupId>org.basepom</groupId>
         <artifactId>basepom-minimal</artifactId>

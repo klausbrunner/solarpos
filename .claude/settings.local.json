@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(java:*)",
+      "Bash(mvn fmt:check:*)",
+      "Bash(mvn test:*)",
+      "Bash(mvn:*)",
+      "WebSearch",
+      "Bash(time java:*)",
+      "WebFetch(domain:klaus.brunners.name)",
+      "Bash(jar tf:*)",
+      "Bash(jar xf:*)",
+      "Bash(rm:*)",
+      "Bash(git checkout:*)",
+      "Bash(grep:*)",
+      "Bash(Rscript:*)",
+      "WebFetch(domain:picocli.info)",
+      "Bash(python3:*)",
+      "Bash(source:*)",
+      "Bash(pip install:*)",
+      "Bash(python:*)",
+      "Read(//Users/klaus/Documents/IdeaProjects/**)",
+      "Read(//Users/klaus/Documents/blog/posts/webp-in-r/**)",
+      "Read(//Users/klaus/Documents/blog/posts/zip-good-enough/**)",
+      "Bash(solarpos:*)",
+      "Bash(time:*)",
+      "Bash(R:*)"
+    ],
+    "deny": [],
+    "ask": [],
+    "additionalDirectories": [
+      "/Users/klaus/Documents/GitHub/sunpath-r"
+    ]
+  }
+}
