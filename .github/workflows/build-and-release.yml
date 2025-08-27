@@ -66,6 +66,74 @@ jobs:
           path: |
             target/**/*
 
+  validate-winget:
+    needs: [ release ]
+    runs-on: windows-latest
+    if: startsWith(inputs.git-ref, 'v')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.git-ref }}
+
+      - uses: cardinalby/export-env-action@v2
+        with:
+          envFile: '.github/workflows/env.txt'
+
+      - name: Set up GraalVM JDK
+        uses: graalvm/setup-graalvm@v1
+        with:
+          distribution: ${{ env.GRAAL_DISTRO }}
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'maven'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 'Download all build artifacts'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: artifacts-*
+          path: target
+          merge-multiple: true
+
+      - name: 'Validate published WinGet manifest'
+        run: |
+          # Extract version from POM
+          $version = (Select-Xml -Path "pom.xml" -XPath "//project/version/text()").Node.Value -replace "-SNAPSHOT", ""
+          Write-Host "Looking for version: $version"
+          
+          # Wait for the winget repo to be updated
+          Start-Sleep -Seconds 20
+          
+          # Clone the winget repo and validate the published manifest
+          git clone https://github.com/klausbrunner/winget-packages.git winget-repo
+          
+          winget settings --enable LocalManifestFiles
+          
+          # Look for the specific version directory: manifests/k/KlausBrunner/solarpos/{version}/
+          $manifestPath = "winget-repo\manifests\k\KlausBrunner\solarpos\$version"
+          
+          if (Test-Path $manifestPath) {
+            Write-Host "Found manifest directory for version $version`: $manifestPath"
+            
+            # List all YAML files in the directory
+            $manifestFiles = Get-ChildItem -Path $manifestPath -Filter "*.yaml"
+            Write-Host "Found $($manifestFiles.Count) manifest files:"
+            foreach ($manifest in $manifestFiles) {
+              Write-Host "  - $($manifest.Name)"
+            }
+            
+            # Validate the manifest directory
+            Write-Host "Validating manifest for version $version"
+            winget validate --manifest "$manifestPath" --verbose-logs --disable-interactivity
+          } else {
+            Write-Host "Manifest directory not found for version $version at: $manifestPath"
+            Write-Host "Available versions:"
+            Get-ChildItem -Path "winget-repo\manifests\k\KlausBrunner\solarpos" -Directory | ForEach-Object { Write-Host "  - $($_.Name)" }
+            exit 1
+          }
+        shell: powershell
+
   release:
     needs: [ build ]
     runs-on: ubuntu-latest
