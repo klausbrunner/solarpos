@@ -116,27 +116,41 @@ public final class Main {
 
     validateStdinUsage(latParam, dateTimeParam);
 
-    if (latParam.startsWith("@")) {
-      var coordFile = pathFromFileParam(latParam);
-      if ("now".equals(dateTimeParam)) {
-        return InputMode.PairedData.from(coordFile, timezone);
-      } else {
-        return new InputMode.CoordinateFile(coordFile, dateTime, timezone);
-      }
-    } else if (dateTimeParam.startsWith("@")) {
-      var timeFile = pathFromFileParam(dateTimeParam);
-      return new InputMode.TimeFile(latitude, longitude, timeFile, timezone);
-    } else {
-      return new InputMode.CoordinateRanges(latitude, longitude, dateTime, timezone);
-    }
+    return switch (determineInputType(latParam, dateTimeParam)) {
+      case COORDINATE_FILE -> createCoordinateFileMode(latParam);
+      case TIME_FILE ->
+          new InputMode.TimeFile(latitude, longitude, pathFromFileParam(dateTimeParam), timezone);
+      case COORDINATE_RANGES ->
+          new InputMode.CoordinateRanges(latitude, longitude, dateTime, timezone);
+    };
+  }
+
+  private enum InputType {
+    COORDINATE_FILE,
+    TIME_FILE,
+    COORDINATE_RANGES
+  }
+
+  private InputType determineInputType(String latParam, String dateTimeParam) {
+    if (latParam.startsWith("@")) return InputType.COORDINATE_FILE;
+    if (dateTimeParam.startsWith("@")) return InputType.TIME_FILE;
+    return InputType.COORDINATE_RANGES;
+  }
+
+  private InputMode createCoordinateFileMode(String latParam) {
+    var coordFile = pathFromFileParam(latParam);
+    var dateTimeParam = getPositionalParam(2);
+    return "now".equals(dateTimeParam)
+        ? InputMode.PairedData.from(coordFile, timezone)
+        : new InputMode.CoordinateFile(coordFile, dateTime, timezone);
   }
 
   /** Validates that stdin is not used multiple times. */
   private void validateStdinUsage(String latParam, String dateTimeParam) {
-    boolean latUsesStdin = "@-".equals(latParam);
-    boolean dateTimeUsesStdin = "@-".equals(dateTimeParam);
+    var stdinUsageCount =
+        Stream.of(latParam, dateTimeParam).mapToLong(param -> "@-".equals(param) ? 1 : 0).sum();
 
-    if (latUsesStdin && dateTimeUsesStdin) {
+    if (stdinUsageCount > 1) {
       throw new IllegalArgumentException(
           "Cannot use stdin (@-) for multiple inputs simultaneously");
     }
@@ -226,11 +240,12 @@ public final class Main {
   }
 
   private static String[] insertDummyParameters(String[] args, int insertIndex, String... dummies) {
-    var result = new java.util.ArrayList<String>();
-    result.addAll(java.util.List.of(args).subList(0, insertIndex + 1));
-    result.addAll(java.util.List.of(dummies));
-    result.addAll(java.util.List.of(args).subList(insertIndex + 1, args.length));
-    return result.toArray(String[]::new);
+    return Stream.of(
+            Stream.of(args).limit(insertIndex + 1),
+            Stream.of(dummies),
+            Stream.of(args).skip(insertIndex + 1))
+        .flatMap(java.util.function.Function.identity())
+        .toArray(String[]::new);
   }
 
   static final class CoordinateRangeConverter
