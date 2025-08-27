@@ -20,7 +20,7 @@ If you're unsure how to get a Java runtime for your system, [Adoptium](http://ad
 
 Native builds are available for some common platforms. These do not require a Java runtime and consist of a single, stand-alone executable that can be used as is.
 
-### macOS: Homebrew installation
+#### macOS: Homebrew installation
 
 A [Homebrew](https://brew.sh) formula for solarpos is available in a separate tap. This simplifies installation to one command:
 
@@ -30,9 +30,9 @@ brew install klausbrunner/tap/solarpos-native
 
 Use ``klausbrunner/tap/solarpos`` if there's no native build for your hardware architecture. This will install the Java version of solarpos, automatically downloading a Java runtime if needed.
 
-### Windows
+#### Windows
 
-For Windows users, there are two options:
+For Windows users, options include:
 
 - **Native Windows executable**: Download the Windows .exe from the [latest release](https://github.com/klausbrunner/solarpos/releases/latest) and extract from the ZIP archive.
 - **WSL2 (recommended)**: Use Windows Subsystem for Linux (WSL2) with the Linux native binary for a better command-line experience.
