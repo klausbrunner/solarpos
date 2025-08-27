@@ -99,6 +99,21 @@
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <configuration>
+                    <filters>
+                        <filter>
+                            <artifact>*:*</artifact>
+                            <excludes>
+                                <exclude>module-info.class</exclude>
+                                <exclude>META-INF/MANIFEST.MF</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.jreleaser</groupId>
                 <artifactId>jreleaser-maven-plugin</artifactId>
                 <version>1.19.0</version>
@@ -189,7 +204,6 @@
                                 <active>RELEASE</active>
                                 <repository>
                                     <name>winget-packages</name>
-                                    <owner>klausbrunner</owner>
                                 </repository>
                                 <publisher>
                                     <name>Klaus Brunner</name>
