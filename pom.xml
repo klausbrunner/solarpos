@@ -185,6 +185,29 @@
                                     <useVersionedJava>false</useVersionedJava>
                                 </extraProperties>
                             </brew>
+                            <winget>
+                                <active>RELEASE</active>
+                                <repository>
+                                    <name>winget-packages</name>
+                                    <owner>klausbrunner</owner>
+                                </repository>
+                                <publisher>
+                                    <name>Klaus Brunner</name>
+                                    <url>{{projectLinkHomepage}}</url>
+                                    <supportUrl>{{projectLinkBugTracker}}</supportUrl>
+                                </publisher>
+                                <package>
+                                    <identifier>KlausBrunner.solarpos</identifier>
+                                    <name>solarpos</name>
+                                    <version>{{projectVersion}}</version>
+                                    <url>{{projectLinkHomepage}}</url>
+                                </package>
+                                <installer>
+                                    <type>ZIP</type>
+                                    <scope>USER</scope>
+                                    <command>solarpos</command>
+                                </installer>
+                            </winget>
                         </packagers>
                         <release>
                             <github>
