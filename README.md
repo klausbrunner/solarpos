@@ -30,6 +30,13 @@ brew install klausbrunner/tap/solarpos-native
 
 Use ``klausbrunner/tap/solarpos`` if there's no native build for your hardware architecture. This will install the Java version of solarpos, automatically downloading a Java runtime if needed.
 
+### Windows
+
+For Windows users, there are two options:
+
+- **Native Windows executable**: Download the Windows .exe from the [latest release](https://github.com/klausbrunner/solarpos/releases/latest) and extract from the ZIP archive.
+- **WSL2 (recommended)**: Use Windows Subsystem for Linux (WSL2) with the Linux native binary for a better command-line experience.
+
 ## Usage
 
 For detailed usage, see built-in help.

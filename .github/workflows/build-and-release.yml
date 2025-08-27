@@ -59,6 +59,7 @@ jobs:
           target\jreleaser\assemble\solarpos-native\native-image\solarpos.exe -V
           target\jreleaser\assemble\solarpos-native\native-image\solarpos.exe 51.5 0 now position
 
+
       - name: 'Upload build artifacts'
         uses: actions/upload-artifact@v4
         with:
@@ -66,68 +67,6 @@ jobs:
           path: |
             target/**/*
 
-  validate-winget:
-    needs: [ release ]
-    runs-on: windows-2025
-    if: startsWith(inputs.git-ref, 'v')
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ inputs.git-ref }}
-
-      - uses: cardinalby/export-env-action@v2
-        with:
-          envFile: '.github/workflows/env.txt'
-
-      - name: Set up GraalVM JDK
-        uses: graalvm/setup-graalvm@v1
-        with:
-          distribution: ${{ env.GRAAL_DISTRO }}
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: 'maven'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 'Download all build artifacts'
-        uses: actions/download-artifact@v4
-        with:
-          pattern: artifacts-*
-          path: target
-          merge-multiple: true
-
-      - name: 'Validate published WinGet manifest'
-        run: |
-          # Wait for the winget repo to be updated
-          Start-Sleep -Seconds 20
-          
-          # Clone the winget repo and validate the published manifest
-          git clone https://github.com/klausbrunner/winget-packages.git winget-repo
-          
-          winget settings --enable LocalManifestFiles
-          
-          # Find the latest version directory (most recently modified)
-          $latestVersion = Get-ChildItem -Path "winget-repo\manifests\k\KlausBrunner\solarpos" -Directory | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-          
-          if ($latestVersion) {
-            $manifestPath = $latestVersion.FullName
-            Write-Host "Found latest manifest directory: $manifestPath (version $($latestVersion.Name))"
-            
-            # List all YAML files in the directory
-            $manifestFiles = Get-ChildItem -Path $manifestPath -Filter "*.yaml"
-            Write-Host "Found $($manifestFiles.Count) manifest files:"
-            foreach ($manifest in $manifestFiles) {
-              Write-Host "  - $($manifest.Name)"
-            }
-            
-            # Validate the manifest directory
-            Write-Host "Validating latest manifest"
-            winget validate --manifest "$manifestPath" --verbose-logs --disable-interactivity
-          } else {
-            Write-Host "No manifest directories found"
-            exit 1
-          }
-        shell: powershell
 
   release:
     needs: [ build ]
