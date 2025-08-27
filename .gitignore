@@ -8,6 +8,9 @@
 # OS generated files
 .DS_Store
 
+# Claude Code local settings
+.claude/
+
 # Gradle related files
 .gradle
 .settings
