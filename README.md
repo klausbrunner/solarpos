@@ -42,9 +42,10 @@ For Windows users, options include:
 For detailed usage, see built-in help.
 
 ```text
-Usage: solarpos [-hV] [--headers] [--[no-]show-inputs] [--deltat[=<deltaT>]]
-                [--format=<format>] [--timezone=<timezone>] <latitude>
-                <longitude> <dateTime> [COMMAND]
+Usage: solarpos [-hV] [--headers] [--[no-]parallel] [--[no-]show-inputs]
+                [--deltat[=<deltaT>]] [--format=<format>]
+                [--timezone=<timezone>] <latitude> <longitude> <dateTime>
+                [COMMAND]
 Calculates topocentric solar coordinates or sunrise/sunset times.
       <latitude>            Latitude in decimal degrees, range (start:end:
                               step), or @file with coordinates.
@@ -58,6 +59,9 @@ Calculates topocentric solar coordinates or sunrise/sunset times.
       --format=<format>     Output format, one of HUMAN, CSV, JSON.
   -h, --help                Show this help message and exit.
       --headers             Show headers in output (CSV only).
+      --[no-]parallel       Enable parallel processing for better performance
+                              on multi-core systems. May cause memory pressure
+                              with large datasets. Default: false.
       --[no-]show-inputs    Show all inputs in output. Automatically enabled
                               for coordinate ranges unless --no-show-inputs is
                               used.
@@ -91,14 +95,14 @@ In addition to time series, solarpos supports geographic coordinate ranges for c
 
 ### File input
 
-For advanced use cases, solarpos supports reading coordinates and times from files using the `@filename` syntax:
+Solarpos supports streaming coordinates and times from files using the `@filename` syntax:
 
 * **Coordinate files**: Use `@coords.txt` as the latitude parameter to read coordinates from a file, one coordinate pair per line in "latitude longitude" format
 * **Time files**: Use `@times.txt` as the dateTime parameter to read times from a file, one timestamp per line  
 * **Paired data files**: Use `@data.txt now` to read coordinate-time pairs from a file, with "latitude longitude datetime" on each line
 * **Stdin input**: Use `@-` to read data from stdin instead of a file. Only one parameter can use stdin at a time.
 
-Coordinate files and time files create a cartesian product - every coordinate is calculated for every time. Paired data files contain explicit coordinate-time pairs with no cartesian expansion.
+Coordinate files and time files create a cartesian product – every coordinate is calculated for every time. Paired data files contain explicit coordinate-time pairs with no cartesian expansion.
 
 File formats support comments (lines starting with `#`) and blank lines, which are ignored. Both space-separated and CSV formats are accepted. Examples:
 
