@@ -70,15 +70,24 @@ final class SunriseCommand implements Callable<Integer> {
       List<String> fieldNames = getFieldNames(parent.shouldShowInputs(), twilight);
       StreamingFormatter<SunriseData> formatter = createFormatter(parent.format);
 
-      Stream<SunriseData> resultStream =
-          parent
-              .getDateTimesStream(Duration.ofDays(1))
-              .parallel()
-              .flatMap(
-                  dt ->
-                      parent
-                          .getCoordinatesStream()
-                          .map(coord -> calculateSunriseData(dt, coord, horizons)));
+      Stream<SunriseData> resultStream;
+      if (parent.isPairedData()) {
+        // Use paired processing for 1:1 coordinate-time correspondence
+        var stream = parent.getPairedDataStream();
+        resultStream =
+            (parent.parallel ? stream.parallel() : stream)
+                .map(pair -> calculateSunriseData(pair.dateTime(), pair.coordinates(), horizons));
+      } else {
+        // Use Cartesian product for separate coordinate/time inputs
+        var timeStream = parent.getDateTimesStream(Duration.ofDays(1));
+        resultStream =
+            (parent.parallel ? timeStream.parallel() : timeStream)
+                .flatMap(
+                    dt ->
+                        parent
+                            .getCoordinatesStream()
+                            .map(coord -> calculateSunriseData(dt, coord, horizons)));
+      }
 
       formatter.format(fields, fieldNames, resultStream, out);
     } catch (IOException e) {

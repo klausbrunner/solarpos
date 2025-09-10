@@ -10,10 +10,13 @@ import java.nio.file.Path;
 import java.time.*;
 import java.time.temporal.TemporalAccessor;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import net.e175.klaus.solarpos.CoordinatePair;
 
 public final class DateTimeIterator {
+
+  private static final Pattern WHITESPACE_OR_COMMA = Pattern.compile("[\\s,]+");
 
   private DateTimeIterator() {}
 
@@ -135,14 +138,13 @@ public final class DateTimeIterator {
   }
 
   private static CoordinateTimePair parsePairedDataLine(String line, Optional<ZoneId> zoneId) {
-    var parts = line.replace(',', ' ').trim().split("\\s+");
+    var parts = WHITESPACE_OR_COMMA.split(line.trim(), 3);
     if (parts.length != 3) {
       throw new IllegalArgumentException(
           "Invalid paired data format (expected lat lon datetime): " + line);
     }
 
-    var coordinates =
-        new CoordinatePair(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
+    var coordinates = parseCoordinates(parts[0], parts[1]);
     var temporalAccessor =
         TimeFormats.INPUT_DATE_TIME_FORMATTER.parseBest(
             parts[2], ZonedDateTime::from, LocalDateTime::from, LocalDate::from);
@@ -152,38 +154,48 @@ public final class DateTimeIterator {
   }
 
   private static CoordinatePair parseCoordinateLine(String line) {
-    var parts = line.replace(',', ' ').trim().split("\\s+");
+    var parts = WHITESPACE_OR_COMMA.split(line.trim(), 2);
     if (parts.length != 2) {
       throw new IllegalArgumentException("Invalid coordinate format: " + line);
     }
-    return new CoordinatePair(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
+    return parseCoordinates(parts[0], parts[1]);
+  }
+
+  private static CoordinatePair parseCoordinates(String latStr, String lngStr) {
+    return new CoordinatePair(Double.parseDouble(latStr), Double.parseDouble(lngStr));
+  }
+
+  private static void closeQuietly(AutoCloseable resource) {
+    try {
+      resource.close();
+    } catch (Exception ignored) {
+      // Ignore close failures
+    }
   }
 
   /** Unified method to read lines from either file or stdin. */
   private static <T> Stream<T> readLinesFromPath(
       Path path, java.util.function.Function<String, T> mapper) {
-    if ("-".equals(path.toString())) {
-      try (var reader =
-          new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8))) {
-        return reader
-            .lines()
-            .filter(line -> !line.trim().isEmpty() && !line.trim().startsWith("#"))
-            .map(line -> mapper.apply(line.trim()))
-            .toList()
-            .stream();
-      } catch (IOException e) {
-        throw new UncheckedIOException("Failed to read from stdin", e);
-      }
-    } else {
-      try (var lines = Files.lines(path)) {
-        return lines
-            .filter(line -> !line.trim().isEmpty() && !line.trim().startsWith("#"))
-            .map(line -> mapper.apply(line.trim()))
-            .toList()
-            .stream();
-      } catch (IOException e) {
-        throw new UncheckedIOException("Failed to read from: " + path, e);
-      }
+    Stream<String> rawLines =
+        "-".equals(path.toString()) ? createStdinStream() : createFileStream(path);
+
+    return rawLines
+        .map(String::trim)
+        .filter(line -> !line.isEmpty() && !line.startsWith("#"))
+        .map(mapper);
+  }
+
+  private static Stream<String> createStdinStream() {
+    var reader = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
+    return reader.lines().onClose(() -> closeQuietly(reader));
+  }
+
+  private static Stream<String> createFileStream(Path path) {
+    try {
+      var lines = Files.lines(path);
+      return lines.onClose(() -> closeQuietly(lines));
+    } catch (IOException e) {
+      throw new UncheckedIOException("Failed to read from: " + path, e);
     }
   }
 }

@@ -60,15 +60,16 @@ public class CsvFormatter<T> implements StreamingFormatter<T> {
   private void formatItems(
       Stream<T> items, List<FieldDescriptor<T>> fields, Appendable out, boolean hasHeaders)
       throws IOException {
-    var itemList = items.toList();
 
-    for (int i = 0; i < itemList.size(); i++) {
-      formatRow(itemList.get(i), fields, out);
-
-      if (i < itemList.size() - 1 || hasHeaders) {
-        out.append(lineSeparator);
-      }
-    }
+    items.forEachOrdered(
+        item -> {
+          try {
+            formatRow(item, fields, out);
+            out.append(lineSeparator);
+          } catch (IOException e) {
+            throw new java.io.UncheckedIOException(e);
+          }
+        });
   }
 
   private void formatRow(T item, List<FieldDescriptor<T>> fields, Appendable out)

@@ -106,15 +106,25 @@ final class PositionCommand implements Callable<Integer> {
       List<String> fieldNames = getFieldNames(parent.shouldShowInputs());
       StreamingFormatter<PositionData> formatter = createFormatter(parent.format);
 
-      Stream<PositionData> resultStream =
-          parent
-              .getDateTimesStream(step)
-              .flatMap(
-                  dt ->
-                      parent
-                          .getCoordinatesStream()
-                          .parallel() // Parallelize the inner coordinate stream instead
-                          .map(coord -> calculatePositionData(dt, coord)));
+      Stream<PositionData> resultStream;
+      if (parent.isPairedData()) {
+        // Use paired processing for 1:1 coordinate-time correspondence
+        var stream = parent.getPairedDataStream();
+        resultStream =
+            (parent.parallel ? stream.parallel() : stream)
+                .map(pair -> calculatePositionData(pair.dateTime(), pair.coordinates()));
+      } else {
+        // Use Cartesian product for separate coordinate/time inputs
+        resultStream =
+            parent
+                .getDateTimesStream(step)
+                .flatMap(
+                    dt -> {
+                      var coordStream = parent.getCoordinatesStream();
+                      return (parent.parallel ? coordStream.parallel() : coordStream)
+                          .map(coord -> calculatePositionData(dt, coord));
+                    });
+      }
 
       formatter.format(fields, fieldNames, resultStream, out);
     } catch (IOException e) {
@@ -161,14 +171,22 @@ final class PositionCommand implements Callable<Integer> {
   }
 
   private List<String> getFieldNames(boolean showInput) {
-    return Stream.of(
-            showInput ? Stream.of("latitude", "longitude", "elevation") : Stream.<String>empty(),
-            showInput && refraction ? Stream.of("pressure", "temperature") : Stream.<String>empty(),
-            showInput ? Stream.of("dateTime", "deltaT") : Stream.of("dateTime"),
-            Stream.of("azimuth"),
-            Stream.of(elevationOutput ? "elevation-angle" : "zenith"))
-        .flatMap(java.util.function.Function.identity())
-        .toList();
+    List<String> names = new ArrayList<>();
+
+    if (showInput) {
+      names.addAll(List.of("latitude", "longitude", "elevation"));
+      if (refraction) {
+        names.addAll(List.of("pressure", "temperature"));
+      }
+      names.addAll(List.of("dateTime", "deltaT"));
+    } else {
+      names.add("dateTime");
+    }
+
+    names.add("azimuth");
+    names.add(elevationOutput ? "elevation-angle" : "zenith");
+
+    return names;
   }
 
   private StreamingFormatter<PositionData> createFormatter(Main.Format format) {

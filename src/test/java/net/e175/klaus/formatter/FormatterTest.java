@@ -136,7 +136,8 @@ class FormatterTest {
         sb);
 
     // Should only have count and value columns
-    var csvValues = sb.toString().split(",");
+    // Note: streaming now always adds trailing newlines for consistency
+    var csvValues = sb.toString().trim().split(",");
     assertEquals(2, csvValues.length);
     assertEquals("42", csvValues[0]);
     assertEquals("123.457", csvValues[1]);

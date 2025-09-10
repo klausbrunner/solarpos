@@ -71,6 +71,15 @@ public final class Main {
   boolean showInput;
 
   @CommandLine.Option(
+      names = {"--parallel"},
+      negatable = true,
+      defaultValue = "false",
+      fallbackValue = "true",
+      description =
+          "Enable parallel processing for better performance on multi-core systems. May cause memory pressure with large datasets. Default: ${DEFAULT-VALUE}.")
+  boolean parallel;
+
+  @CommandLine.Option(
       names = {"--format"},
       description = "Output format, one of ${COMPLETION-CANDIDATES}.",
       defaultValue = "human")
@@ -141,7 +150,7 @@ public final class Main {
     var coordFile = pathFromFileParam(latParam);
     var dateTimeParam = getPositionalParam(2);
     return "now".equals(dateTimeParam)
-        ? InputMode.PairedData.from(coordFile, timezone)
+        ? new InputMode.PairedData(coordFile, timezone)
         : new InputMode.CoordinateFile(coordFile, dateTime, timezone);
   }
 
@@ -181,6 +190,14 @@ public final class Main {
 
   Stream<ZonedDateTime> getDateTimesStream(Duration step) {
     return getInputMode().times(step);
+  }
+
+  Stream<net.e175.klaus.solarpos.util.DateTimeIterator.CoordinateTimePair> getPairedDataStream() {
+    return getInputMode().pairedData();
+  }
+
+  boolean isPairedData() {
+    return getInputMode().isPairedData();
   }
 
   static CommandLine createCommandLine() {

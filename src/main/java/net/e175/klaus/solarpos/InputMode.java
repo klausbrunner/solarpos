@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAccessor;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 import net.e175.klaus.solarpos.util.DateTimeIterator;
@@ -26,17 +25,22 @@ sealed interface InputMode
 
   void validate();
 
-  /** Checks if this input mode uses stdin. */
-  default boolean usesStdin() {
-    return false;
-  }
-
   /** Helper to check if a path represents stdin. */
   static boolean isStdinPath(java.nio.file.Path path) {
     return "-".equals(path.toString());
   }
 
   boolean shouldShowInputs();
+
+  /** Returns paired coordinate-time data if this mode supports it, empty otherwise. */
+  default Stream<CoordinateTimePair> pairedData() {
+    return Stream.empty();
+  }
+
+  /** Returns true if this mode provides paired data (1:1 coordinate-time correspondence). */
+  default boolean isPairedData() {
+    return false;
+  }
 
   /** Returns true if the temporal accessor will generate multiple time points. */
   static boolean hasMultipleTimes(TemporalAccessor dateTime) {
@@ -98,11 +102,6 @@ sealed interface InputMode
     }
 
     @Override
-    public boolean usesStdin() {
-      return isStdinPath(coordFile);
-    }
-
-    @Override
     public boolean shouldShowInputs() {
       return true;
     }
@@ -135,50 +134,37 @@ sealed interface InputMode
     }
 
     @Override
-    public boolean usesStdin() {
-      return isStdinPath(timeFile);
-    }
-
-    @Override
     public boolean shouldShowInputs() {
       return true;
     }
   }
 
   /** Paired coordinate-time data from file */
-  record PairedData(
-      java.nio.file.Path dataFile,
-      Optional<ZoneId> timezone,
-      java.util.List<CoordinateTimePair> data)
-      implements InputMode {
-
-    public PairedData {
-      data = List.copyOf(data);
-    }
-
-    public static PairedData from(java.nio.file.Path dataFile, Optional<ZoneId> timezone) {
-      var data = DateTimeIterator.pairedDataFromFile(dataFile, timezone).toList();
-      return new PairedData(dataFile, timezone, data);
-    }
+  record PairedData(java.nio.file.Path dataFile, Optional<ZoneId> timezone) implements InputMode {
 
     @Override
     public Stream<CoordinatePair> coordinates() {
-      return data.stream().map(CoordinateTimePair::coordinates);
+      throw new UnsupportedOperationException("Use pairedData() for paired coordinate-time data");
     }
 
     @Override
     public Stream<ZonedDateTime> times(Duration step) {
-      return data.stream().map(CoordinateTimePair::dateTime);
+      throw new UnsupportedOperationException("Use pairedData() for paired coordinate-time data");
+    }
+
+    @Override
+    public Stream<CoordinateTimePair> pairedData() {
+      return DateTimeIterator.pairedDataFromFile(dataFile, timezone);
+    }
+
+    @Override
+    public boolean isPairedData() {
+      return true;
     }
 
     @Override
     public void validate() {
       // Validation happens during paired data loading
-    }
-
-    @Override
-    public boolean usesStdin() {
-      return isStdinPath(dataFile);
     }
 
     @Override
