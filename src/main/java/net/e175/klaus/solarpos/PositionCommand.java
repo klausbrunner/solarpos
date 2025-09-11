@@ -100,6 +100,7 @@ final class PositionCommand implements Callable<Integer> {
     validate();
 
     final PrintWriter out = parent.spec.commandLine().getOut();
+    final PerformanceTracker tracker = PerformanceTracker.create(parent.showPerformance);
 
     try {
       List<FieldDescriptor<PositionData>> fields = createFields();
@@ -126,11 +127,13 @@ final class PositionCommand implements Callable<Integer> {
                     });
       }
 
+      resultStream = PerformanceTracker.wrapIfNeeded(tracker, resultStream);
       formatter.format(fields, fieldNames, resultStream, out);
     } catch (IOException e) {
       throw new RuntimeException("Failed to format output", e);
     }
 
+    PerformanceTracker.reportIfNeeded(tracker);
     out.flush();
     return 0;
   }

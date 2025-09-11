@@ -99,6 +99,12 @@ public final class Main {
           "Delta T in seconds; an estimate is used if this option is given without a value.")
   double deltaT;
 
+  @CommandLine.Option(
+      names = {"--perf"},
+      hidden = true,
+      description = "Show performance statistics.")
+  boolean showPerformance;
+
   void validate() {
     getInputMode().validate();
   }

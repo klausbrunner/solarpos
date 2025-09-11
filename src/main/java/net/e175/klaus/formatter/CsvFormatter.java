@@ -5,11 +5,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-public class CsvFormatter<T> implements StreamingFormatter<T> {
-  private final SerializerRegistry registry;
-  private final boolean withHeaders;
-  private final String delimiter;
-  private final String lineSeparator;
+public record CsvFormatter<T>(
+    SerializerRegistry registry, boolean withHeaders, String delimiter, String lineSeparator)
+    implements StreamingFormatter<T> {
   private static final char QUOTE = '"';
   private static final String ESCAPED_QUOTE = "\"\"";
 
@@ -49,7 +47,13 @@ public class CsvFormatter<T> implements StreamingFormatter<T> {
 
       String fieldName = field.name();
       if (needsEscaping(fieldName)) {
-        out.append(QUOTE).append(fieldName.replace("\"", ESCAPED_QUOTE)).append(QUOTE);
+        out.append(QUOTE);
+        if (fieldName.indexOf(QUOTE) >= 0) {
+          out.append(fieldName.replace("\"", ESCAPED_QUOTE));
+        } else {
+          out.append(fieldName);
+        }
+        out.append(QUOTE);
       } else {
         out.append(fieldName);
       }
@@ -58,8 +62,7 @@ public class CsvFormatter<T> implements StreamingFormatter<T> {
   }
 
   private void formatItems(
-      Stream<T> items, List<FieldDescriptor<T>> fields, Appendable out, boolean hasHeaders)
-      throws IOException {
+      Stream<T> items, List<FieldDescriptor<T>> fields, Appendable out, boolean hasHeaders) {
 
     items.forEachOrdered(
         item -> {
@@ -88,7 +91,13 @@ public class CsvFormatter<T> implements StreamingFormatter<T> {
 
   private void appendEscapedIfNecessary(String value, Appendable out) throws IOException {
     if (needsEscaping(value)) {
-      out.append(QUOTE).append(value.replace("\"", ESCAPED_QUOTE)).append(QUOTE);
+      out.append(QUOTE);
+      if (value.indexOf(QUOTE) >= 0) {
+        out.append(value.replace("\"", ESCAPED_QUOTE));
+      } else {
+        out.append(value);
+      }
+      out.append(QUOTE);
     } else {
       out.append(value);
     }

@@ -17,7 +17,7 @@ public record CoordinateRange(double start, double end, double step) {
     if (step < MIN_STEP && start != end) {
       throw new IllegalArgumentException(
           String.format(
-              "step must be at least %.3f degrees for coordinate ranges, got %.6f",
+              "step must be at least %.3f degrees for coordinate ranges, got %.4f",
               MIN_STEP, step));
     }
     if (start > end) {
@@ -83,7 +83,7 @@ public record CoordinateRange(double start, double end, double step) {
   private void validateBounds(double min, double max, String type) {
     if (start < min || start > max || end < min || end > max) {
       throw new IllegalArgumentException(
-          "%s must be between %.0f° and %.0f°, got start=%.6f°, end=%.6f°"
+          "%s must be between %.0f° and %.0f°, got start=%.4f°, end=%.4f°"
               .formatted(type, min, max, start, end));
     }
   }
@@ -91,7 +91,7 @@ public record CoordinateRange(double start, double end, double step) {
   private void validateStep() {
     if (step < MIN_STEP && !isSinglePoint()) {
       throw new IllegalArgumentException(
-          "Step must be at least %.3f° (~100m) for ranges, got %.6f°".formatted(MIN_STEP, step));
+          "Step must be at least %.3f° for ranges, got %.4f°".formatted(MIN_STEP, step));
     }
   }
 }

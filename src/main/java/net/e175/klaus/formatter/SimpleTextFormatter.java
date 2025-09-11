@@ -7,10 +7,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-public class SimpleTextFormatter<T> implements StreamingFormatter<T> {
-  private final SerializerRegistry registry;
-  private final String lineSeparator;
-  private final Map<String, String> displayNames;
+public record SimpleTextFormatter<T>(
+    SerializerRegistry registry, String lineSeparator, Map<String, String> displayNames)
+    implements StreamingFormatter<T> {
   private static final String FORMAT_SEPARATOR = ": ";
 
   public SimpleTextFormatter(SerializerRegistry registry) {
@@ -29,7 +28,7 @@ public class SimpleTextFormatter<T> implements StreamingFormatter<T> {
       SerializerRegistry registry, String lineSeparator, Map<String, String> displayNames) {
     this.registry = Objects.requireNonNull(registry, "Registry must not be null");
     this.lineSeparator = Objects.requireNonNull(lineSeparator, "Line separator must not be null");
-    this.displayNames = displayNames != null ? displayNames : Map.of();
+    this.displayNames = displayNames != null ? Map.copyOf(displayNames) : Map.of();
   }
 
   @Override

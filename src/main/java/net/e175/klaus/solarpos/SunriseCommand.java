@@ -64,6 +64,7 @@ final class SunriseCommand implements Callable<Integer> {
 
     final SPA.Horizon[] horizons = twilight ? TWILIGHT_HORIZONS : BASIC_HORIZONS;
     final PrintWriter out = parent.spec.commandLine().getOut();
+    final PerformanceTracker tracker = PerformanceTracker.create(parent.showPerformance);
 
     try {
       List<FieldDescriptor<SunriseData>> fields = createFields();
@@ -89,11 +90,13 @@ final class SunriseCommand implements Callable<Integer> {
                             .map(coord -> calculateSunriseData(dt, coord, horizons)));
       }
 
+      resultStream = PerformanceTracker.wrapIfNeeded(tracker, resultStream);
       formatter.format(fields, fieldNames, resultStream, out);
     } catch (IOException e) {
       throw new RuntimeException("Failed to format output", e);
     }
 
+    PerformanceTracker.reportIfNeeded(tracker);
     out.flush();
     return 0;
   }

@@ -99,7 +99,7 @@ Solarpos supports streaming coordinates and times from files using the `@filenam
 
 * **Coordinate files**: Use `@coords.txt` as the latitude parameter to read coordinates from a file, one coordinate pair per line in "latitude longitude" format
 * **Time files**: Use `@times.txt` as the dateTime parameter to read times from a file, one timestamp per line  
-* **Paired data files**: Use `@data.txt now` to read coordinate-time pairs from a file, with "latitude longitude datetime" on each line
+* **Paired data files**: Use `@data.txt` to read coordinate-time pairs from a file, with "latitude longitude datetime" on each line
 * **Stdin input**: Use `@-` to read data from stdin instead of a file. Only one parameter can use stdin at a time.
 
 Coordinate files and time files create a cartesian product – every coordinate is calculated for every time. Paired data files contain explicit coordinate-time pairs with no cartesian expansion.

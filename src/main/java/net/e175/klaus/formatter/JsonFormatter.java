@@ -7,9 +7,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-public class JsonFormatter<T> implements StreamingFormatter<T> {
-  private final SerializerRegistry registry;
-  private final String lineSeparator;
+public record JsonFormatter<T>(SerializerRegistry registry, String lineSeparator)
+    implements StreamingFormatter<T> {
   private static final int INITIAL_BUFFER_SIZE = 256;
   private static final DateTimeFormatter ISO_FORMAT =
       DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
@@ -58,8 +57,7 @@ public class JsonFormatter<T> implements StreamingFormatter<T> {
         case null -> out.append("null");
         case Number n -> out.append(registry.serialize(value, field));
         case Boolean b -> out.append(registry.serialize(value, field));
-        case ZonedDateTime zdt ->
-            out.append('"').append(escapeJson(zdt.format(ISO_FORMAT))).append('"');
+        case ZonedDateTime zdt -> out.append('"').append(zdt.format(ISO_FORMAT)).append('"');
         default -> out.append('"').append(escapeJson(registry.serialize(value, field))).append('"');
       }
     }

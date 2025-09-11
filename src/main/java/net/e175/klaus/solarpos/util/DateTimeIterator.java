@@ -176,8 +176,8 @@ public final class DateTimeIterator {
   /** Unified method to read lines from either file or stdin. */
   private static <T> Stream<T> readLinesFromPath(
       Path path, java.util.function.Function<String, T> mapper) {
-    Stream<String> rawLines =
-        "-".equals(path.toString()) ? createStdinStream() : createFileStream(path);
+    String pathStr = path.toString();
+    Stream<String> rawLines = "-".equals(pathStr) ? createStdinStream() : createFileStream(path);
 
     return rawLines
         .map(String::trim)
