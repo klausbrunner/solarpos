@@ -7,7 +7,6 @@ import java.time.temporal.TemporalAccessor;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Stream;
-import net.e175.klaus.solarpos.util.TimeFormats;
 import net.e175.klaus.solarpositioning.DeltaT;
 import picocli.CommandLine;
 import picocli.CommandLine.HelpCommand;
@@ -16,7 +15,16 @@ import picocli.CommandLine.HelpCommand;
     name = "solarpos",
     subcommands = {HelpCommand.class, PositionCommand.class, SunriseCommand.class},
     mixinStandardHelpOptions = true,
-    description = "Calculates topocentric solar coordinates or sunrise/sunset times.",
+    description = {
+      "Calculates topocentric solar coordinates or sunrise/sunset times.",
+      "",
+      "Examples:",
+      "  solarpos 52.0 13.4 2024-01-01 position",
+      "  solarpos 52:53:0.1 13:14:0.1 2024 position --format=csv",
+      "  solarpos @coords.txt @times.txt position",
+      "  solarpos @data.txt position  # paired lat,lng,datetime data",
+      "  echo '52.0 13.4 2024-01-01T12:00:00' | solarpos @- now position"
+    },
     versionProvider = Main.ManifestBasedVersionProviderWithVariables.class,
     showAtFileInUsageHelp = true)
 public final class Main {
@@ -36,24 +44,36 @@ public final class Main {
 
   @CommandLine.Parameters(
       index = "0",
-      description =
-          "Latitude in decimal degrees, range (start:end:step), or @file with coordinates.",
+      description = {
+        "Latitude: decimal degrees, range, or file",
+        "  52.5        single coordinate",
+        "  52:53:0.1   range from 52° to 53° in 0.1° steps",
+        "  @coords.txt file with coordinates (or @- for stdin)"
+      },
       converter = CoordinateRangeConverter.class)
   CoordinateRange latitude;
 
   @CommandLine.Parameters(
       index = "1",
-      description =
-          "Longitude in decimal degrees, range (start:end:step), or @file with coordinates.",
+      description = {
+        "Longitude: decimal degrees, range, or file",
+        "  13.4        single coordinate",
+        "  13:14:0.1   range from 13° to 14° in 0.1° steps",
+        "  @coords.txt file with coordinates (or @- for stdin)"
+      },
       converter = CoordinateRangeConverter.class)
   CoordinateRange longitude;
 
   @CommandLine.Parameters(
       index = "2",
-      description =
-          "Date/time in ISO format "
-              + TimeFormats.INPUT_DATE_TIME_PATTERN
-              + ", or @file with times. Use 'now' for current time and date.",
+      description = {
+        "Date/time: ISO format, partial dates, or file",
+        "  2024-01-01           specific date (midnight)",
+        "  2024-01-01T12:00:00  specific date and time",
+        "  2024                 entire year (with --step)",
+        "  now                  current date and time",
+        "  @times.txt           file with times (or @- for stdin)"
+      },
       converter = DateTimeConverter.class)
   TemporalAccessor dateTime;
 
