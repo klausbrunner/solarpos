@@ -87,7 +87,7 @@ Files may include blank lines and comments (lines starting with `#`). Both space
 ## Output formats
 
 - `human` (default) – readable text for quick checks.
-- `csv` – comma-separated values; use `--headers` to include a header row.
+- `csv` – comma-separated values with headers by default; use `--no-headers` to omit them.
 - `json` – JSON Lines (one JSON object per line) for streaming and line-oriented processing.
 
 ## Key options
@@ -95,7 +95,7 @@ Files may include blank lines and comments (lines starting with `#`). Both space
 - `--timezone=<tz>` – timezone as an offset (e.g., `+01:00`) or a TZ database name (e.g., `Europe/Berlin`).
 - `--deltat[=<seconds>]` – specify delta-T explicitly, or provide the option without value to request an automatic estimate. For background on delta-T see [solarpositioning](https://github.com/klausbrunner/solarpositioning).
 - `--format=<format>` – output format: `human`, `csv`, or `json`.
-- `--headers` – add header row to CSV output.
+- `--[no-]headers` – include/omit header row for CSV output (default: headers on).
 - `--[no-]parallel` – use parallel processing. Increases throughput, but also memory usage.
 - `--[no-]show-inputs` – include input parameters in the output.
 - `--step=<seconds>` – time step for `position` time series sampling.

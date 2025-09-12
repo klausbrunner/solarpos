@@ -85,13 +85,30 @@ class PositionTest {
     var lon = "25.0";
     var dateTime = "2003-10-17T12:00:00Z";
 
+    // Test with headers (default)
     var result = TestUtil.run(lat, lon, dateTime, "--format=csv", "--deltat=69", "position");
+    assertEquals(0, result.returnCode());
+    var lines = result.output().lines().toList();
+    assertEquals(2, lines.size());
+    assertEquals("dateTime,azimuth,zenith", lines.get(0));
+    assertEquals("2003-10-17T12:00:00Z,211.20726,65.92499", lines.get(1));
+
+    // Test without headers
+    result =
+        TestUtil.run(lat, lon, dateTime, "--format=csv", "--no-headers", "--deltat=69", "position");
     assertEquals(0, result.returnCode());
     assertEquals("2003-10-17T12:00:00Z,211.20726,65.92499", result.output().strip());
 
     result =
         TestUtil.run(
-            lat, lon, dateTime, "--format=csv", "--show-inputs", "--deltat=69", "position");
+            lat,
+            lon,
+            dateTime,
+            "--format=csv",
+            "--no-headers",
+            "--show-inputs",
+            "--deltat=69",
+            "position");
     assertEquals(0, result.returnCode());
 
     assertEquals(
@@ -111,8 +128,10 @@ class PositionTest {
             lon,
             dateTime,
             "--format=csv",
+            "--no-headers",
             "--deltat=69",
             "--timezone=UTC",
+            "--show-inputs",
             "position",
             "--step=7200");
     assertEquals(0, result.returnCode());
@@ -151,8 +170,10 @@ class PositionTest {
             lon,
             dateTime,
             "--format=csv",
+            "--no-headers",
             "--deltat=69",
             "--timezone=UTC",
+            "--show-inputs",
             "position",
             "--step=7200");
     assertEquals(0, result.returnCode());
@@ -189,8 +210,10 @@ class PositionTest {
             lon,
             dateTime,
             "--format=csv",
+            "--no-headers",
             "--deltat=69",
             "--timezone=UTC",
+            "--show-inputs",
             "position",
             "--step=7200");
     assertEquals(0, result.returnCode());
@@ -213,7 +236,6 @@ class PositionTest {
             lat,
             lon,
             dateTime,
-            "--headers",
             "--format=csv",
             "--deltat=69",
             "--show-inputs",
@@ -231,6 +253,21 @@ class PositionTest {
   }
 
   @Test
+  void csvDefaultHasHeaders() {
+    var lat = "52.0";
+    var lon = "25.0";
+    var dateTime = "2003-10-17T12:00:00Z";
+
+    var result = TestUtil.run(lat, lon, dateTime, "--format=csv", "--deltat=69", "position");
+    assertEquals(0, result.returnCode());
+
+    var lines = result.output().lines().toList();
+    assertEquals(2, lines.size());
+    assertEquals("dateTime,azimuth,zenith", lines.get(0));
+    assertEquals("2003-10-17T12:00:00Z,211.20726,65.92499", lines.get(1));
+  }
+
+  @Test
   void refractionParametersNotIncludedWhenDisabled() throws IOException {
     var lat = "52.0";
     var lon = "25.0";
@@ -238,7 +275,7 @@ class PositionTest {
 
     // Test with refraction enabled (default)
     var resultWithRefraction =
-        TestUtil.run(lat, lon, dateTime, "--format=csv", "--headers", "--show-inputs", "position");
+        TestUtil.run(lat, lon, dateTime, "--format=csv", "--show-inputs", "position");
     assertEquals(0, resultWithRefraction.returnCode());
 
     var recordsWithRefraction =
@@ -253,14 +290,7 @@ class PositionTest {
     // Test with refraction explicitly disabled
     var resultWithoutRefraction =
         TestUtil.run(
-            lat,
-            lon,
-            dateTime,
-            "--format=csv",
-            "--headers",
-            "--show-inputs",
-            "position",
-            "--no-refraction");
+            lat, lon, dateTime, "--format=csv", "--show-inputs", "position", "--no-refraction");
     assertEquals(0, resultWithoutRefraction.returnCode());
 
     var recordsWithoutRefraction =
@@ -387,9 +417,27 @@ class PositionTest {
     var lon = "25.0";
     var dateTime = "2003-10-17T12:00:00Z";
 
+    // Test with headers (default)
     var result =
         TestUtil.run(
             lat, lon, dateTime, "--format=csv", "--deltat=69", "position", "--elevation-angle");
+    assertEquals(0, result.returnCode());
+    var lines = result.output().lines().toList();
+    assertEquals(2, lines.size());
+    assertEquals("dateTime,azimuth,elevation-angle", lines.get(0));
+    assertEquals("2003-10-17T12:00:00Z,211.20726,24.07501", lines.get(1));
+
+    // Test without headers
+    result =
+        TestUtil.run(
+            lat,
+            lon,
+            dateTime,
+            "--format=csv",
+            "--no-headers",
+            "--deltat=69",
+            "position",
+            "--elevation-angle");
     assertEquals(0, result.returnCode());
     assertEquals("2003-10-17T12:00:00Z,211.20726,24.07501", result.output().strip());
   }
@@ -402,14 +450,7 @@ class PositionTest {
 
     var result =
         TestUtil.run(
-            lat,
-            lon,
-            dateTime,
-            "--format=csv",
-            "--headers",
-            "--deltat=69",
-            "position",
-            "--elevation-angle");
+            lat, lon, dateTime, "--format=csv", "--deltat=69", "position", "--elevation-angle");
     assertEquals(0, result.returnCode());
 
     var output = result.output();
@@ -488,7 +529,13 @@ class PositionTest {
     // setUnmatchedOptionsArePositionalParams(true)
     // In shell: solarpos --format=csv 45.0 -10.0:-5.0:1.0 2024-06-21T12:00 position
     var result =
-        TestUtil.run("--format=csv", "45.0", "-10.0:-5.0:1.0", "2024-06-21T12:00", "position");
+        TestUtil.run(
+            "--format=csv",
+            "--no-headers",
+            "45.0",
+            "-10.0:-5.0:1.0",
+            "2024-06-21T12:00",
+            "position");
 
     assertEquals(0, result.returnCode(), "Negative range should work");
     assertTrue(result.output().contains("-10.00000"));

@@ -50,17 +50,21 @@ public final class SerializerRegistry {
     };
   }
 
+  private static final java.util.concurrent.ConcurrentHashMap<String, DateTimeFormatter>
+      FORMATTER_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+
   private static BiFunction<ZonedDateTime, Map<String, Object>, String> createDateTimeFormatter(
       String nullValue, DateTimeFormatter defaultFormat, boolean quoted) {
     return (dt, hints) -> {
       if (dt == null) return nullValue;
 
       var pattern = (String) hints.get("pattern");
-      String formatted =
+      DateTimeFormatter formatter =
           pattern != null
-              ? dt.format(DateTimeFormatter.ofPattern(pattern))
-              : dt.format(defaultFormat);
+              ? FORMATTER_CACHE.computeIfAbsent(pattern, DateTimeFormatter::ofPattern)
+              : defaultFormat;
 
+      String formatted = dt.format(formatter);
       return quoted ? '"' + formatted + '"' : formatted;
     };
   }

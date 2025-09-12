@@ -80,7 +80,6 @@ class SunriseTest {
             dateTime,
             "--format=csv",
             "--deltat=69",
-            "--headers",
             "--show-inputs",
             "sunrise",
             "--twilight");
@@ -132,12 +131,49 @@ class SunriseTest {
     var lon = "25.0";
     var dateTime = "2022-10-17T12:00:00Z";
 
+    // Test with headers (default)
     var result =
         TestUtil.run(lat, lon, dateTime, "--format=csv", "--deltat=69", "--show-inputs", "sunrise");
+    assertEquals(0, result.returnCode());
+    var lines = result.output().lines().toList();
+    assertEquals(2, lines.size());
+    assertEquals("latitude,longitude,dateTime,deltaT,type,sunrise,transit,sunset", lines.get(0));
+    assertEquals(
+        "52.00000,25.00000,2022-10-17T12:00:00Z,69.000,NORMAL,2022-10-17T04:47:51Z,2022-10-17T10:05:21Z,2022-10-17T15:22:00Z",
+        lines.get(1));
+
+    // Test without headers
+    result =
+        TestUtil.run(
+            lat,
+            lon,
+            dateTime,
+            "--format=csv",
+            "--no-headers",
+            "--deltat=69",
+            "--show-inputs",
+            "sunrise");
     assertEquals(0, result.returnCode());
     assertEquals(
         "52.00000,25.00000,2022-10-17T12:00:00Z,69.000,NORMAL,2022-10-17T04:47:51Z,2022-10-17T10:05:21Z,2022-10-17T15:22:00Z",
         result.output().strip());
+  }
+
+  @Test
+  void csvDefaultHasHeaders() {
+    var lat = "52.0";
+    var lon = "25.0";
+    var dateTime = "2022-10-17T12:00:00Z";
+
+    var result = TestUtil.run(lat, lon, dateTime, "--format=csv", "--deltat=69", "sunrise");
+    assertEquals(0, result.returnCode());
+
+    var lines = result.output().lines().toList();
+    assertEquals(2, lines.size());
+    // Without --show-inputs, headers don't include lat/lon
+    assertEquals("type,sunrise,transit,sunset", lines.get(0));
+    assertEquals(
+        "NORMAL,2022-10-17T04:47:51Z,2022-10-17T10:05:21Z,2022-10-17T15:22:00Z", lines.get(1));
   }
 
   @Test
@@ -152,6 +188,7 @@ class SunriseTest {
             lon,
             dateTime,
             "--format=csv",
+            "--no-headers",
             "--deltat",
             "--show-inputs",
             "--timezone=UTC",
@@ -176,6 +213,7 @@ class SunriseTest {
             lon,
             dateTime,
             "--format=csv",
+            "--no-headers",
             "--deltat",
             "--show-inputs",
             "--timezone=UTC",
@@ -199,7 +237,6 @@ class SunriseTest {
             lat,
             lon,
             dateTime,
-            "--headers",
             "--format=csv",
             "--deltat",
             "--show-inputs",
@@ -220,8 +257,7 @@ class SunriseTest {
     var lon = "15.63";
     var dateTime = "2023-02";
 
-    var result =
-        TestUtil.run(lat, lon, dateTime, "--headers", "--format=csv", "--timezone=UTC", "sunrise");
+    var result = TestUtil.run(lat, lon, dateTime, "--format=csv", "--timezone=UTC", "sunrise");
     assertEquals(0, result.returnCode());
 
     var outputRecords =
@@ -233,14 +269,7 @@ class SunriseTest {
 
     result =
         TestUtil.run(
-            lat,
-            lon,
-            dateTime,
-            "--show-inputs",
-            "--headers",
-            "--format=csv",
-            "--timezone=UTC",
-            "sunrise");
+            lat, lon, dateTime, "--show-inputs", "--format=csv", "--timezone=UTC", "sunrise");
     assertEquals(0, result.returnCode());
 
     outputRecords = TestUtil.CSV_WITH_HEADER.parse(new StringReader(result.output())).getRecords();
@@ -255,9 +284,7 @@ class SunriseTest {
     var lat = "78.22";
     var lon = "15.63";
 
-    var result =
-        TestUtil.run(
-            lat, lon, "2023-02-01", "--headers", "--format=json", "--timezone=UTC", "sunrise");
+    var result = TestUtil.run(lat, lon, "2023-02-01", "--format=json", "--timezone=UTC", "sunrise");
     assertEquals(0, result.returnCode());
 
     var jsonObject = JsonParser.parseString(result.output()).getAsJsonObject();

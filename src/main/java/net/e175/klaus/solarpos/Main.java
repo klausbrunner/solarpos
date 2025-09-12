@@ -107,7 +107,10 @@ public final class Main {
 
   @CommandLine.Option(
       names = {"--headers"},
-      description = "Show headers in output (CSV only).")
+      negatable = true,
+      defaultValue = "true",
+      fallbackValue = "true",
+      description = "Show headers in output (CSV only). Default: ${DEFAULT-VALUE}")
   boolean headers;
 
   @CommandLine.Option(

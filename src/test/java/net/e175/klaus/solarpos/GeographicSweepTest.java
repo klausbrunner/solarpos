@@ -26,7 +26,12 @@ final class GeographicSweepTest {
   void geographicSweepPosition() throws Exception {
     var result =
         TestUtil.run(
-            "--format=csv", "40.0:41.0:1.0", "73.0:74.0:1.0", "2024-06-21T12:00", "position");
+            "--format=csv",
+            "--no-headers",
+            "40.0:41.0:1.0",
+            "73.0:74.0:1.0",
+            "2024-06-21T12:00",
+            "position");
 
     assertEquals(0, result.returnCode());
     var records = parseCSV(result.output());
@@ -42,7 +47,13 @@ final class GeographicSweepTest {
   @Test
   void geographicSweepSunrise() throws Exception {
     var result =
-        TestUtil.run("--format=csv", "40.0:41.0:1.0", "73.0:74.0:1.0", "2024-06-21", "sunrise");
+        TestUtil.run(
+            "--format=csv",
+            "--no-headers",
+            "40.0:41.0:1.0",
+            "73.0:74.0:1.0",
+            "2024-06-21",
+            "sunrise");
 
     assertEquals(0, result.returnCode());
     var records = parseCSV(result.output());
@@ -60,6 +71,7 @@ final class GeographicSweepTest {
     var result =
         TestUtil.run(
             "--format=csv",
+            "--no-headers",
             "40.0:41.0:1.0",
             "73.0:74.0:1.0",
             "2024-06-21",
@@ -77,7 +89,9 @@ final class GeographicSweepTest {
 
   @Test
   void backwardCompatibilitySingleCoordinate() throws Exception {
-    var result = TestUtil.run("--format=csv", "40.7", "-74.0", "2024-06-21T12:00", "position");
+    var result =
+        TestUtil.run(
+            "--format=csv", "--no-headers", "40.7", "-74.0", "2024-06-21T12:00", "position");
 
     assertEquals(0, result.returnCode());
     var records = parseCSV(result.output());
@@ -116,7 +130,13 @@ final class GeographicSweepTest {
   @Test
   void autoShowInputsForLatitudeRange() throws Exception {
     var result =
-        TestUtil.run("--format=csv", "40.0:41.0:1.0", "73.0", "2024-06-21T12:00", "position");
+        TestUtil.run(
+            "--format=csv",
+            "--no-headers",
+            "40.0:41.0:1.0",
+            "73.0",
+            "2024-06-21T12:00",
+            "position");
 
     assertEquals(0, result.returnCode());
     var records = parseCSV(result.output());
@@ -132,7 +152,13 @@ final class GeographicSweepTest {
   @Test
   void autoShowInputsForLongitudeRange() throws Exception {
     var result =
-        TestUtil.run("--format=csv", "40.0", "73.0:74.0:1.0", "2024-06-21T12:00", "position");
+        TestUtil.run(
+            "--format=csv",
+            "--no-headers",
+            "40.0",
+            "73.0:74.0:1.0",
+            "2024-06-21T12:00",
+            "position");
 
     assertEquals(0, result.returnCode());
     var records = parseCSV(result.output());
@@ -150,6 +176,7 @@ final class GeographicSweepTest {
     var result =
         TestUtil.run(
             "--format=csv",
+            "--no-headers",
             "--no-show-inputs",
             "40.0:41.0:1.0",
             "73.0",
