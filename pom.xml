@@ -40,6 +40,7 @@
         <basepom.release.tag-name-format>v@{project.version}</basepom.release.tag-name-format>
 
         <basepom.check.skip-dependency>true</basepom.check.skip-dependency>
+        <basepom.check.skip-spotbugs>true</basepom.check.skip-spotbugs>
         <basepom.check.skip-checkstyle>true</basepom.check.skip-checkstyle>
         <basepom.check.fail-spotbugs>false</basepom.check.fail-spotbugs>
     </properties>
@@ -54,15 +55,22 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>com.spotify.fmt</groupId>
-                <artifactId>fmt-maven-plugin</artifactId>
-                <version>2.27</version>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>2.43.0</version>
+                <configuration>
+                    <java>
+                        <googleJavaFormat>
+                            <version>1.28.0</version>
+                        </googleJavaFormat>
+                    </java>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
-                            <goal>format</goal>
+                            <goal>check</goal>
                         </goals>
-                        <phase>process-sources</phase>
+                        <phase>compile</phase>
                     </execution>
                 </executions>
             </plugin>
@@ -237,7 +245,7 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.13.1</version>
+            <version>2.13.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
