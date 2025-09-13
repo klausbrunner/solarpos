@@ -111,7 +111,7 @@ final class PositionCommand implements Callable<Integer> {
       Stream<PositionData> resultStream;
       if (parent.isPairedData()) {
         // Use paired processing for 1:1 coordinate-time correspondence
-        var stream = parent.getPairedDataStream();
+        var stream = parent.getPairedDataStream(DateTimeIterator.TimePrecision.TIME_REQUIRED);
         resultStream =
             (parent.parallel ? stream.parallel() : stream)
                 .map(pair -> calculatePositionData(pair.dateTime(), pair.coordinates()));
@@ -120,7 +120,7 @@ final class PositionCommand implements Callable<Integer> {
         // Flatten the entire Cartesian product first, then parallelize across all combinations
         var cartesianStream =
             parent
-                .getDateTimesStream(step)
+                .getDateTimesStream(step, DateTimeIterator.TimePrecision.TIME_REQUIRED)
                 .flatMap(
                     dt ->
                         parent

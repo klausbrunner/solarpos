@@ -2,7 +2,6 @@ package net.e175.klaus.formatter;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -45,19 +44,7 @@ public record CsvFormatter<T>(
     for (var field : fields) {
       if (!firstField) out.append(delimiter);
       firstField = false;
-
-      String fieldName = field.name();
-      if (needsEscaping(fieldName)) {
-        out.append(QUOTE);
-        if (fieldName.indexOf(QUOTE) >= 0) {
-          out.append(fieldName.replace("\"", ESCAPED_QUOTE));
-        } else {
-          out.append(fieldName);
-        }
-        out.append(QUOTE);
-      } else {
-        out.append(fieldName);
-      }
+      appendEscapedIfNecessary(field.name(), out);
     }
     out.append(lineSeparator);
   }
@@ -85,11 +72,10 @@ public record CsvFormatter<T>(
 
       var value = field.extractor().apply(item);
 
-      // Stream directly to output without intermediate String creation
       switch (value) {
         case null -> out.append("");
-        case Double d -> appendDouble(d, getPrecision(field), out);
-        case Float f -> appendFloat(f, getPrecision(field), out);
+        case Double d -> registry.appendDouble(d, registry.getPrecision(field), out);
+        case Float f -> registry.appendFloat(f, registry.getPrecision(field), out);
         case Number n -> out.append(n.toString());
         default -> {
           var serialized = registry.serialize(value, field);
@@ -97,18 +83,6 @@ public record CsvFormatter<T>(
         }
       }
     }
-  }
-
-  private int getPrecision(FieldDescriptor<T> field) {
-    return (int) field.hints().getOrDefault("precision", 5);
-  }
-
-  private void appendDouble(double value, int precision, Appendable out) throws IOException {
-    out.append(String.format(Locale.US, SerializerRegistry.FORMAT_SPECS[precision], value));
-  }
-
-  private void appendFloat(float value, int precision, Appendable out) throws IOException {
-    appendDouble(value, precision, out);
   }
 
   private void appendEscapedIfNecessary(String value, Appendable out) throws IOException {

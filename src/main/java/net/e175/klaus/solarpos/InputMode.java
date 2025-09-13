@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import net.e175.klaus.solarpos.util.DateTimeIterator;
 import net.e175.klaus.solarpos.util.DateTimeIterator.CoordinateTimePair;
+import net.e175.klaus.solarpos.util.DateTimeIterator.TimePrecision;
 
 /**
  * Represents the different input modes for coordinates and time data using a sealed interface
@@ -23,6 +24,11 @@ sealed interface InputMode
 
   Stream<ZonedDateTime> times(Duration step);
 
+  /** Returns times with specified precision requirement for file inputs. */
+  default Stream<ZonedDateTime> times(Duration step, TimePrecision precision) {
+    return times(step); // Default implementation ignores precision
+  }
+
   void validate();
 
   /** Helper to check if a path represents stdin. */
@@ -35,6 +41,11 @@ sealed interface InputMode
   /** Returns paired coordinate-time data if this mode supports it, empty otherwise. */
   default Stream<CoordinateTimePair> pairedData() {
     return Stream.empty();
+  }
+
+  /** Returns paired coordinate-time data with specified precision requirement. */
+  default Stream<CoordinateTimePair> pairedData(TimePrecision precision) {
+    return pairedData(); // Default implementation ignores precision
   }
 
   /** Returns true if this mode provides paired data (1:1 coordinate-time correspondence). */
@@ -128,6 +139,11 @@ sealed interface InputMode
     }
 
     @Override
+    public Stream<ZonedDateTime> times(Duration step, TimePrecision precision) {
+      return DateTimeIterator.fromFile(timeFile, timezone, precision);
+    }
+
+    @Override
     public void validate() {
       latitude.validateLatitude();
       longitude.validateLongitude();
@@ -155,6 +171,11 @@ sealed interface InputMode
     @Override
     public Stream<CoordinateTimePair> pairedData() {
       return DateTimeIterator.pairedDataFromFile(dataFile, timezone);
+    }
+
+    @Override
+    public Stream<CoordinateTimePair> pairedData(TimePrecision precision) {
+      return DateTimeIterator.pairedDataFromFile(dataFile, timezone, precision);
     }
 
     @Override
