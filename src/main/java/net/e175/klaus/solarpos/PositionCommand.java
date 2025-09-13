@@ -16,6 +16,7 @@ import net.e175.klaus.formatter.JsonFormatter;
 import net.e175.klaus.formatter.SerializerRegistry;
 import net.e175.klaus.formatter.SimpleTextFormatter;
 import net.e175.klaus.formatter.StreamingFormatter;
+import net.e175.klaus.solarpos.util.DateTimeIterator;
 import net.e175.klaus.solarpos.util.TimeFormats;
 import net.e175.klaus.solarpositioning.Grena3;
 import net.e175.klaus.solarpositioning.SPA;
@@ -116,15 +117,18 @@ final class PositionCommand implements Callable<Integer> {
                 .map(pair -> calculatePositionData(pair.dateTime(), pair.coordinates()));
       } else {
         // Use Cartesian product for separate coordinate/time inputs
-        resultStream =
+        // Flatten the entire Cartesian product first, then parallelize across all combinations
+        var cartesianStream =
             parent
                 .getDateTimesStream(step)
                 .flatMap(
-                    dt -> {
-                      var coordStream = parent.getCoordinatesStream();
-                      return (parent.parallel ? coordStream.parallel() : coordStream)
-                          .map(coord -> calculatePositionData(dt, coord));
-                    });
+                    dt ->
+                        parent
+                            .getCoordinatesStream()
+                            .map(coord -> new DateTimeIterator.CoordinateTimePair(coord, dt)));
+        resultStream =
+            (parent.parallel ? cartesianStream.parallel() : cartesianStream)
+                .map(pair -> calculatePositionData(pair.dateTime(), pair.coordinates()));
       }
 
       resultStream = PerformanceTracker.wrapIfNeeded(tracker, resultStream);

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -55,8 +56,10 @@ public record JsonFormatter<T>(SerializerRegistry registry, String lineSeparator
       var value = field.extractor().apply(item);
       switch (value) {
         case null -> out.append("null");
-        case Number n -> out.append(registry.serialize(value, field));
-        case Boolean b -> out.append(registry.serialize(value, field));
+        case Double d -> appendDouble(d, getPrecision(field), out);
+        case Float f -> appendFloat(f, getPrecision(field), out);
+        case Number n -> out.append(n.toString());
+        case Boolean b -> out.append(b.toString());
         case ZonedDateTime zdt -> out.append('"').append(zdt.format(ISO_FORMAT)).append('"');
         default -> out.append('"').append(escapeJson(registry.serialize(value, field))).append('"');
       }
@@ -88,5 +91,17 @@ public record JsonFormatter<T>(SerializerRegistry registry, String lineSeparator
     }
 
     return sb.toString();
+  }
+
+  private int getPrecision(FieldDescriptor<T> field) {
+    return (int) field.hints().getOrDefault("precision", 6);
+  }
+
+  private void appendDouble(double value, int precision, Appendable out) throws IOException {
+    out.append(String.format(Locale.US, SerializerRegistry.FORMAT_SPECS[precision], value));
+  }
+
+  private void appendFloat(float value, int precision, Appendable out) throws IOException {
+    appendDouble(value, precision, out);
   }
 }

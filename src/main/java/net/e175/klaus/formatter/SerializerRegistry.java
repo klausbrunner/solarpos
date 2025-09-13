@@ -10,6 +10,10 @@ import java.util.function.BiFunction;
 import net.e175.klaus.solarpos.util.TimeFormats;
 
 public final class SerializerRegistry {
+  static final String[] FORMAT_SPECS = {
+    "%.0f", "%.1f", "%.2f", "%.3f", "%.4f", "%.5f", "%.6f", "%.7f", "%.8f", "%.9f"
+  };
+
   private final Map<Class<?>, BiFunction<Object, Map<String, Object>, String>> serializers =
       new HashMap<>();
   private String nullValue = "";
@@ -34,7 +38,7 @@ public final class SerializerRegistry {
       int defaultPrecision) {
     return (num, hints) -> {
       var precision = (int) hints.getOrDefault("precision", defaultPrecision);
-      return String.format(Locale.US, "%." + precision + "f", num);
+      return String.format(Locale.US, FORMAT_SPECS[precision], num);
     };
   }
 
@@ -43,7 +47,7 @@ public final class SerializerRegistry {
           int defaultPrecision) {
     return (num, hints) -> {
       var precision = (int) hints.getOrDefault("precision", defaultPrecision);
-      String result = String.format(Locale.US, "%." + precision + "f", num);
+      String result = String.format(Locale.US, FORMAT_SPECS[precision], num);
 
       var unit = (String) hints.get("unit");
       return unit != null ? String.format("%28s%s", result, unit) : result;
@@ -100,8 +104,8 @@ public final class SerializerRegistry {
     var precision = (int) hints.getOrDefault("precision", 6);
 
     return switch (n) {
-      case Double d -> String.format(Locale.US, "%." + precision + "f", d);
-      case Float f -> String.format(Locale.US, "%." + precision + "f", f);
+      case Double d -> String.format(Locale.US, FORMAT_SPECS[precision], d);
+      case Float f -> String.format(Locale.US, FORMAT_SPECS[precision], f);
       case Number num -> num.toString();
       default -> n.toString();
     };

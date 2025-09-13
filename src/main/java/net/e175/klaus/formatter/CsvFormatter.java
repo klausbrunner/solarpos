@@ -2,6 +2,7 @@ package net.e175.klaus.formatter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -83,10 +84,31 @@ public record CsvFormatter<T>(
       firstField = false;
 
       var value = field.extractor().apply(item);
-      var serialized = registry.serialize(value, field);
 
-      appendEscapedIfNecessary(serialized, out);
+      // Stream directly to output without intermediate String creation
+      switch (value) {
+        case null -> out.append("");
+        case Double d -> appendDouble(d, getPrecision(field), out);
+        case Float f -> appendFloat(f, getPrecision(field), out);
+        case Number n -> out.append(n.toString());
+        default -> {
+          var serialized = registry.serialize(value, field);
+          appendEscapedIfNecessary(serialized, out);
+        }
+      }
     }
+  }
+
+  private int getPrecision(FieldDescriptor<T> field) {
+    return (int) field.hints().getOrDefault("precision", 5);
+  }
+
+  private void appendDouble(double value, int precision, Appendable out) throws IOException {
+    out.append(String.format(Locale.US, SerializerRegistry.FORMAT_SPECS[precision], value));
+  }
+
+  private void appendFloat(float value, int precision, Appendable out) throws IOException {
+    appendDouble(value, precision, out);
   }
 
   private void appendEscapedIfNecessary(String value, Appendable out) throws IOException {
