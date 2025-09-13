@@ -7,6 +7,7 @@ import java.time.temporal.TemporalAccessor;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Stream;
+import net.e175.klaus.solarpos.util.DateTimeIterator;
 import net.e175.klaus.solarpositioning.DeltaT;
 import picocli.CommandLine;
 import picocli.CommandLine.HelpCommand;
@@ -72,7 +73,8 @@ public final class Main {
         "  2024-01-01T12:00:00  specific date and time",
         "  2024                 entire year (with --step)",
         "  now                  current date and time",
-        "  @times.txt           file with times (or @- for stdin)"
+        "  @times.txt           file with times (or @- for stdin)",
+        "                       (files require explicit dates like 2024-01-15)"
       },
       converter = DateTimeConverter.class)
   TemporalAccessor dateTime;
@@ -221,8 +223,18 @@ public final class Main {
     return getInputMode().times(step);
   }
 
+  Stream<ZonedDateTime> getDateTimesStream(
+      Duration step, DateTimeIterator.TimePrecision precision) {
+    return getInputMode().times(step, precision);
+  }
+
   Stream<net.e175.klaus.solarpos.util.DateTimeIterator.CoordinateTimePair> getPairedDataStream() {
     return getInputMode().pairedData();
+  }
+
+  Stream<net.e175.klaus.solarpos.util.DateTimeIterator.CoordinateTimePair> getPairedDataStream(
+      DateTimeIterator.TimePrecision precision) {
+    return getInputMode().pairedData(precision);
   }
 
   boolean isPairedData() {
@@ -286,11 +298,9 @@ public final class Main {
   }
 
   private static String[] insertDummyParameters(String[] args, int insertIndex, String... dummies) {
-    return Stream.of(
-            Stream.of(args).limit(insertIndex + 1),
-            Stream.of(dummies),
+    return Stream.concat(
+            Stream.concat(Stream.of(args).limit(insertIndex + 1), Stream.of(dummies)),
             Stream.of(args).skip(insertIndex + 1))
-        .flatMap(java.util.function.Function.identity())
         .toArray(String[]::new);
   }
 

@@ -7,14 +7,9 @@ import java.io.PrintWriter;
 import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
-import net.e175.klaus.formatter.CsvFormatter;
 import net.e175.klaus.formatter.FieldDescriptor;
-import net.e175.klaus.formatter.JsonFormatter;
-import net.e175.klaus.formatter.SerializerRegistry;
-import net.e175.klaus.formatter.SimpleTextFormatter;
 import net.e175.klaus.formatter.StreamingFormatter;
 import net.e175.klaus.solarpos.util.DateTimeIterator;
 import net.e175.klaus.solarpos.util.TimeFormats;
@@ -111,7 +106,7 @@ final class PositionCommand implements Callable<Integer> {
       Stream<PositionData> resultStream;
       if (parent.isPairedData()) {
         // Use paired processing for 1:1 coordinate-time correspondence
-        var stream = parent.getPairedDataStream();
+        var stream = parent.getPairedDataStream(DateTimeIterator.TimePrecision.TIME_REQUIRED);
         resultStream =
             (parent.parallel ? stream.parallel() : stream)
                 .map(pair -> calculatePositionData(pair.dateTime(), pair.coordinates()));
@@ -120,7 +115,7 @@ final class PositionCommand implements Callable<Integer> {
         // Flatten the entire Cartesian product first, then parallelize across all combinations
         var cartesianStream =
             parent
-                .getDateTimesStream(step)
+                .getDateTimesStream(step, DateTimeIterator.TimePrecision.TIME_REQUIRED)
                 .flatMap(
                     dt ->
                         parent
@@ -197,21 +192,7 @@ final class PositionCommand implements Callable<Integer> {
   }
 
   private StreamingFormatter<PositionData> createFormatter(Main.Format format) {
-    SerializerRegistry registry =
-        switch (format) {
-          case HUMAN -> SerializerRegistry.forText();
-          case JSON -> SerializerRegistry.forJson();
-          case CSV -> SerializerRegistry.forCsv();
-        };
-
-    return switch (format) {
-      case HUMAN -> {
-        var displayNames = Map.of("dateTime", "date/time", "deltaT", "delta T");
-        yield new SimpleTextFormatter<>(registry, displayNames);
-      }
-      case JSON -> new JsonFormatter<>(registry, "\n");
-      case CSV -> new CsvFormatter<>(registry, parent.headers);
-    };
+    return FormatterFactory.create(format, parent.headers);
   }
 
   private PositionData calculatePositionData(ZonedDateTime dateTime, CoordinatePair coord) {
@@ -276,12 +257,5 @@ final class PositionCommand implements Callable<Integer> {
           "%s must be between %.1f and %.1f %s, got %.1f"
               .formatted(paramName, min, max, unit, value));
     }
-  }
-
-  // Utility method for creating coordinate Cartesian products - moved to CoordinateRange if needed
-  static Stream<CoordinatePair> getCoordinates(CoordinateRange latRange, CoordinateRange lngRange) {
-    return latRange.stream()
-        .boxed()
-        .flatMap(lat -> lngRange.stream().mapToObj(lng -> new CoordinatePair(lat, lng)));
   }
 }

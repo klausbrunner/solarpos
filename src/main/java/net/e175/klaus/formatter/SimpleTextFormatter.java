@@ -45,16 +45,6 @@ public record SimpleTextFormatter<T>(
     formatItems(items, fields, formatPattern, out);
   }
 
-  private static <T> List<FieldDescriptor<T>> filterAndOrderFields(
-      List<FieldDescriptor<T>> allFields, List<String> subset) {
-
-    var fieldMap =
-        allFields.stream()
-            .collect(java.util.stream.Collectors.toMap(FieldDescriptor::name, f -> f));
-
-    return subset.stream().map(fieldMap::get).filter(Objects::nonNull).toList();
-  }
-
   private int calculateMaxFieldNameLength(List<FieldDescriptor<T>> fields) {
     return fields.stream()
         .mapToInt(

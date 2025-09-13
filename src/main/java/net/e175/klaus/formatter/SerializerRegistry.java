@@ -1,5 +1,6 @@
 package net.e175.klaus.formatter;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -88,7 +89,8 @@ public final class SerializerRegistry {
         .register(Float.class, createFloatFormatter(6))
         .register(
             ZonedDateTime.class,
-            createDateTimeFormatter("null", TimeFormats.ISO_LOCAL_DATE_TIME_REDUCED, true));
+            createDateTimeFormatter(
+                "null", DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX"), true));
   }
 
   public static SerializerRegistry forCsv() {
@@ -149,5 +151,17 @@ public final class SerializerRegistry {
 
   public String serialize(Object obj) {
     return serialize(obj, new FieldDescriptor<>("", x -> x));
+  }
+
+  public <T> int getPrecision(FieldDescriptor<T> field) {
+    return (int) field.hints().getOrDefault("precision", 5);
+  }
+
+  public void appendDouble(double value, int precision, Appendable out) throws IOException {
+    out.append(String.format(Locale.US, FORMAT_SPECS[precision], value));
+  }
+
+  public void appendFloat(float value, int precision, Appendable out) throws IOException {
+    appendDouble(value, precision, out);
   }
 }

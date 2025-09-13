@@ -20,6 +20,14 @@ public final class DateTimeIterator {
 
   private DateTimeIterator() {}
 
+  /** Specifies the required precision for time inputs. */
+  public enum TimePrecision {
+    /** Requires explicit time (for position calculations). */
+    TIME_REQUIRED,
+    /** Date precision is sufficient (for sunrise calculations). */
+    DATE_SUFFICIENT
+  }
+
   /** Represents a coordinate pair with its associated time. */
   public record CoordinateTimePair(CoordinatePair coordinates, ZonedDateTime dateTime) {}
 
@@ -82,12 +90,19 @@ public final class DateTimeIterator {
   }
 
   public static Stream<ZonedDateTime> fromFile(Path timesFile, Optional<ZoneId> zoneId) {
-    return readLinesFromPath(timesFile, line -> parseDateTime(line, zoneId));
+    return fromFile(timesFile, zoneId, TimePrecision.DATE_SUFFICIENT);
   }
 
-  private static ZonedDateTime parseDateTime(String dateTimeStr, Optional<ZoneId> zoneId) {
+  public static Stream<ZonedDateTime> fromFile(
+      Path timesFile, Optional<ZoneId> zoneId, TimePrecision precision) {
+    return readLinesFromPath(timesFile, line -> parseDateTime(line, zoneId, precision));
+  }
+
+  private static ZonedDateTime parseDateTime(
+      String dateTimeStr, Optional<ZoneId> zoneId, TimePrecision precision) {
+    TemporalAccessor temporal;
     try {
-      var temporal =
+      temporal =
           TimeFormats.INPUT_DATE_TIME_FORMATTER.parseBest(
               dateTimeStr,
               ZonedDateTime::from,
@@ -95,17 +110,24 @@ public final class DateTimeIterator {
               LocalDate::from,
               YearMonth::from,
               Year::from);
-      return convertToZonedDateTime(temporal, zoneId);
     } catch (Exception e) {
       try {
-        var temporal =
+        temporal =
             TimeFormats.INPUT_TIME_FORMATTER.parseBest(
                 dateTimeStr, OffsetTime::from, LocalTime::from);
         return convertToZonedDateTime(temporal, zoneId);
       } catch (Exception ex) {
-        throw new IllegalArgumentException("Failed to parse date/time: " + dateTimeStr, ex);
+        throw new IllegalArgumentException(
+            "Failed to parse date/time: "
+                + dateTimeStr
+                + ". File inputs require explicit dates (e.g., '2024-01-15' or '2024-01-15T12:30:00'). "
+                + "For time series generation, use command-line date arguments instead.",
+            ex);
       }
     }
+
+    validatePrecision(temporal, dateTimeStr, precision);
+    return convertToZonedDateTime(temporal, zoneId);
   }
 
   public static Stream<CoordinatePair> coordinatesFromFile(Path coordFile) {
@@ -115,7 +137,12 @@ public final class DateTimeIterator {
   /** Parses paired coordinate-time data from file (latitude longitude datetime per line). */
   public static Stream<CoordinateTimePair> pairedDataFromFile(
       Path dataFile, Optional<ZoneId> zoneId) {
-    return readLinesFromPath(dataFile, line -> parsePairedDataLine(line, zoneId));
+    return pairedDataFromFile(dataFile, zoneId, TimePrecision.DATE_SUFFICIENT);
+  }
+
+  public static Stream<CoordinateTimePair> pairedDataFromFile(
+      Path dataFile, Optional<ZoneId> zoneId, TimePrecision precision) {
+    return readLinesFromPath(dataFile, line -> parsePairedDataLine(line, zoneId, precision));
   }
 
   private static ZonedDateTime convertToZonedDateTime(
@@ -137,7 +164,8 @@ public final class DateTimeIterator {
     };
   }
 
-  private static CoordinateTimePair parsePairedDataLine(String line, Optional<ZoneId> zoneId) {
+  private static CoordinateTimePair parsePairedDataLine(
+      String line, Optional<ZoneId> zoneId, TimePrecision precision) {
     var parts = WHITESPACE_OR_COMMA.split(line.trim(), 3);
     if (parts.length != 3) {
       throw new IllegalArgumentException(
@@ -145,12 +173,19 @@ public final class DateTimeIterator {
     }
 
     var coordinates = parseCoordinates(parts[0], parts[1]);
-    var temporalAccessor =
-        TimeFormats.INPUT_DATE_TIME_FORMATTER.parseBest(
-            parts[2], ZonedDateTime::from, LocalDateTime::from, LocalDate::from);
-    var dateTime = convertToZonedDateTime(temporalAccessor, zoneId);
-
+    var dateTime = parseDateTime(parts[2], zoneId, precision);
     return new CoordinateTimePair(coordinates, dateTime);
+  }
+
+  private static void validatePrecision(
+      TemporalAccessor temporal, String input, TimePrecision precision) {
+    if (precision == TimePrecision.TIME_REQUIRED && temporal instanceof LocalDate) {
+      throw new IllegalArgumentException(
+          "Position calculations require explicit time (e.g., '2024-01-15T12:30:00'). "
+              + "Date-only input '"
+              + input
+              + "' is ambiguous for solar position.");
+    }
   }
 
   private static CoordinatePair parseCoordinateLine(String line) {

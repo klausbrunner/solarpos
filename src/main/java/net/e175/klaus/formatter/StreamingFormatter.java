@@ -18,6 +18,18 @@ public interface StreamingFormatter<T> {
     return allFields.stream().filter(fd -> subset.contains(fd.name())).toList();
   }
 
+  default List<FieldDescriptor<T>> filterAndOrderFields(
+      List<FieldDescriptor<T>> allFields, List<String> subset) {
+    Objects.requireNonNull(allFields, "Field list must not be null");
+    Objects.requireNonNull(subset, "Subset list must not be null");
+
+    var fieldMap =
+        allFields.stream()
+            .collect(java.util.stream.Collectors.toMap(FieldDescriptor::name, f -> f));
+
+    return subset.stream().map(fieldMap::get).filter(Objects::nonNull).toList();
+  }
+
   default void validateInputs(
       List<FieldDescriptor<T>> allFields, List<String> subset, Stream<T> items, Appendable out) {
     Objects.requireNonNull(allFields, "Field list must not be null");

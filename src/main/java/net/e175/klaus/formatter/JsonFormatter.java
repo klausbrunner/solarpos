@@ -4,13 +4,12 @@ import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Stream;
 
 public record JsonFormatter<T>(SerializerRegistry registry, String lineSeparator)
     implements StreamingFormatter<T> {
-  private static final int INITIAL_BUFFER_SIZE = 256;
+  private static final int INITIAL_BUFFER_SIZE = 128;
   private static final DateTimeFormatter ISO_FORMAT =
       DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
 
@@ -56,8 +55,8 @@ public record JsonFormatter<T>(SerializerRegistry registry, String lineSeparator
       var value = field.extractor().apply(item);
       switch (value) {
         case null -> out.append("null");
-        case Double d -> appendDouble(d, getPrecision(field), out);
-        case Float f -> appendFloat(f, getPrecision(field), out);
+        case Double d -> registry.appendDouble(d, registry.getPrecision(field), out);
+        case Float f -> registry.appendFloat(f, registry.getPrecision(field), out);
         case Number n -> out.append(n.toString());
         case Boolean b -> out.append(b.toString());
         case ZonedDateTime zdt -> out.append('"').append(zdt.format(ISO_FORMAT)).append('"');
@@ -91,17 +90,5 @@ public record JsonFormatter<T>(SerializerRegistry registry, String lineSeparator
     }
 
     return sb.toString();
-  }
-
-  private int getPrecision(FieldDescriptor<T> field) {
-    return (int) field.hints().getOrDefault("precision", 6);
-  }
-
-  private void appendDouble(double value, int precision, Appendable out) throws IOException {
-    out.append(String.format(Locale.US, SerializerRegistry.FORMAT_SPECS[precision], value));
-  }
-
-  private void appendFloat(float value, int precision, Appendable out) throws IOException {
-    appendDouble(value, precision, out);
   }
 }

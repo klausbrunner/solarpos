@@ -8,7 +8,8 @@ import java.time.*;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
-import net.e175.klaus.formatter.*;
+import net.e175.klaus.formatter.FieldDescriptor;
+import net.e175.klaus.formatter.StreamingFormatter;
 import net.e175.klaus.solarpos.util.TimeFormats;
 import net.e175.klaus.solarpositioning.SPA;
 import net.e175.klaus.solarpositioning.SunriseResult;
@@ -159,21 +160,7 @@ final class SunriseCommand implements Callable<Integer> {
   }
 
   private StreamingFormatter<SunriseData> createFormatter(Main.Format format) {
-    SerializerRegistry registry =
-        switch (format) {
-          case HUMAN -> SerializerRegistry.forText();
-          case JSON -> SerializerRegistry.forJson();
-          case CSV -> SerializerRegistry.forCsv();
-        };
-
-    return switch (format) {
-      case HUMAN -> {
-        var displayNames = Map.of("dateTime", "date/time", "deltaT", "delta T");
-        yield new SimpleTextFormatter<>(registry, displayNames);
-      }
-      case JSON -> new JsonFormatter<>(registry, "\n");
-      case CSV -> new CsvFormatter<>(registry, parent.headers);
-    };
+    return FormatterFactory.create(format, parent.headers);
   }
 
   private SunriseData calculateSunriseData(
@@ -249,9 +236,5 @@ final class SunriseCommand implements Callable<Integer> {
     return result instanceof SunriseResult.RegularDay regularDay
         ? new Times(regularDay.sunrise(), regularDay.sunset())
         : new Times(null, null);
-  }
-
-  static Stream<CoordinatePair> getCoordinates(CoordinateRange latRange, CoordinateRange lngRange) {
-    return PositionCommand.getCoordinates(latRange, lngRange);
   }
 }
