@@ -24,7 +24,7 @@ import picocli.CommandLine.HelpCommand;
       "  solarpos 52:53:0.1 13:14:0.1 2024 position --format=csv",
       "  solarpos @coords.txt @times.txt position",
       "  solarpos @data.txt position  # paired lat,lng,datetime data",
-      "  echo '52.0 13.4 2024-01-01T12:00:00' | solarpos @- now position"
+      "  echo '52.0 13.4 2024-01-01T12:00:00' | solarpos @- position"
     },
     versionProvider = Main.ManifestBasedVersionProviderWithVariables.class,
     showAtFileInUsageHelp = true)
@@ -89,7 +89,7 @@ public final class Main {
       names = {"--show-inputs"},
       negatable = true,
       description =
-          "Show all inputs in output. Automatically enabled for coordinate ranges unless --no-show-inputs is used.")
+          "Show all inputs in output. Automatically enabled for coordinate ranges, time series, files unless --no-show-inputs is used.")
   boolean showInput;
 
   @CommandLine.Option(
