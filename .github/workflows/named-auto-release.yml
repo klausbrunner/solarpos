@@ -51,4 +51,5 @@ jobs:
     with:
       git-ref: v${{ inputs.release-version }}
       jreleaser-do-not-tag: true
+      optimize-for-release: true
     secrets: inherit
