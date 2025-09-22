@@ -2,6 +2,8 @@
 
 `solarpos` is a command-line application for computing topocentric solar coordinates and solar events such as sunrise, sunset, transit, and twilight. It is designed for scripting and bulk processing: the tool supports time series, geographic sweeps, file input, and streaming, and produces machine-friendly output (CSV or JSON Lines) for use in data pipelines. Built on the [solarpositioning](https://github.com/klausbrunner/solarpositioning) library of high-accuracy algorithms.
 
+**Note**: [sunce](https://github.com/klausbrunner/sunce) is a rewrite of `solarpos` with better performance and a few functional enhancements. While not quite as stable yet, it is expected to supersede this tool as I can't maintain both. 
+
 ## Use cases
 
 ![Global Solar Elevation Animation](docs/solar_elevation_animation.webp)
