@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -103,26 +104,37 @@ public final class DateTimeIterator {
     TemporalAccessor temporal;
     try {
       temporal =
-          TimeFormats.INPUT_DATE_TIME_FORMATTER.parseBest(
-              dateTimeStr,
-              ZonedDateTime::from,
-              LocalDateTime::from,
-              LocalDate::from,
-              YearMonth::from,
-              Year::from);
-    } catch (Exception e) {
+          DateTimeFormatter.ISO_ZONED_DATE_TIME.parseBest(
+              dateTimeStr, ZonedDateTime::from, OffsetDateTime::from);
+    } catch (Exception e1) {
       try {
         temporal =
-            TimeFormats.INPUT_TIME_FORMATTER.parseBest(
-                dateTimeStr, OffsetTime::from, LocalTime::from);
-        return convertToZonedDateTime(temporal, zoneId);
-      } catch (Exception ex) {
-        throw new IllegalArgumentException(
-            "Failed to parse date/time: "
-                + dateTimeStr
-                + ". File inputs require explicit dates (e.g., '2024-01-15' or '2024-01-15T12:30:00'). "
-                + "For time series generation, use command-line date arguments instead.",
-            ex);
+            DateTimeFormatter.ISO_LOCAL_DATE_TIME.parseBest(dateTimeStr, LocalDateTime::from);
+      } catch (Exception e2) {
+        try {
+          temporal =
+              TimeFormats.INPUT_DATE_TIME_FORMATTER.parseBest(
+                  dateTimeStr,
+                  ZonedDateTime::from,
+                  LocalDateTime::from,
+                  LocalDate::from,
+                  YearMonth::from,
+                  Year::from);
+        } catch (Exception e3) {
+          try {
+            temporal =
+                TimeFormats.INPUT_TIME_FORMATTER.parseBest(
+                    dateTimeStr, OffsetTime::from, LocalTime::from);
+            return convertToZonedDateTime(temporal, zoneId);
+          } catch (Exception ex) {
+            throw new IllegalArgumentException(
+                "Failed to parse date/time: "
+                    + dateTimeStr
+                    + ". File inputs require explicit dates (e.g., '2024-01-15' or '2024-01-15T12:30:00'). "
+                    + "For time series generation, use command-line date arguments instead.",
+                ex);
+          }
+        }
       }
     }
 

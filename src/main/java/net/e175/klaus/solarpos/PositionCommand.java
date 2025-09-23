@@ -112,18 +112,27 @@ final class PositionCommand implements Callable<Integer> {
                 .map(pair -> calculatePositionData(pair.dateTime(), pair.coordinates()));
       } else {
         // Use Cartesian product for separate coordinate/time inputs
-        // Flatten the entire Cartesian product first, then parallelize across all combinations
-        var cartesianStream =
-            parent
-                .getDateTimesStream(step, DateTimeIterator.TimePrecision.TIME_REQUIRED)
-                .flatMap(
-                    dt ->
-                        parent
-                            .getCoordinatesStream()
-                            .map(coord -> new DateTimeIterator.CoordinateTimePair(coord, dt)));
-        resultStream =
-            (parent.parallel ? cartesianStream.parallel() : cartesianStream)
-                .map(pair -> calculatePositionData(pair.dateTime(), pair.coordinates()));
+        if (algorithm == Algorithm.SPA) {
+          // Optimized SPA processing: compute time-dependent parts once per datetime
+          var spaStream =
+              parent
+                  .getDateTimesStream(step, DateTimeIterator.TimePrecision.TIME_REQUIRED)
+                  .flatMap(this::createOptimizedSpaResultsForDateTime);
+          resultStream = parent.parallel ? spaStream.parallel() : spaStream;
+        } else {
+          // Traditional Cartesian product for Grena3
+          var cartesianStream =
+              parent
+                  .getDateTimesStream(step, DateTimeIterator.TimePrecision.TIME_REQUIRED)
+                  .flatMap(
+                      dt ->
+                          parent
+                              .getCoordinatesStream()
+                              .map(coord -> new DateTimeIterator.CoordinateTimePair(coord, dt)));
+          resultStream =
+              (parent.parallel ? cartesianStream.parallel() : cartesianStream)
+                  .map(pair -> calculatePositionData(pair.dateTime(), pair.coordinates()));
+        }
       }
 
       resultStream = PerformanceTracker.wrapIfNeeded(tracker, resultStream);
@@ -202,6 +211,50 @@ final class PositionCommand implements Callable<Integer> {
         refraction
             ? calculateSolarPositionWithRefraction(dateTime, coord, deltaT)
             : calculateSolarPositionWithoutRefraction(dateTime, coord, deltaT);
+
+    return new PositionData(
+        coord.latitude(),
+        coord.longitude(),
+        elevation,
+        pressure,
+        temperature,
+        dateTime,
+        deltaT,
+        position.azimuth(),
+        position.zenithAngle(),
+        90.0 - position.zenithAngle());
+  }
+
+  private Stream<PositionData> createOptimizedSpaResultsForDateTime(ZonedDateTime dateTime) {
+    // Compute time-dependent parts ONCE per datetime
+    final double deltaT = parent.getBestGuessDeltaT(dateTime);
+    final SPA.SpaTimeDependent timeDependent = SPA.calculateSpaTimeDependentParts(dateTime, deltaT);
+
+    // Apply to ALL coordinates for this datetime using the cached time-dependent parts
+    return parent
+        .getCoordinatesStream()
+        .map(
+            coord -> calculateSpaPositionDataWithTimeParts(dateTime, coord, deltaT, timeDependent));
+  }
+
+  private PositionData calculateSpaPositionDataWithTimeParts(
+      ZonedDateTime dateTime,
+      CoordinatePair coord,
+      double deltaT,
+      SPA.SpaTimeDependent timeDependent) {
+
+    // Use pre-computed time-dependent parts - this is where the optimization happens!
+    SolarPosition position =
+        refraction
+            ? SPA.calculateSolarPositionWithTimeDependentParts(
+                coord.latitude(),
+                coord.longitude(),
+                elevation,
+                pressure,
+                temperature,
+                timeDependent)
+            : SPA.calculateSolarPositionWithTimeDependentParts(
+                coord.latitude(), coord.longitude(), elevation, timeDependent);
 
     return new PositionData(
         coord.latitude(),

@@ -210,6 +210,27 @@ class DateTimeConverterTest {
   }
 
   @Test
+  void parsesDifferentFractionalSecondsCorrectly() {
+    var converter = new DateTimeConverter();
+
+    var result1 = converter.convert("2024-06-21T12:30:45.123+02:00");
+    var result2 = converter.convert("2024-06-21T12:30:45.999+02:00");
+
+    assertInstanceOf(ZonedDateTime.class, result1);
+    assertInstanceOf(ZonedDateTime.class, result2);
+
+    var zdt1 = (ZonedDateTime) result1;
+    var zdt2 = (ZonedDateTime) result2;
+
+    // Verify different fractional seconds are preserved
+    assertEquals(123_000_000, zdt1.getNano());
+    assertEquals(999_000_000, zdt2.getNano());
+
+    // This test prevents regression of GitHub issue #77
+    assertNotEquals(zdt1.getNano(), zdt2.getNano());
+  }
+
+  @Test
   void rejectsDateTimeWithBracketedTimeZone() {
     var converter = new DateTimeConverter();
 

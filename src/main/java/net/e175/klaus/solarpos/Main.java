@@ -121,7 +121,7 @@ public final class Main {
       defaultValue = "0",
       fallbackValue = "NaN",
       description =
-          "Delta T in seconds; an estimate is used if this option is given without a value.")
+          "Delta T in seconds; an estimate is used if this option is given without a value. Use --deltat=<value> to specify an explicit value.")
   double deltaT;
 
   @CommandLine.Option(

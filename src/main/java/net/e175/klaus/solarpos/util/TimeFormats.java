@@ -6,15 +6,16 @@ import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
 
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 
 public final class TimeFormats {
 
   private TimeFormats() {}
 
   public static final String INPUT_DATE_TIME_PATTERN =
-      "yyyy[-MM[-dd[['T'][ ]HH:mm[:ss[.SSS]][XXX['['VV']']]]]]";
+      "yyyy[-MM[-dd[['T'][ ]HH:mm[:ss[.S[SS]]][XXX['['VV']']]]]]";
 
-  public static final String INPUT_TIME_PATTERN = "HH:mm[:ss[.SSS]][XXX['['VV']']]";
+  public static final String INPUT_TIME_PATTERN = "HH:mm[:ss[.S[SS]]][XXX['['VV']']]";
 
   public static final String OUTPUT_DATE_TIME_HUMAN_PATTERN = "yyyy-MM-dd HH:mm:ssXXX";
   public static final String OUTPUT_DATE_TIME_ISO_PATTERN = "yyyy-MM-dd'T'HH:mm:ssXXX";
@@ -24,6 +25,30 @@ public final class TimeFormats {
 
   public static final DateTimeFormatter INPUT_TIME_FORMATTER =
       DateTimeFormatter.ofPattern(INPUT_TIME_PATTERN);
+
+  public static final DateTimeFormatter INPUT_DATE_TIME_FORMATTER_WITH_FRACTIONS =
+      new DateTimeFormatterBuilder()
+          .appendPattern("yyyy")
+          .optionalStart()
+          .appendPattern("-MM")
+          .optionalStart()
+          .appendPattern("-dd")
+          .optionalStart()
+          .appendPattern("[['T'][ ]HH:mm")
+          .optionalStart()
+          .appendPattern(":ss")
+          .optionalStart()
+          .appendLiteral('.')
+          .appendFraction(ChronoField.NANO_OF_SECOND, 1, 9, true)
+          .optionalEnd()
+          .optionalEnd()
+          .optionalStart()
+          .appendPattern("[XXX['['VV']']]")
+          .optionalEnd()
+          .optionalEnd()
+          .optionalEnd()
+          .optionalEnd()
+          .toFormatter();
 
   public static final DateTimeFormatter ISO_LOCAL_TIME_REDUCED =
       new DateTimeFormatterBuilder()
